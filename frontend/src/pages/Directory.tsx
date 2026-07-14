@@ -6,7 +6,7 @@ const markets = [
 
 export default function Directory() {
   return (
-    <main className="max-w-5xl mx-auto px-4 py-20">
+    <main className="max-w-5xl mx-auto px-6 sm:px-12 lg:px-20 py-20">
       <h1 className="text-3xl font-bold mb-8">Market Directory</h1>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {markets.map((m) => (

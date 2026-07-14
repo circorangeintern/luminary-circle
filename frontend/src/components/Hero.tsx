@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 export default function Hero() {
   return (
-    <section className="bg-cream relative overflow-hidden px-4 sm:px-10 lg:px-16 py-16 lg:py-24">
+    <section className="bg-cream relative overflow-hidden px-6 sm:px-12 lg:px-20 py-16 lg:py-24">
       <div
         className="absolute rounded-full bg-bg-grey z-0"
         style={{ width: 600, height: 600, left: 870, top: 25 }}

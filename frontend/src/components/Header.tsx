@@ -13,7 +13,7 @@ export default function Header() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="bg-ink flex items-center px-4 sm:px-8 lg:px-16 gap-6 sticky top-0 z-50 h-16 lg:h-20">
+    <header className="bg-ink flex items-center px-6 sm:px-12 lg:px-20 gap-6 sticky top-0 z-50 h-20 lg:h-24">
       <Link to="/" className="flex items-center gap-2 shrink-0">
         <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M4 30V14L11 6L17 14L23 6L30 14V30" stroke="#FFF3F6" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" fill="none"/>

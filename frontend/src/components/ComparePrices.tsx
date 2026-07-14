@@ -21,7 +21,7 @@ export default function ComparePrices() {
   const [active, setActive] = useState(0)
 
   return (
-    <section id="compare" className="px-4 sm:px-10 lg:px-16 mt-10 relative z-10">
+    <section id="compare" className="px-6 sm:px-12 lg:px-20 mt-10 relative z-10">
       <div className="max-w-[1240px] mx-3 sm:mx-6 lg:mx-auto bg-white border border-grey-border rounded-2xl p-6 sm:p-8 lg:p-12">
         <div className="m-8">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-6">

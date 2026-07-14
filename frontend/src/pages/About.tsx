@@ -1,6 +1,6 @@
 export default function About() {
   return (
-    <main className="max-w-3xl mx-auto px-4 py-20">
+    <main className="max-w-3xl mx-auto px-6 sm:px-12 lg:px-20 py-20">
       <h1 className="text-3xl font-bold mb-4">About Market Compare</h1>
       <p className="text-lg leading-relaxed text-gray-700">
         Market Compare helps shoppers make informed decisions by providing real-time price comparisons

@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="bg-ink mt-20 px-4 sm:px-8 lg:px-16 py-16 pb-10">
+    <footer className="bg-ink mt-20 px-6 sm:px-12 lg:px-20 py-16 pb-10">
       <div className="max-w-[1380px] mx-auto flex flex-wrap gap-12 justify-between mb-10">
         <div>
           <h4 className="text-white text-lg font-bold mb-5">PLATFORM</h4>
