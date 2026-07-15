@@ -14,13 +14,8 @@ export default function Header() {
 
   return (
     <header className="bg-ink flex items-center px-6 sm:px-12 lg:px-20 gap-6 sticky top-0 z-50 h-20 lg:h-24">
-      <Link to="/" className="flex items-center gap-2 shrink-0">
-        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 30V14L11 6L17 14L23 6L30 14V30" stroke="#FFF3F6" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" fill="none"/>
-          <path d="M11 30V20" stroke="#FFF3F6" strokeWidth="2.6" strokeLinecap="round"/>
-          <path d="M23 30V20" stroke="#FFF3F6" strokeWidth="2.6" strokeLinecap="round"/>
-        </svg>
-        <span className="text-[#FFF3F6] font-semibold text-base lg:text-lg">Market Compare</span>
+      <Link to="/" className="flex items-center shrink-0">
+        <img src="/logo.png" alt="Market Compare" className="h-8 lg:h-9 w-auto brightness-0 invert" />
       </Link>
 
       <button
