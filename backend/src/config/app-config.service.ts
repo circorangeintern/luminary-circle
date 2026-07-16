@@ -24,11 +24,8 @@ export class AppConfigService {
   get flagExcludeThreshold() {
     return this.config.get('FLAG_EXCLUDE_THRESHOLD', { infer: true });
   }
-  get upstashUrl() {
-    return this.config.get('UPSTASH_REDIS_REST_URL', { infer: true });
-  }
-  get upstashToken() {
-    return this.config.get('UPSTASH_REDIS_REST_TOKEN', { infer: true });
+  get upstashRedisUrl() {
+    return this.config.get('UPSTASH_REDIS_URL', { infer: true });
   }
   get isProduction() {
     return this.config.get('NODE_ENV', { infer: true }) === 'production';
