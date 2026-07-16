@@ -15,8 +15,7 @@ export const envSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRES_IN: z.string().default('1d'),
 
-  UPSTASH_REDIS_REST_URL: z.url(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+  UPSTASH_REDIS_URL: z.url(),
 
   // Product config
   FRESHNESS_WINDOW_DAYS: z.coerce.number().int().positive().default(7),
