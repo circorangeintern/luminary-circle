@@ -1,0 +1,47 @@
+@base = http://localhost:3000/api/v1
+
+### register — expect 201 + { success, data: { user, accessToken } }
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "displayName": "Test User", "phone": "08031234567", "password": "testpass123" }
+
+### register again — expect 409 CONFLICT
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "displayName": "Test User", "phone": "08031234567", "password": "testpass123" }
+
+### bad phone — expect 400 with details[0].field = "phone"
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "displayName": "Test User", "phone": "0203123456", "password": "testpass123" }
+
+### login correct — expect 200 + token
+POST {{base}}/auth/login
+X-Session-Id: ses_test_1
+Content-Type: application/json
+
+{ "phone": "08031234567", "password": "testpass123" }
+
+### login wrong password — expect 401 "Phone number or password is incorrect"
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "phone": "08031234567", "password": "testpass123!" }
+
+### login nonexistent phone — expect IDENTICAL 401 message
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "phone": "08031234587", "password": "testpass123" }
+
+### GET /auth/me with Authorization: Bearer <token> — expect the user
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJxZXhqYmswMDAwNWtkanBtb3EybW8zIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODQzODMxMTYsImV4cCI6MTc4NDQ2OTUxNn0.-eZtkG7aa8nkSJX-gXK_oQKFUVPxJq3uglsCXYGgAlM
+
+GET {{base}}/auth/me
+Authorization: Bearer {{token}}
+
+### GET /auth/me with no header — expect 401
+GET {{base}}/auth/me
