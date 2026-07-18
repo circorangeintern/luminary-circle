@@ -20,6 +20,7 @@ Content-Type: application/json
 
 ### login correct — expect 200 + token
 POST {{base}}/auth/login
+X-Session-Id: ses_test_1
 Content-Type: application/json
 
 { "phone": "08031234567", "password": "testpass123" }
