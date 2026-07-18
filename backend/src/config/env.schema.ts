@@ -15,7 +15,10 @@ export const envSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRES_IN: z
     .string()
-    .regex(/^\d+(s|m|h|d)$/, 'JWT_EXPIRES_IN must be like 30m, 12h, 1d, or 604800s')
+    .regex(
+      /^\d+(s|m|h|d)$/,
+      'JWT_EXPIRES_IN must be like 30m, 12h, 1d, or 604800s',
+    )
     .default('1d'),
 
   UPSTASH_REDIS_URL: z.url(),

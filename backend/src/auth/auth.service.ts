@@ -21,9 +21,11 @@ export class AuthService {
 
     const existing = await this.prisma.user.findUnique({ where: { phone } });
     if (existing) {
-      throw new AppException('CONFLICT', 'This phone number already has an account', [
-        { field: 'phone', message: 'Already registered' },
-      ]);
+      throw new AppException(
+        'CONFLICT',
+        'This phone number already has an account',
+        [{ field: 'phone', message: 'Already registered' }],
+      );
     }
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
@@ -68,7 +70,7 @@ export class AuthService {
         role: user.role,
       },
       accessToken: this.signToken(user.id, user.role),
-    }
+    };
   }
 
   private signToken(sub: string, role: string) {
@@ -76,9 +78,13 @@ export class AuthService {
   }
 
   private invalidCredentials() {
-    return new AppException("AUTHENTICATION_ERROR", "Phone number or password is incorrect");
+    return new AppException(
+      'AUTHENTICATION_ERROR',
+      'Phone number or password is incorrect',
+    );
   }
 }
 
 // A real bcrypt hash of a random string, used only to equalize timing.
-const DUMMY_HASH = '$2b$10$CwTycUXWue0Thq9StjUM0uJ8.PjTPRTLQvzD9pAeC3zsFYyj5FSDy';
+const DUMMY_HASH =
+  '$2b$10$CwTycUXWue0Thq9StjUM0uJ8.PjTPRTLQvzD9pAeC3zsFYyj5FSDy';

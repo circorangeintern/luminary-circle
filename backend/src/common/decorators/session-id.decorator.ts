@@ -4,7 +4,9 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
  *  so a missing header can never break a product request. */
 export const SessionId = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): string => {
-    const req = ctx.switchToHttp().getRequest<{ headers: Record<string, string | undefined> }>();
+    const req = ctx
+      .switchToHttp()
+      .getRequest<{ headers: Record<string, string | undefined> }>();
     return req.headers['x-session-id'] ?? 'unknown';
   },
 );

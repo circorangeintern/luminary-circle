@@ -14,7 +14,9 @@ import type { SignOptions } from 'jsonwebtoken';
       inject: [AppConfigService],
       useFactory: (config: AppConfigService) => ({
         secret: config.jwtSecret,
-        signOptions: { expiresIn: config.jwtExpiresIn as SignOptions['expiresIn'] },
+        signOptions: {
+          expiresIn: config.jwtExpiresIn as SignOptions['expiresIn'],
+        },
       }),
     }),
   ],

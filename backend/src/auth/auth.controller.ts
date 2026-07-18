@@ -1,4 +1,11 @@
-import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -8,7 +15,6 @@ import type { AuthenticatedUser } from './types/authenticated-user.type';
 import { SessionId } from '../common/decorators/session-id.decorator';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AppException } from '../common/errors/app.exception';
-import e from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -18,10 +24,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
-  async register(
-    @Body() dto: RegisterDto,
-    @SessionId() sessionId: string,
-  ) {
+  async register(@Body() dto: RegisterDto, @SessionId() sessionId: string) {
     try {
       const result = await this.auth.register(dto);
       this.analytics.emit({
@@ -35,9 +38,11 @@ export class AuthController {
       this.analytics.emit({
         name: 'signup_failed',
         sessionId,
-        responseStatus: e instanceof AppException && e.code === 'CONFLICT'
-          ? 'VALIDATION_ERROR'
-          : 'SERVER_ERROR',
+        responseStatus:
+          e instanceof AppException &&
+          (e.code === 'CONFLICT' || e.code === 'VALIDATION_ERROR')
+            ? 'VALIDATION_ERROR'
+            : 'SERVER_ERROR',
         errorCode: e instanceof AppException ? e.code : 'UNKNOWN',
       });
       throw e;
@@ -46,10 +51,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
-  async login(
-    @Body() dto: LoginDto,
-    @SessionId() sessionId: string,
-  ) {
+  async login(@Body() dto: LoginDto, @SessionId() sessionId: string) {
     try {
       const result = await this.auth.login(dto);
       this.analytics.emit({
@@ -64,12 +66,15 @@ export class AuthController {
       this.analytics.emit({
         name: 'login_failed',
         sessionId,
-        responseStatus: e instanceof AppException && e.code === 'CONFLICT'
-          ? 'VALIDATION_ERROR'
-          : 'SERVER_ERROR',
+        responseStatus:
+          e instanceof AppException && e.code === 'AUTHENTICATION_ERROR'
+            ? 'AUTHENTICATION_ERROR'
+            : e instanceof AppException && e.code === 'VALIDATION_ERROR'
+              ? 'VALIDATION_ERROR'
+              : 'SERVER_ERROR',
         errorCode: e instanceof AppException ? e.code : 'UNKNOWN',
       });
-      
+
       throw e;
     }
   }

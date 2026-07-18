@@ -5,7 +5,10 @@ import { AppConfigService } from '../../config/app-config.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AppException } from '../../common/errors/app.exception';
 
-export interface JwtPayload { sub: string; role: string };
+export interface JwtPayload {
+  sub: string;
+  role: string;
+}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -33,7 +36,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!user || user.accountStatus !== 'ACTIVE') {
-      throw new AppException('AUTHENTICATION_ERROR', 'Session is no longer valid');
+      throw new AppException(
+        'AUTHENTICATION_ERROR',
+        'Session is no longer valid',
+      );
     }
 
     return user;

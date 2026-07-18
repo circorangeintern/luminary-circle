@@ -9,16 +9,25 @@ export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const required = this.reflector.getAllAndOverride<string[] | undefined>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const required = this.reflector.getAllAndOverride<string[] | undefined>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
     if (!required?.length) return true;
 
-    const { user } = context.switchToHttp().getRequest<{ user?: AuthenticatedUser }>();
-    if (!user) throw new AppException('AUTHENTICATION_ERROR', 'Please sign in to continue');
+    const { user } = context
+      .switchToHttp()
+      .getRequest<{ user?: AuthenticatedUser }>();
+    if (!user)
+      throw new AppException(
+        'AUTHENTICATION_ERROR',
+        'Please sign in to continue',
+      );
     if (!required.includes(user.role)) {
-      throw new AppException('FORBIDDEN', 'You do not have permission to do this');
+      throw new AppException(
+        'FORBIDDEN',
+        'You do not have permission to do this',
+      );
     }
 
     return true;
