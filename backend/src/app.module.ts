@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { GlobalExceptionFilter } from './common/errors/global-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     }),
     AppConfigModule,
     PrismaModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [
