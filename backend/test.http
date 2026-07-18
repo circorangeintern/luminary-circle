@@ -25,13 +25,13 @@ Content-Type: application/json
 { "phone": "08031234567", "password": "testpass123" }
 
 ### login wrong password — expect 401 "Phone number or password is incorrect"
-POST {{base}}/auth/register
+POST {{base}}/auth/login
 Content-Type: application/json
 
 { "phone": "08031234567", "password": "testpass123!" }
 
 ### login nonexistent phone — expect IDENTICAL 401 message
-POST {{base}}/auth/register
+POST {{base}}/auth/login
 Content-Type: application/json
 
 { "phone": "08031234587", "password": "testpass123" }

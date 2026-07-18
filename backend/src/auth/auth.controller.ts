@@ -4,6 +4,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import type { AuthenticatedUser } from './types/authenticated-user.type';
 
 @Controller('auth')
 export class AuthController {
@@ -22,7 +23,8 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@CurrentUser() user: unknown) {
-    return user;
+  me(@CurrentUser() user: AuthenticatedUser) {
+    const { id, displayName, phone, role } = user;
+    return { user: { id, displayName, phone, role } };
   }
 }
