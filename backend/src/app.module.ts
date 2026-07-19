@@ -8,6 +8,7 @@ import { GlobalExceptionFilter } from './common/errors/global-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     AnalyticsModule,
     AuthModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },

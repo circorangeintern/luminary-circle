@@ -3,5 +3,4 @@ export interface AuthenticatedUser {
   displayName: string;
   phone: string;
   role: 'USER' | 'ADMIN';
-  accountStatus: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
 }
