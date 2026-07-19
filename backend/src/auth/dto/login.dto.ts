@@ -13,6 +13,6 @@ export class LoginDto {
 
   @ApiProperty({ example: 'hunter2hunter2', minLength: 8, maxLength: 72 })
   @IsString()
-  @MinLength(1)
+  @MinLength(1) // Presence only. Login must not enforce password POLICY (that would leak the rule and break pre-existing passwords.)
   password!: string;
 }

@@ -45,7 +45,7 @@ export class AuthService {
     } catch {
       // Deliberate: a malformed phone yields the same generic 401 as a wrong
       // password, so login has exactly one failure shape. Do not "fix" this
-      // into a VALIDATION_ERROR without a decisioin.
+      // into a VALIDATION_ERROR without a decision.
       throw this.invalidCredentials();
     }
 

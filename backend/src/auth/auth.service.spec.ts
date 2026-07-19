@@ -92,7 +92,10 @@ describe('AuthService', () => {
 
       expect(prisma.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ phone: '+2348031234567' }),
+          data: expect.objectContaining({ phone: '+2348031234567' }) as Record<
+            string,
+            unknown
+          >,
         }),
       );
     });
@@ -153,6 +156,6 @@ describe('AuthService', () => {
         message: INVALID_CREDENTIALS,
       });
       expect(prisma.user.findUnique).not.toHaveBeenCalled();
-    })
+    });
   });
 });
