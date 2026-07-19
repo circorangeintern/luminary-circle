@@ -144,5 +144,15 @@ describe('AuthService', () => {
 
       expect(prisma.user.update).not.toHaveBeenCalled(); // no lastLoginAt bump
     });
+
+    it('rejects a malformed phone on login with <chosen code>', async () => {
+      await expect(
+        service.login({ phone: 'not-a-number', password: 'whatever123' }),
+      ).rejects.toMatchObject({
+        code: 'AUTHENTICATION_ERROR',
+        message: INVALID_CREDENTIALS,
+      });
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    })
   });
 });
