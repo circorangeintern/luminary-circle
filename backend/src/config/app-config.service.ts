@@ -30,4 +30,10 @@ export class AppConfigService {
   get isProduction() {
     return this.config.get('NODE_ENV', { infer: true }) === 'production';
   }
+  get corsAllowedOrigins() {
+    return this.config.get('CORS_ALLOWED_ORIGINS', { infer: true });
+  }
+  get corsAllowVercelPreviews() {
+    return this.config.get('CORS_ALLOW_VERCEL_PREVIEWS', { infer: true });
+  }
 }

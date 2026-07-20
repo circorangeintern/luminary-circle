@@ -51,6 +51,35 @@ async function bootstrap() {
     Logger.log('Swagger UI available at /api/docs', 'Bootstrap');
   }
 
+  /**
+   * CORS SETUP
+   */
+  const allowedOrigins = config.corsAllowedOrigins
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+  // Anchored both ends — an unanchored pattern would match
+  // evil-site.vercel.app.attacker.com
+  const VERCEL_PREVIEW = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
+
+  app.enableCors({
+    origin: (origin: string | undefined, callback: (error: Error | null, allow: boolean) => void) => {
+      if (!origin) return callback(null, true); // curl, Postman, same-origin
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (config.corsAllowVercelPreviews && VERCEL_PREVIEW.test(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin not allowed: ${origin}`), false);
+    },
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-Id', 'Idempotency-Key'],
+    credentials: false, // auth is a Bearer header, not cookies — no CSRF surface
+    maxAge: 86400,
+  });
+  
+
+
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
   Logger.log(`MarketCompare backend listening on :${port}/api/v1`, 'Bootstrap');

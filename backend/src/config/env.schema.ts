@@ -7,6 +7,13 @@ export const envSchema = z.object({
     .default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
 
+  // Cors config
+  CORS_ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
+  CORS_ALLOW_VERCEL_PREVIEWS: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+
   // Database config
   DATABASE_URL: z.url(),
   DIRECT_URL: z.url(),
