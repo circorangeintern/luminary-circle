@@ -64,7 +64,10 @@ async function bootstrap() {
   const VERCEL_PREVIEW = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
 
   app.enableCors({
-    origin: (origin: string | undefined, callback: (error: Error | null, allow: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (error: Error | null, allow: boolean) => void,
+    ) => {
       if (!origin) return callback(null, true); // curl, Postman, same-origin
       if (allowedOrigins.includes(origin)) return callback(null, true);
       if (config.corsAllowVercelPreviews && VERCEL_PREVIEW.test(origin)) {
@@ -73,12 +76,15 @@ async function bootstrap() {
       return callback(new Error(`Origin not allowed: ${origin}`), false);
     },
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-Id', 'Idempotency-Key'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Session-Id',
+      'Idempotency-Key',
+    ],
     credentials: false, // auth is a Bearer header, not cookies — no CSRF surface
     maxAge: 86400,
   });
-  
-
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
