@@ -9,6 +9,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AppController } from './app.controller';
+import { CatalogModule } from './catalog/catalog.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AppController } from './app.controller';
     PrismaModule,
     AnalyticsModule,
     AuthModule,
+    CatalogModule,
   ],
   controllers: [AppController],
   providers: [
