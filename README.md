@@ -1,75 +1,46 @@
-# Market Compare
+# Market Compare — Frontend
 
-A market price comparison platform that helps shoppers make informed decisions by providing real-time price comparisons across local markets. Built as part of the Orange Internship Program 2026.
+React 19 + TypeScript + Vite 8 frontend for the Market Compare price comparison platform.
 
-## Project Structure
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview the production build |
+| `npm run lint` | Run Oxlint |
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VITE_API_URL` | `http://localhost:3000/api` | Backend API base URL |
+
+## Project Layout
 
 ```
-luminary-circle/
-├── frontend/          # React + TypeScript + Vite frontend
-└── README.md
+src/
+├── components/       # Reusable UI components
+│   ├── Header.tsx
+│   ├── Footer.tsx
+│   ├── Hero.tsx
+│   ├── ComparePrices.tsx
+│   ├── PriceTrend.tsx
+│   ├── SubmissionBanner.tsx
+│   └── SubmissionConfirmation.tsx
+├── pages/            # Route-level page components
+│   ├── Home.tsx
+│   ├── Prices.tsx
+│   ├── About.tsx
+│   ├── Contact.tsx
+│   ├── Directory.tsx
+│   ├── SignIn.tsx
+│   ├── CreateAccount.tsx
+│   └── SubmitPrice.tsx
+├── services/         # API client and types
+│   └── api.ts
+├── App.tsx           # Root component with routing
+├── main.tsx          # Entry point
+└── index.css         # Global styles and Tailwind theme
 ```
-
-## Tech Stack
-
-### Frontend
-- **React 19** with TypeScript
-- **Vite 8** for build tooling
-- **Tailwind CSS 4** for styling
-- **React Router v7** for routing
-- **Axios** for API communication
-- **Recharts** for price trend charts
-- **Oxlint** for linting
-
-## Getting Started
-
-### Prerequisites
-- Node.js >= 18
-- npm
-
-### Installation
-
-```bash
-cd frontend
-npm install
-```
-
-### Development
-
-```bash
-cd frontend
-npm run dev
-```
-
-The app will be available at `http://localhost:5173`.
-
-### Build
-
-```bash
-cd frontend
-npm run build
-```
-
-### Lint
-
-```bash
-cd frontend
-npm run lint
-```
-
-## API Configuration
-
-The frontend connects to a backend API at `http://localhost:3000/api` by default. Override with the `VITE_API_URL` environment variable.
-
-## Features
-
-- **Price Comparison** – Compare food prices across multiple markets side-by-side
-- **Price Trends** – Visualize historical price movements with interactive charts
-- **Market Directory** – Browse markets and the products they offer
-- **Price Submission** – Contribute price data to help the community
-- **User Accounts** – Sign up and sign in (coming soon with backend integration)
-
-## License
-
-MIT
-
