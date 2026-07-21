@@ -2,8 +2,18 @@ import { Link } from 'react-router-dom'
 
 export default function Hero() {
   return (
-    <section className="bg-cream relative overflow-hidden px-6 sm:px-12 lg:px-20 py-16 lg:py-24">
-      <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-10">
+    <section className="bg-cream relative overflow-hidden pb-16 lg:pb-24">
+      <div className="px-6 sm:px-12 lg:px-20 pt-4 pb-6">
+        <div className="max-w-[945px] mx-auto flex items-center gap-3 px-4 h-[75px] bg-input-bg border border-days-grey rounded-[10px] w-full" style={{ borderWidth: '0.5px' }}>
+          <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5 shrink-0">
+            <circle cx="9" cy="9" r="6" stroke="#A1A1A1" strokeWidth="1.5" />
+            <path d="M14 14L17.5 17.5" stroke="#A1A1A1" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <input type="text" placeholder="Search foodstuffs" className="bg-transparent border-none outline-none text-sm text-days-grey w-full placeholder-days-grey tracking-tight" style={{ letterSpacing: '-0.24px', lineHeight: '20px' }} />
+        </div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-12 lg:px-20 flex flex-col lg:flex-row items-center gap-10">
         <div className="relative z-10 max-w-[637px]">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black leading-tight tracking-tight mb-5">
             Know Market Prices Before You Shop.
@@ -30,7 +40,6 @@ export default function Hero() {
         </div>
 
         <div className="relative w-full max-w-[607px] shrink-0 flex items-center justify-center">
-          <div className="absolute rounded-full bg-bg-grey z-0 w-[120%] h-[120%] -top-[10%] -right-[20%] lg:w-[600px] lg:h-[600px] lg:-top-[40px] lg:-right-[80px]" />
           <img
             src="/hero-image.png"
             alt="Basket with rice, beans, and oil"

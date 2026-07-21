@@ -6,7 +6,6 @@ const links = [
   { to: '/prices', label: 'Prices' },
   { to: '/about', label: 'About' },
   { to: '/contact', label: 'Contact' },
-  { to: '/directory', label: 'Directory' },
 ]
 
 export default function Header() {
@@ -36,14 +35,7 @@ export default function Header() {
         </ul>
       </div>
 
-      <div className="hidden lg:flex items-center gap-4 shrink-0">
-        <div className="flex items-center gap-2 bg-input-bg border border-input-border rounded-lg px-4 py-3 w-44 mr-20 xl:mr-40">
-          <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
-            <circle cx="9" cy="9" r="6" stroke="#A1A1A1" strokeWidth="1.5" />
-            <path d="M14 14L17.5 17.5" stroke="#A1A1A1" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          <input type="text" placeholder="Search" className="bg-transparent border-none outline-none text-sm text-black w-full placeholder-days-grey" />
-        </div>
+      <div className="hidden lg:flex items-center shrink-0 ms-auto">
         <Link to="/signin" className="bg-red text-white px-10 py-3 rounded-lg text-sm whitespace-nowrap hover:brightness-110 transition">
           Sign in
         </Link>
