@@ -18,6 +18,9 @@ export interface MarketPrice {
   reports: number
   isCheapest?: boolean
   isHighest?: boolean
+  isSeed?: boolean
+  source?: string
+  updatedAt: string
 }
 
 export interface PriceSubmission {

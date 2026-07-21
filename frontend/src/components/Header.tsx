@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const links = [
   { to: '/', label: 'Home' },
@@ -9,6 +10,7 @@ const links = [
 ]
 
 export default function Header() {
+  const { isAuthenticated, user, logout } = useAuth()
   const [open, setOpen] = useState(false)
 
   return (
@@ -18,7 +20,7 @@ export default function Header() {
         <img src="/logo.png" alt="Market Compare" className="h-9 w-auto brightness-0 invert" />
       </Link>
 
-      <div className="hidden lg:flex items-center gap-[340px]">
+      <div className="hidden lg:flex items-center gap-10">
         <ul className="flex items-center gap-[53px] list-none">
           {links.map((l) => (
             <li key={l.to}>
@@ -35,9 +37,21 @@ export default function Header() {
           ))}
         </ul>
 
-        <Link to="/signin" className="bg-red text-white w-[134px] h-[49px] flex items-center justify-center rounded-[10px] text-base leading-[19px] hover:brightness-110 transition">
-          Sign in
-        </Link>
+        {isAuthenticated ? (
+          <div className="flex items-center gap-4">
+            <span className="text-white/80 text-sm">{user?.username}</span>
+            <button
+              onClick={logout}
+              className="bg-white/10 text-white px-4 py-2 rounded-lg text-sm hover:bg-white/20 transition cursor-pointer"
+            >
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <Link to="/signin" className="bg-red text-white w-[134px] h-[49px] flex items-center justify-center rounded-[10px] text-base leading-[19px] hover:brightness-110 transition">
+            Sign in
+          </Link>
+        )}
       </div>
 
       <button
@@ -72,6 +86,24 @@ export default function Header() {
               </NavLink>
             </li>
           ))}
+          <li className="border-t border-white/10 pt-2 mt-2">
+            {isAuthenticated ? (
+              <button
+                onClick={() => { logout(); setOpen(false) }}
+                className="block w-full text-left py-2.5 px-3 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/5 transition cursor-pointer"
+              >
+                Sign out ({user?.username})
+              </button>
+            ) : (
+              <Link
+                to="/signin"
+                onClick={() => setOpen(false)}
+                className="block py-2.5 px-3 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/5 transition"
+              >
+                Sign in
+              </Link>
+            )}
+          </li>
         </ul>
       </div>
       </div>

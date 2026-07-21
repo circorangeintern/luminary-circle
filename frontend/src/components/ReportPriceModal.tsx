@@ -5,6 +5,7 @@ interface ReportPriceModalProps {
   market: string
   price: string
   onClose: () => void
+  onReported?: () => void
 }
 
 const reasons = [
@@ -28,7 +29,7 @@ const reasons = [
 
 type State = 'loading' | 'default' | 'validationError' | 'notSent' | 'confirm'
 
-export default function ReportPriceModal({ product, market, price, onClose }: ReportPriceModalProps) {
+export default function ReportPriceModal({ product, market, price, onClose, onReported }: ReportPriceModalProps) {
   const [state, setState] = useState<State>('loading')
   const [selected, setSelected] = useState<number | null>(null)
   const [details, setDetails] = useState('')
@@ -44,6 +45,7 @@ export default function ReportPriceModal({ product, market, price, onClose }: Re
       return
     }
     setState('confirm')
+    onReported?.()
   }
 
   if (state === 'loading') {
