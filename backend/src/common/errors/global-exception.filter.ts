@@ -8,6 +8,8 @@ import {
 import { Response, Request } from 'express';
 import { ErrorCode, ErrorCodes } from './error-codes';
 import { AppException } from './app.exception';
+import { AnalyticsService } from '../../analytics/analytics.service';
+import { ResponseStatus } from '../../generated/prisma';
 
 interface PrismaKnownError {
   code: string;
@@ -19,10 +21,12 @@ interface PrismaKnownError {
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
+  constructor(private readonly analytics: AnalyticsService) {}
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
-    const req = ctx.getRequest<Request>();
+    const req = ctx.getRequest<Request & { user?: { id: string } }>();
 
     const { code, message, details } = this.translate(exception);
     const httpStatus = ErrorCodes[code].httpStatus;
@@ -37,6 +41,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         `${req.method} ${req.url} -> ${httpStatus} ${code}: ${message}`,
       );
     }
+
+    this.analytics.emit({
+      name: 'api_error_encountered',
+      sessionId: (req.headers['x-session-id'] as string) ?? 'unknown',
+      userId: req.user?.id ?? null,
+      responseStatus: this.toResponseStatus(code),
+      errorCode: code,
+      properties: {
+        endpoint: req.url,
+        method: req.method,
+        httpStatus,
+      },
+    });
 
     res.status(httpStatus).json({
       success: false,
@@ -112,5 +129,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       'code' in e &&
       typeof e.code === 'string'
     );
+  }
+
+  private toResponseStatus(code: ErrorCode): ResponseStatus {
+    switch (code) {
+      case 'VALIDATION_ERROR':
+      case 'CONFLICT':
+        return 'VALIDATION_ERROR';
+      case 'AUTHENTICATION_ERROR':
+      case 'FORBIDDEN':
+        return 'AUTHENTICATION_ERROR';
+      default:
+        return 'SERVER_ERROR';
+    }
   }
 }
