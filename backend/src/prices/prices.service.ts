@@ -5,8 +5,10 @@ import { CreatePriceDto } from './dto/create-price.dto';
 import { PriceDto } from './dto/price-response.dto';
 import { AppException } from '../common/errors/app.exception';
 import { PRICE_SELECT, toPriceDto } from './price.mapper';
+import { PriceQueryDto, PriceQueryResponseDto } from './dto/query-price.dto';
 
 const DEDUPE_WINDOW_MINUTES = 10;
+const DEFAULT_PAGE_SIZE = 20;
 
 @Injectable()
 export class PricesService {
@@ -101,5 +103,41 @@ export class PricesService {
       freshnessWindowDays: this.config.freshnessWindowDays,
       flagMarkThreshold: this.config.flagMarkThreshold,
     });
+  }
+
+  async getPrices(dto: PriceQueryDto): Promise<PriceQueryResponseDto> {
+    const page = dto.page ?? 1;
+    const pageSize = dto.pageSize ?? DEFAULT_PAGE_SIZE;
+
+    const where = {
+      status: 'ACTIVE' as const,
+      ...(dto.itemId && { itemId: dto.itemId }),
+      ...(dto.unitId && { unitId: dto.unitId }),
+      ...(dto.marketId && { marketId: dto.marketId }),
+    }
+
+    const [rows, totalItems] = await this.prisma.$transaction([
+      this.prisma.priceSubmission.findMany({
+        where,
+        select: PRICE_SELECT,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.priceSubmission.count({ where }),
+    ]);
+
+    const mapperOptions = {
+      freshnessWindowDays: this.config.freshnessWindowDays,
+      flagMarkThreshold: this.config.flagMarkThreshold,
+    };
+
+    return {
+      items: rows.map((row) => toPriceDto(row, mapperOptions)),
+      page,
+      pageSize,
+      totalItems,
+      totalPages: Math.ceil(totalItems / pageSize),
+    };
   }
 }

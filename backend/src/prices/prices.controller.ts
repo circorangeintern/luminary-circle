@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiHeader,
@@ -17,6 +17,7 @@ import { AppException } from '../common/errors/app.exception';
 import { PriceResponseDto } from './dto/price-response.dto';
 import { ErrorResponseDto } from '../common/errors/error-response.dto';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { PriceQueryDto, PriceQueryResponseDto } from './dto/query-price.dto';
 
 @ApiTags('prices')
 @ApiHeader({
@@ -102,5 +103,17 @@ export class PricesController {
 
       throw e;
     }
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Browse price submissions, newest first' })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated price submissions',
+    type: PriceQueryResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid query parameters', type: ErrorResponseDto })
+  async list(@Query() query: PriceQueryDto) {
+    return this.prices.getPrices(query);
   }
 }

@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const envSchema = z.object({
   // App config
   NODE_ENV: z
-    .enum(['development', 'test', 'production'])
+    .enum(['development', 'test', 'staging', 'production'])
     .default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
 

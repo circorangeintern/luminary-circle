@@ -184,3 +184,30 @@ Authorization: Bearer not.a.real.token
   "marketId": "{{mile3Id}}",
   "price": 2100
 }
+
+
+# QUERY 
+
+### feed: default page -> 20 items, newest first, totalItems ~160
+GET {{base}}/prices
+
+### feed: page 2
+GET {{base}}/prices?page=2
+
+### feed: filter by item
+GET {{base}}/prices?itemId={{riceId}}
+
+### feed: filter by item + market (the combination the compare view will use)
+GET {{base}}/prices?itemId={{riceId}}&marketId={{mile3Id}}
+
+### feed: no auth header at all -> still 200 (public endpoint)
+GET {{base}}/prices?pageSize=5
+
+### feed: pageSize over the max -> 400
+GET {{base}}/prices?pageSize=100
+
+### feed: decimal page -> 400 (IsInt catches what Min alone would let through)
+GET {{base}}/prices?page=1.5
+
+### feed: unknown query param -> 400 (forbidNonWhitelisted applies to queries too)
+GET {{base}}/prices?sortBy=price
