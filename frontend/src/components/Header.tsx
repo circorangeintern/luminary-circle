@@ -12,20 +12,23 @@ export default function Header() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="bg-ink flex items-center px-6 sm:px-12 lg:px-20 gap-6 sticky top-0 z-50 h-20 lg:h-24">
-      <Link to="/" className="flex items-center shrink-0">
-        <img src="/logo.png" alt="Market Compare" className="h-8 lg:h-9 w-auto brightness-0 invert" />
+    <header className="bg-ink flex items-center justify-between px-6 sm:px-12 lg:px-20 sticky top-0 z-50 h-20 lg:h-24">
+      <Link to="/" className="flex items-center gap-2 shrink-0">
+        <img src="/logo.png" alt="Market Compare" className="h-9 w-auto brightness-0 invert" />
+        <span className="text-white text-[4px] leading-[5px] font-normal hidden sm:block" style={{ fontFamily: "'Neue Haas Grotesk Display Pro', 'Inter', sans-serif" }}>
+          Know before you go
+        </span>
       </Link>
 
-      <div className="flex-1 lg:flex hidden items-center">
-        <ul className="flex items-center justify-center ms-auto me-4 gap-6 xl:gap-10 list-none">
+      <div className="hidden lg:flex items-center gap-[340px]">
+        <ul className="flex items-center gap-[53px] list-none">
           {links.map((l) => (
             <li key={l.to}>
               <NavLink
                 to={l.to}
                 end={l.to === '/'}
                 className={({ isActive }) =>
-                  `text-white text-sm transition-opacity hover:opacity-70 ${isActive ? 'opacity-100 underline underline-offset-4' : 'opacity-80'}`
+                  `text-white text-base leading-[19px] transition-opacity hover:opacity-70 ${isActive ? 'opacity-100 underline underline-offset-4' : 'opacity-80'}`
                 }
               >
                 {l.label}
@@ -33,10 +36,8 @@ export default function Header() {
             </li>
           ))}
         </ul>
-      </div>
 
-      <div className="hidden lg:flex items-center shrink-0 ms-auto">
-        <Link to="/signin" className="bg-red text-white px-10 py-3 rounded-lg text-sm whitespace-nowrap hover:brightness-110 transition">
+        <Link to="/signin" className="bg-red text-white w-[134px] h-[49px] flex items-center justify-center rounded-[10px] text-base leading-[19px] hover:brightness-110 transition">
           Sign in
         </Link>
       </div>
