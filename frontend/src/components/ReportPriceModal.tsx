@@ -45,7 +45,6 @@ export default function ReportPriceModal({ product, market, price, onClose, onRe
       return
     }
     setState('confirm')
-    onReported?.()
   }
 
   if (state === 'loading') {
@@ -164,7 +163,7 @@ export default function ReportPriceModal({ product, market, price, onClose, onRe
             </div>
             <div className="flex gap-5">
               <button
-                onClick={onClose}
+                onClick={() => { onReported?.(); onClose() }}
                 className="flex-1 h-12 flex items-center justify-center gap-2 bg-white border border-days-grey rounded-[12px] text-sm text-black hover:bg-gray-50 transition cursor-pointer"
               >
                 <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
@@ -173,7 +172,7 @@ export default function ReportPriceModal({ product, market, price, onClose, onRe
                 Back to comparison
               </button>
               <button
-                onClick={() => { setState('default'); setSelected(null); setDetails('') }}
+                onClick={() => { onReported?.(); setState('default'); setSelected(null); setDetails('') }}
                 className="flex-1 h-12 flex items-center justify-center gap-2 bg-[#161111] rounded-[12px] text-sm text-white hover:brightness-125 transition cursor-pointer"
               >
                 <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
