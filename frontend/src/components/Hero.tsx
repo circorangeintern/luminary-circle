@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 export default function Hero() {
   return (
     <section className="bg-cream relative overflow-hidden pb-16 lg:pb-24">
-      <div className="px-6 sm:px-12 lg:px-20 pt-4 pb-6">
-        <div className="max-w-[945px] mx-auto flex items-center gap-3 px-4 h-[75px] bg-input-bg border border-days-grey rounded-[10px] w-full" style={{ borderWidth: '0.5px' }}>
+      <div className="px-6 sm:px-12 lg:px-20 pt-8 pb-10">
+        <div className="max-w-[800px] mx-auto flex items-center gap-3 px-4 h-[65px] bg-input-bg border border-days-grey rounded-[10px] w-full" style={{ borderWidth: '0.5px' }}>
           <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5 shrink-0">
             <circle cx="9" cy="9" r="6" stroke="#A1A1A1" strokeWidth="1.5" />
             <path d="M14 14L17.5 17.5" stroke="#A1A1A1" strokeWidth="1.5" strokeLinecap="round" />

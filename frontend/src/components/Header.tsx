@@ -12,7 +12,8 @@ export default function Header() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="bg-ink flex items-center justify-between px-6 sm:px-12 lg:px-20 sticky top-0 z-50 h-20 lg:h-24">
+    <header className="bg-ink sticky top-0 z-50 h-20 lg:h-24">
+      <div className="max-w-7xl mx-auto px-6 sm:px-12 lg:px-20 flex items-center justify-between h-full">
       <Link to="/" className="flex items-center shrink-0">
         <img src="/logo.png" alt="Market Compare" className="h-9 w-auto brightness-0 invert" />
       </Link>
@@ -72,6 +73,7 @@ export default function Header() {
             </li>
           ))}
         </ul>
+      </div>
       </div>
     </header>
   )
