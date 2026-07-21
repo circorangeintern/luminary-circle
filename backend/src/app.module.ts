@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AppController } from './app.controller';
 import { CatalogModule } from './catalog/catalog.module';
+import { PricesModule } from './prices/prices.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CatalogModule } from './catalog/catalog.module';
     AnalyticsModule,
     AuthModule,
     CatalogModule,
+    PricesModule,
   ],
   controllers: [AppController],
   providers: [

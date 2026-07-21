@@ -1,0 +1,179 @@
+@base = http://localhost:3000/api/v1
+@session = ses_local_test
+
+### 0. Login first — copy accessToken from the response into @token below
+POST {{base}}/auth/login
+Content-Type: application/json
+X-Session-Id: {{session}}
+
+{
+  "phone": "08031234567",
+  "password": "testpass123"
+}
+
+### --- paste values here before running the rest ---
+# token from step 0; IDs from catalog.http (GET /items, GET /markets)
+@token = paste.jwt.here
+@riceId = paste_rice_item_id
+@dericaId = paste_derica_unit_id
+@eggsId = paste_eggs_item_id
+@bagId = paste_50kg_bag_unit_id
+@mile3Id = paste_mile3_market_id
+
+### 1. no token -> 401 AUTHENTICATION_ERROR
+POST {{base}}/prices
+Content-Type: application/json
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100
+}
+
+### 2. valid submission -> 201
+# check: isStale false, flagCount 0, isFlagged false, submitterDisplayName set,
+# nested item/unit/market objects, createdAt is an ISO string
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100,
+  "note": "big derica"
+}
+
+### 3. SAME submission again -> 409 CONFLICT (dedupe window, 10 min)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100,
+  "note": "big derica"
+}
+
+### 4. different price, same everything else -> 201 (dedupe is price-specific)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2150
+}
+
+### 5. illegal pair: eggs + 50kg bag -> 400, details[0].field = "unitId"
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{eggsId}}",
+  "unitId": "{{bagId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 6000
+}
+
+### 6. nonexistent market -> 400, details[0].field = "marketId"
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "cmnotarealmarketid00000",
+  "price": 2100
+}
+
+### 7. price 0 -> 400 (DTO Min, before the DB constraint)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 0
+}
+
+### 8. decimal price -> 400 (IsInt)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100.50
+}
+
+### 9. extra field -> 400 (forbidNonWhitelisted proves itself)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100,
+  "reporter": "me"
+}
+
+### 10. missing required field -> 400 (details should name itemId)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100
+}
+
+### 11. note over 200 chars -> 400
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2200,
+  "note": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}
+
+### 12. bogus token -> 401
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer not.a.real.token
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100
+}
