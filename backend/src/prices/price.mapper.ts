@@ -35,7 +35,10 @@ export const PRICE_SELECT = {
   _count: { select: { flags: true } },
 } as const;
 
-export function toPriceDto(row: PriceWithRelations, opts: MapperOptions): PriceDto {
+export function toPriceDto(
+  row: PriceWithRelations,
+  opts: MapperOptions,
+): PriceDto {
   const ageMs = Date.now() - row.createdAt.getTime();
   const windowMs = opts.freshnessWindowDays * 24 * 60 * 60 * 1000;
   const flagCount = row._count.flags;

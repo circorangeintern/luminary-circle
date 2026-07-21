@@ -1,5 +1,11 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PricesService } from './prices.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -10,6 +16,7 @@ import { SessionId } from '../common/decorators/session-id.decorator';
 import { AppException } from '../common/errors/app.exception';
 import { PriceResponseDto } from './dto/price-response.dto';
 import { ErrorResponseDto } from '../common/errors/error-response.dto';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @ApiTags('prices')
 @ApiHeader({
@@ -25,13 +32,34 @@ export class PricesController {
   ) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Submit a price observation' })
-  @ApiResponse({ status: 201, description: 'Price submitted', type: PriceResponseDto })
-  @ApiResponse({ status: 400, description: 'Validation failed', type: ErrorResponseDto })
-  @ApiResponse({ status: 401, description: 'Not signed in', type: ErrorResponseDto })
-  @ApiResponse({ status: 409, description: 'Duplicate submission', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Price submitted',
+    type: PriceResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not signed in',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Duplicate submission',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Rate limit exceeded',
+    type: ErrorResponseDto,
+  })
   async create(
     @Body() dto: CreatePriceDto,
     @CurrentUser() user: AuthenticatedUser,

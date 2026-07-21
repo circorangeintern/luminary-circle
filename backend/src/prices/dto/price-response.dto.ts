@@ -19,7 +19,7 @@ export class PriceUnitDto {
 export class PriceMarketDto {
   @ApiProperty({ example: 'cmrqexjbk00005kdjpmoq2mo3' })
   id!: string;
-  
+
   @ApiProperty({ example: 'Mile 3 Market' })
   name!: string;
 
@@ -63,14 +63,13 @@ export class PriceDto {
 
   @ApiProperty({ example: 0 })
   flagCount!: number;
-  
+
   @ApiProperty({ example: 'Chidi' })
   submitterDisplayName!: string;
 
   @ApiProperty({ example: '2026-07-19T09:00:00.000Z' })
   createdAt!: string;
 }
-
 
 export class PriceResponseDto {
   @ApiProperty({ type: PriceDto })

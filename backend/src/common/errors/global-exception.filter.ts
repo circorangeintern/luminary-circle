@@ -103,6 +103,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // 3) if it's nestjs exceptions
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
+
+      // ThrottlerException's default message is "ThrottlerException: Too Many Requests". This one reaches real users, so give it our voice.
+      if (status === 429) {
+        return {
+          code: 'RATE_LIMITED',
+          message: 'You are submitting very fast. Please try again shortly.',
+        };
+      }
       const map: Record<number, ErrorCode> = {
         400: 'VALIDATION_ERROR',
         401: 'AUTHENTICATION_ERROR',
@@ -135,6 +143,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     switch (code) {
       case 'VALIDATION_ERROR':
       case 'CONFLICT':
+      case 'RATE_LIMITED':
         return 'VALIDATION_ERROR';
       case 'AUTHENTICATION_ERROR':
       case 'FORBIDDEN':

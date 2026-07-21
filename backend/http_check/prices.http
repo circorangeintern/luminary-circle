@@ -13,12 +13,19 @@ X-Session-Id: {{session}}
 
 ### --- paste values here before running the rest ---
 # token from step 0; IDs from catalog.http (GET /items, GET /markets)
+# @token = paste.jwt.here
+# @riceId = paste_rice_item_id
+# @dericaId = paste_derica_unit_id
+# @eggsId = paste_eggs_item_id
+# @bagId = paste_50kg_bag_unit_id
+# @mile3Id = paste_mile3_market_id
 @token = paste.jwt.here
-@riceId = paste_rice_item_id
-@dericaId = paste_derica_unit_id
-@eggsId = paste_eggs_item_id
-@bagId = paste_50kg_bag_unit_id
-@mile3Id = paste_mile3_market_id
+@riceId = cmrmtby0c000apwdjuuy3cixh
+@dericaId = cmrmtbv820000pwdjwt3ouvbi
+@eggsId = cmrmtbyn0000epwdj81z5j7sm
+@bagId = cmrmtbx0x0003pwdjra33zskz
+@mile3Id = cmrmtc86f000fpwdjrju0rwac
+@oilMillId = cmrmtc9gl000hpwdjkuevpsex
 
 ### 1. no token -> 401 AUTHENTICATION_ERROR
 POST {{base}}/prices

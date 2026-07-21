@@ -28,7 +28,16 @@ export const envSchema = z.object({
     )
     .default('1d'),
 
+  // Redis config
   UPSTASH_REDIS_URL: z.url(),
+
+  // Redis rate limiting config
+  PRICE_SUBMIT_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(10),
+  PRICE_SUBMIT_LIMIT_PER_MARKET_PER_HOUR: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(5),
 
   // Product config
   FRESHNESS_WINDOW_DAYS: z.coerce.number().int().positive().default(7),

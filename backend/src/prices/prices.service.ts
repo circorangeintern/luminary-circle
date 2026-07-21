@@ -38,27 +38,29 @@ export class PricesService {
       throw new AppException(
         'VALIDATION_ERROR',
         'That measure is not valid for the selected item',
-        [{
-          field: 'unitId',
-          message: 'Choose a measure from the list for this item',
-        }],
+        [
+          {
+            field: 'unitId',
+            message: 'Choose a measure from the list for this item',
+          },
+        ],
       );
     }
     if (pair.item.status !== 'ACTIVE') {
-      throw new AppException(
-        'VALIDATION_ERROR',
-        'That item is not available',
-        [{ field: 'itemId', message: 'Item is not active' }],
-      );
+      throw new AppException('VALIDATION_ERROR', 'That item is not available', [
+        { field: 'itemId', message: 'Item is not active' },
+      ]);
     }
     if (!market || market.status != 'ACTIVE') {
       throw new AppException(
         'VALIDATION_ERROR',
         'That market is not available',
-        [{
-          field: 'marketId',
-          message: 'Choose a market from the list',
-        }],
+        [
+          {
+            field: 'marketId',
+            message: 'Choose a market from the list',
+          },
+        ],
       );
     }
 
