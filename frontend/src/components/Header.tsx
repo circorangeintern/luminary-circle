@@ -13,11 +13,8 @@ export default function Header() {
 
   return (
     <header className="bg-ink flex items-center justify-between px-6 sm:px-12 lg:px-20 sticky top-0 z-50 h-20 lg:h-24">
-      <Link to="/" className="flex items-center gap-2 shrink-0">
+      <Link to="/" className="flex items-center shrink-0">
         <img src="/logo.png" alt="Market Compare" className="h-9 w-auto brightness-0 invert" />
-        <span className="text-white text-[4px] leading-[5px] font-normal hidden sm:block" style={{ fontFamily: "'Neue Haas Grotesk Display Pro', 'Inter', sans-serif" }}>
-          Know before you go
-        </span>
       </Link>
 
       <div className="hidden lg:flex items-center gap-[340px]">

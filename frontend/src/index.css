@@ -19,3 +19,14 @@
 
 html { scroll-behavior: smooth; overflow-x: hidden; }
 body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f2f2f2 0%, #f2f2f2 30%, #bdbdbd 70%, #f2f2f2 100%);
+  background-size: 800px 100%;
+  animation: shimmer 1.8s infinite linear;
+}
