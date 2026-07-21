@@ -28,13 +28,13 @@ src/
 │   ├── ComparePrices.tsx
 │   ├── PriceTrend.tsx
 │   ├── SubmissionBanner.tsx
-│   └── SubmissionConfirmation.tsx
+│   └── ReportPriceModal.tsx
 ├── pages/            # Route-level page components
 │   ├── Home.tsx
 │   ├── Prices.tsx
 │   ├── About.tsx
 │   ├── Contact.tsx
-│   ├── Directory.tsx
+│   ├── PriceList.tsx
 │   ├── SignIn.tsx
 │   ├── CreateAccount.tsx
 │   └── SubmitPrice.tsx
