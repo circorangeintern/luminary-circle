@@ -69,7 +69,6 @@ export default function SubmitPrice() {
               <h1 className="text-[32px] font-extrabold text-black tracking-tight mb-1.5">Price Submission form</h1>
               <p className="text-sm text-days-grey">Help others compare before they travel</p>
             </div>
-            <span className="text-sm text-days-grey whitespace-nowrap mt-1.5 font-medium">No internet connection</span>
           </div>
 
           <div className="text-center max-w-[540px] mx-auto pt-10">
@@ -170,7 +169,6 @@ export default function SubmitPrice() {
               <h1 className="text-[32px] font-extrabold text-black tracking-tight mb-1.5">Price Submission form</h1>
               <p className="text-sm text-days-grey">Help others compare before they travel</p>
             </div>
-            <span className="text-sm text-days-grey whitespace-nowrap mt-1.5 font-medium">No internet connection</span>
           </div>
 
           <div className="text-center max-w-[560px] mx-auto pt-2">

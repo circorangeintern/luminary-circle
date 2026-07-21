@@ -8,7 +8,7 @@ export default function SignIn() {
   const [searchParams] = useSearchParams()
   const returnUrl = searchParams.get('returnUrl') || '/'
 
-  const [username, setUsername] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,16 +16,16 @@ export default function SignIn() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!username || !password) {
+    if (!phone || !password) {
       setError('Please fill in all fields')
       return
     }
     setLoading(true)
     try {
-      await login(username, password)
+      await login(phone, password)
       navigate(returnUrl, { replace: true })
     } catch {
-      setError('Invalid username or password')
+      setError('Phone number or password is incorrect')
     } finally {
       setLoading(false)
     }
@@ -47,12 +47,12 @@ export default function SignIn() {
           )}
 
           <div className="mb-5">
-            <label className="block text-sm font-medium text-black mb-2">Username</label>
+            <label className="block text-sm font-medium text-black mb-2">Phone Number</label>
             <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Sanny opabo"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+234"
               className="w-full px-3.5 py-3 border border-[#e0e0e0] rounded-md text-sm text-black bg-[#f5f5f5] placeholder-[#999999] focus:outline-none focus:border-[#d0d0d0] focus:bg-white"
             />
           </div>

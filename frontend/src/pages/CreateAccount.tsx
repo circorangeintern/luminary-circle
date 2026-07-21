@@ -3,39 +3,42 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function CreateAccount() {
-  const { signup } = useAuth()
+  const { signup, phoneExists } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const returnUrl = searchParams.get('returnUrl') || '/'
 
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const [pwTouched, setPwTouched] = useState(false)
+  const pwShort = pwTouched && password.length > 0 && password.length < 8
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
 
-    if (!username || !email || !password || !confirm) {
-      setError('Please fill in all required fields')
+    if (!displayName || !phone || !password) {
+      setError('Please fill in all fields')
       return
     }
-    if (password !== confirm) {
-      setError('Passwords do not match')
-      return
-    }
+
     if (password.length < 8) {
-      setError('Password must be at least 8 characters')
+      setPwTouched(true)
+      return
+    }
+
+    if (phoneExists(phone)) {
+      setError('An account with this phone number already exists.')
       return
     }
 
     setLoading(true)
     try {
-      await signup(username, email, password)
+      await signup(displayName, phone, password)
       navigate(returnUrl, { replace: true })
     } catch {
       setError('Something went wrong. Please try again.')
@@ -56,27 +59,23 @@ export default function CreateAccount() {
           {error && (
             <div className="mb-5 p-3.5 bg-[#fbd7d7] border border-[#e3a3a3] rounded-lg text-sm text-[#b40000] font-semibold text-center">
               {error}
+              {error === 'An account with this phone number already exists.' && (
+                <span className="block mt-1 font-normal">
+                  <Link to={`/signin?returnUrl=${encodeURIComponent(returnUrl)}`} className="text-[#b40000] underline font-semibold">
+                    Log in instead
+                  </Link>
+                </span>
+              )}
             </div>
           )}
 
           <div className="mb-5">
-            <label className="block text-sm font-medium text-black mb-2">Username</label>
+            <label className="block text-sm font-medium text-black mb-2">Display Name</label>
             <input
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Sanny opabo"
-              className="w-full px-3.5 py-3 border border-[#e0e0e0] rounded-md text-sm text-black bg-[#f5f5f5] placeholder-[#999999] focus:outline-none focus:border-[#d0d0d0] focus:bg-white"
-            />
-          </div>
-
-          <div className="mb-5">
-            <label className="block text-sm font-medium text-black mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="@gmail"
               className="w-full px-3.5 py-3 border border-[#e0e0e0] rounded-md text-sm text-black bg-[#f5f5f5] placeholder-[#999999] focus:outline-none focus:border-[#d0d0d0] focus:bg-white"
             />
           </div>
@@ -97,21 +96,22 @@ export default function CreateAccount() {
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); if (!pwTouched) setPwTouched(true) }}
               placeholder="••••••••"
-              className="w-full px-3.5 py-3 border border-[#e0e0e0] rounded-md text-sm text-black bg-[#f5f5f5] placeholder-[#999999] focus:outline-none focus:border-[#d0d0d0] focus:bg-white"
+              className={`w-full px-3.5 py-3 border rounded-md text-sm bg-[#f5f5f5] placeholder-[#999999] focus:outline-none text-black ${
+                pwShort ? 'border-[#b40000] bg-[#fbd7d7]' : 'border-[#e0e0e0] focus:border-[#d0d0d0] focus:bg-white'
+              }`}
             />
-          </div>
-
-          <div className="mb-5">
-            <label className="block text-sm font-medium text-black mb-2">Password Confirmation</label>
-            <input
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3.5 py-3 border border-[#e0e0e0] rounded-md text-sm text-black bg-[#f5f5f5] placeholder-[#999999] focus:outline-none focus:border-[#d0d0d0] focus:bg-white"
-            />
+            {pwShort && (
+              <div className="flex items-center gap-2 mt-2.5">
+                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 shrink-0 text-[#b40000]">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+                  <path d="M12 8V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <circle cx="12" cy="16.2" r="1.1" fill="currentColor" />
+                </svg>
+                <span className="text-sm font-semibold text-[#b40000]">Password must be at least 8 characters</span>
+              </div>
+            )}
           </div>
 
           <button

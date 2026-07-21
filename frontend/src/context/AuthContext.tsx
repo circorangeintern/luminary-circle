@@ -1,16 +1,32 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
 
 interface User {
-  username: string
-  email: string
+  displayName: string
+  phone: string
 }
 
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
-  login: (username: string, password: string) => Promise<void>
-  signup: (username: string, email: string, password: string) => Promise<void>
+  login: (phone: string, password: string) => Promise<void>
+  signup: (displayName: string, phone: string, password: string) => Promise<void>
   logout: () => void
+  phoneExists: (phone: string) => boolean
+}
+
+const PHONES_KEY = 'registered_phones'
+
+function getRegisteredPhones(): string[] {
+  try {
+    const raw = localStorage.getItem(PHONES_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveRegisteredPhones(phones: string[]) {
+  localStorage.setItem(PHONES_KEY, JSON.stringify(phones))
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -21,16 +37,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return stored ? JSON.parse(stored) : null
   })
 
-  const login = useCallback(async (username: string, _password: string) => {
+  const phoneExists = useCallback((phone: string) => {
+    return getRegisteredPhones().includes(phone)
+  }, [])
+
+  const login = useCallback(async (phone: string, _password: string) => {
     await new Promise((r) => setTimeout(r, 500))
-    const u: User = { username, email: `${username}@example.com` }
+    const u: User = { displayName: phone, phone }
     localStorage.setItem('user', JSON.stringify(u))
     setUser(u)
   }, [])
 
-  const signup = useCallback(async (username: string, email: string, _password: string) => {
+  const signup = useCallback(async (displayName: string, phone: string, _password: string) => {
     await new Promise((r) => setTimeout(r, 500))
-    const u: User = { username, email }
+    const phones = getRegisteredPhones()
+    if (!phones.includes(phone)) {
+      phones.push(phone)
+      saveRegisteredPhones(phones)
+    }
+    const u: User = { displayName, phone }
     localStorage.setItem('user', JSON.stringify(u))
     setUser(u)
   }, [])
@@ -41,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout, phoneExists }}>
       {children}
     </AuthContext.Provider>
   )

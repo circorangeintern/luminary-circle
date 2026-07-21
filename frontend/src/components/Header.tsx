@@ -20,7 +20,7 @@ export default function Header() {
         <img src="/logo.png" alt="Market Compare" className="h-9 w-auto brightness-0 invert" />
       </Link>
 
-      <div className="hidden lg:flex items-center gap-10">
+      <div className="hidden lg:flex items-center gap-[340px]">
         <ul className="flex items-center gap-[53px] list-none">
           {links.map((l) => (
             <li key={l.to}>
@@ -39,7 +39,7 @@ export default function Header() {
 
         {isAuthenticated ? (
           <div className="flex items-center gap-4">
-            <span className="text-white/80 text-sm">{user?.username}</span>
+            <span className="text-white/80 text-sm">{user?.displayName}</span>
             <button
               onClick={logout}
               className="bg-white/10 text-white px-4 py-2 rounded-lg text-sm hover:bg-white/20 transition cursor-pointer"
@@ -92,7 +92,7 @@ export default function Header() {
                 onClick={() => { logout(); setOpen(false) }}
                 className="block w-full text-left py-2.5 px-3 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/5 transition cursor-pointer"
               >
-                Sign out ({user?.username})
+                Sign out ({user?.displayName})
               </button>
             ) : (
               <Link
