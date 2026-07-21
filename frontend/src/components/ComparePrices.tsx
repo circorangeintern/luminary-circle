@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import ReportPriceModal from './ReportPriceModal'
 
 interface MarketRow {
   name: string
@@ -19,9 +21,18 @@ const rows: MarketRow[] = [
 
 export default function ComparePrices() {
   const [active, setActive] = useState(0)
+  const [reportTarget, setReportTarget] = useState<{ product: string; market: string; price: string } | null>(null)
 
   return (
     <section id="compare" className="px-6 sm:px-12 lg:px-20 mt-10 relative z-10">
+      {reportTarget && (
+        <ReportPriceModal
+          product={reportTarget.product}
+          market={reportTarget.market}
+          price={reportTarget.price}
+          onClose={() => setReportTarget(null)}
+        />
+      )}
       <div className="max-w-[1240px] mx-3 sm:mx-6 lg:mx-auto bg-white border border-grey-border rounded-2xl p-6 sm:p-8 lg:p-12">
         <div className="m-8">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-6">
@@ -87,7 +98,10 @@ export default function ComparePrices() {
                   <span className="font-semibold text-base text-text-dark text-center">{r.price}</span>
                   <span className="text-sm text-text-dark text-center">{r.trend}</span>
                   <span className="text-sm text-text-dark text-center">{r.reports}</span>
-                  <button className="border border-days-grey rounded-lg px-3.5 py-2 text-sm text-red-flag justify-self-center hover:bg-gray-50 transition cursor-pointer">
+                  <button
+                    onClick={() => setReportTarget({ product: products[active], market: r.name, price: r.price })}
+                    className="border border-days-grey rounded-lg px-3.5 py-2 text-sm text-red-flag justify-self-center hover:bg-gray-50 transition cursor-pointer"
+                  >
                     ⚑ Flag
                   </button>
                 </div>
@@ -98,9 +112,9 @@ export default function ComparePrices() {
           <p className="text-sm font-medium text-text-dark py-5">Average across all markets: ₦2,133 / mudu</p>
 
           <div className="flex gap-5 flex-wrap">
-            <button className="flex-1 min-w-[180px] bg-[#2C2424] border border-grey-border text-white px-4 py-4 rounded-lg text-sm text-center hover:brightness-110 transition cursor-pointer">
+            <Link to="/prices/list" className="flex-1 min-w-[180px] bg-[#2C2424] border border-grey-border text-white px-4 py-4 rounded-lg text-sm text-center hover:brightness-110 transition cursor-pointer block">
               View details
-            </button>
+            </Link>
             <button className="flex-1 min-w-[180px] bg-input-bg border border-grey-border text-[#252323] px-4 py-4 rounded-lg text-sm text-center hover:bg-gray-100 transition cursor-pointer">
               Submit price
             </button>
