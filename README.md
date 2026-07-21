@@ -1,32 +1,75 @@
-# React + TypeScript + Vite
+# Market Compare
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A market price comparison platform that helps shoppers make informed decisions by providing real-time price comparisons across local markets. Built as part of the Orange Internship Program 2026.
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+luminary-circle/
+├── frontend/          # React + TypeScript + Vite frontend
+└── README.md
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Tech Stack
+
+### Frontend
+- **React 19** with TypeScript
+- **Vite 8** for build tooling
+- **Tailwind CSS 4** for styling
+- **React Router v7** for routing
+- **Axios** for API communication
+- **Recharts** for price trend charts
+- **Oxlint** for linting
+
+## Getting Started
+
+### Prerequisites
+- Node.js >= 18
+- npm
+
+### Installation
+
+```bash
+cd frontend
+npm install
+```
+
+### Development
+
+```bash
+cd frontend
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`.
+
+### Build
+
+```bash
+cd frontend
+npm run build
+```
+
+### Lint
+
+```bash
+cd frontend
+npm run lint
+```
+
+## API Configuration
+
+The frontend connects to a backend API at `http://localhost:3000/api` by default. Override with the `VITE_API_URL` environment variable.
+
+## Features
+
+- **Price Comparison** – Compare food prices across multiple markets side-by-side
+- **Price Trends** – Visualize historical price movements with interactive charts
+- **Market Directory** – Browse markets and the products they offer
+- **Price Submission** – Contribute price data to help the community
+- **User Accounts** – Sign up and sign in (coming soon with backend integration)
+
+## License
+
+MIT
+
