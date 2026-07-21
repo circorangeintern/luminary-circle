@@ -3,12 +3,8 @@ import { Link } from 'react-router-dom'
 export default function Hero() {
   return (
     <section className="bg-cream relative overflow-hidden px-6 sm:px-12 lg:px-20 py-16 lg:py-24">
-      <div
-        className="absolute rounded-full bg-bg-grey z-0"
-        style={{ width: 600, height: 600, left: 870, top: 25 }}
-      />
       <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-10">
-        <div className="max-w-[637px]">
+        <div className="relative z-10 max-w-[637px]">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black leading-tight tracking-tight mb-5">
             Know Market Prices Before You Shop.
           </h1>
@@ -34,6 +30,7 @@ export default function Hero() {
         </div>
 
         <div className="relative w-full max-w-[607px] shrink-0 flex items-center justify-center">
+          <div className="absolute rounded-full bg-bg-grey z-0 w-[120%] h-[120%] -top-[10%] -right-[20%] lg:w-[600px] lg:h-[600px] lg:-top-[40px] lg:-right-[80px]" />
           <img
             src="/hero-image.png"
             alt="Basket with rice, beans, and oil"

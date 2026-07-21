@@ -6,6 +6,9 @@ import Prices from './pages/Prices'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import Directory from './pages/Directory'
+import SignIn from './pages/SignIn'
+import CreateAccount from './pages/CreateAccount'
+import SubmitPrice from './pages/SubmitPrice'
 
 export default function App() {
   return (
@@ -19,6 +22,9 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/directory" element={<Directory />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/create-account" element={<CreateAccount />} />
+            <Route path="/submit" element={<SubmitPrice />} />
           </Routes>
         </main>
         <Footer />
