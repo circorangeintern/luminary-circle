@@ -114,7 +114,7 @@ export class PricesService {
       ...(dto.itemId && { itemId: dto.itemId }),
       ...(dto.unitId && { unitId: dto.unitId }),
       ...(dto.marketId && { marketId: dto.marketId }),
-    }
+    };
 
     const [rows, totalItems] = await this.prisma.$transaction([
       this.prisma.priceSubmission.findMany({

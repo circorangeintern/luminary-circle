@@ -112,7 +112,11 @@ export class PricesController {
     description: 'Paginated price submissions',
     type: PriceQueryResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Invalid query parameters', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid query parameters',
+    type: ErrorResponseDto,
+  })
   async list(@Query() query: PriceQueryDto) {
     return this.prices.getPrices(query);
   }
