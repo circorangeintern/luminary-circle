@@ -13,6 +13,9 @@ export class PrismaService
       connectionString: configService.databaseUrl,
     });
     super({ adapter });
+    // Known upstream issue: @prisma/adapter-pg emits a pg deprecation warning on
+    // writes that select relations (prisma/prisma#29407, #29646). Functional today;
+    // revisit when Prisma ships a fix or before pg@9. Not caused by our code.
   }
 
   async onModuleInit() {

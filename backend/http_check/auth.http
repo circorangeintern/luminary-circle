@@ -38,7 +38,7 @@ Content-Type: application/json
 { "phone": "08031234587", "password": "testpass123" }
 
 ### GET /auth/me with Authorization: Bearer <token> — expect the user
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJxZXhqYmswMDAwNWtkanBtb3EybW8zIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODQzODMxMTYsImV4cCI6MTc4NDQ2OTUxNn0.-eZtkG7aa8nkSJX-gXK_oQKFUVPxJq3uglsCXYGgAlM
+@token = 
 
 GET {{base}}/auth/me
 Authorization: Bearer {{token}}

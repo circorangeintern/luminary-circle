@@ -45,4 +45,14 @@ export class AppConfigService {
   get corsAllowVercelPreviews() {
     return this.config.get('CORS_ALLOW_VERCEL_PREVIEWS', { infer: true });
   }
+
+  get priceSubmitLimitPerHour() {
+    return this.config.get('PRICE_SUBMIT_LIMIT_PER_HOUR', { infer: true });
+  }
+
+  get priceSubmitLimitPerMarketPerHour() {
+    return this.config.get('PRICE_SUBMIT_LIMIT_PER_MARKET_PER_HOUR', {
+      infer: true,
+    });
+  }
 }

@@ -9,6 +9,12 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AppController } from './app.controller';
+import { CatalogModule } from './catalog/catalog.module';
+import { PricesModule } from './prices/prices.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AppConfigService } from './config/app-config.service';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { Redis } from 'ioredis';
 
 @Module({
   imports: [
@@ -17,9 +23,40 @@ import { AppController } from './app.controller';
       validate: validateEnv,
     }),
     AppConfigModule,
+    ThrottlerModule.forRootAsync({
+      inject: [AppConfigService],
+      useFactory: (config: AppConfigService) => ({
+        throttlers: [
+          {
+            // 10 submissions per user per hour
+            name: 'submissions-hourly',
+            ttl: 3_600_000,
+            limit: config.priceSubmitLimitPerHour,
+            getTracker: (req: { user?: { id: string }; ip?: string }) =>
+              req.user?.id ?? req.ip ?? 'anonymous',
+          },
+          {
+            // 5 per user per (item, market) per hour
+            name: 'submissions-per-market',
+            ttl: 3_600_000,
+            limit: config.priceSubmitLimitPerMarketPerHour,
+            getTracker: (req: {
+              user?: { id: string };
+              body?: { itemId?: string; marketId?: string };
+            }) =>
+              `${req.user?.id ?? 'anon'}:${req.body?.itemId}:${req.body?.marketId}`,
+          },
+        ],
+        storage: new ThrottlerStorageRedisService(
+          new Redis(config.upstashRedisUrl, { maxRetriesPerRequest: 2 }),
+        ),
+      }),
+    }),
     PrismaModule,
     AnalyticsModule,
     AuthModule,
+    CatalogModule,
+    PricesModule,
   ],
   controllers: [AppController],
   providers: [
