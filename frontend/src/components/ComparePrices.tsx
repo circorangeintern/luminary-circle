@@ -48,7 +48,7 @@ export default function ComparePrices() {
   useEffect(() => {
     if (!active) return
     setPricesLoading(true)
-    fetchPrices({ itemId: active.itemId, unitId: active.unitId, pageSize: 100 })
+    fetchPrices({ itemId: active.itemId, unitId: active.unitId, pageSize: 50 })
       .then((res) => setPrices(res.items))
       .catch(() => setPrices([]))
       .finally(() => setPricesLoading(false))

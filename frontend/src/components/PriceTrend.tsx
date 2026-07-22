@@ -50,7 +50,7 @@ export default function PriceTrend() {
   useEffect(() => {
     if (!active) return
     setPricesLoading(true)
-    fetchPrices({ itemId: active.itemId, unitId: active.unitId, pageSize: 200 })
+    fetchPrices({ itemId: active.itemId, unitId: active.unitId, pageSize: 50 })
       .then((res) => setPrices(res.items))
       .catch(() => setPrices([]))
       .finally(() => setPricesLoading(false))
