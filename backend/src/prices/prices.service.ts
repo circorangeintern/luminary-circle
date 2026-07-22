@@ -351,7 +351,7 @@ export class PricesService {
 
     const excludeThreshold = this.config.flagExcludeThreshold;
 
-     // Fetch a bit more than the window, because some rows may be flagged out.
+    // Fetch a bit more than the window, because some rows may be flagged out.
     // We over-fetch, filter, THEN slice to the window — otherwise a flagged
     // row inside the window would shrink our sample below what's available.
     const rows = await this.prisma.priceSubmission.findMany({

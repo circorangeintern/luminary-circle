@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PriceDto, PriceItemDto, PriceMarketDto, PriceUnitDto } from './price-response.dto';
+import {
+  PriceDto,
+  PriceItemDto,
+  PriceMarketDto,
+  PriceUnitDto,
+} from './price-response.dto';
 
 export class TrendPointDto {
   @ApiProperty({ example: 2100 })

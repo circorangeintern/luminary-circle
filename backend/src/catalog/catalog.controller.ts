@@ -40,10 +40,7 @@ export class CatalogController {
     description: 'Invalid item, unit, or market',
     type: ErrorResponseDto,
   })
-  async trend(
-    @Param('itemId') itemId: string,
-    @Query() query: TrendQueryDto,
-  ) {
+  async trend(@Param('itemId') itemId: string, @Query() query: TrendQueryDto) {
     return this.prices.trend(itemId, query.unitId, query.marketId);
   }
 
