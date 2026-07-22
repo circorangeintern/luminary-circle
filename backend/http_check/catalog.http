@@ -1,4 +1,4 @@
-@base = https://staging.marketcompare.name.ng/api/v1
+@base = http://localhost:3000/api/v1
 
 ### Get all active items
 GET {{base}}/items
@@ -17,6 +17,7 @@ GET {{base}}/markets
 @kegId = cmrmtbxpp0008pwdj6iuv483a
 @muduId = cmrmtbwth0001pwdjqht84eqi
 @beansId = cmrmtby5z000bpwdjonxn47hj
+@mile3Id = cmrmtc86f000fpwdjrju0rwac
 
 ### compare: rice + derica -> 3 markets, exactly one isCheapest
 GET {{base}}/markets/compare?itemId={{riceId}}&unitId={{dericaId}}
@@ -32,3 +33,20 @@ GET {{base}}/markets/compare?itemId={{riceId}}
 
 ### should return an empty comparison (no seed for this pair)
 GET {{base}}/markets/compare?itemId={{oilId}}&unitId={{kegId}}
+
+
+
+
+# TRENDS
+
+### trend: rice+derica+Mile3, should have several submissions
+GET {{base}}/items/{{riceId}}/trend?unitId={{dericaId}}&marketId={{mile3Id}}
+
+### trend: a triple with one submission -> INSUFFICIENT_DATA, points length 1
+GET {{base}}/items/{{oilId}}/trend?unitId={{kegId}}&marketId={{mile3Id}}
+
+### trend: illegal pair -> 400
+GET {{base}}/items/{{eggsId}}/trend?unitId={{bagId}}&marketId={{mile3Id}}
+
+### trend: missing marketId -> 400
+GET {{base}}/items/{{riceId}}/trend?unitId={{dericaId}}
