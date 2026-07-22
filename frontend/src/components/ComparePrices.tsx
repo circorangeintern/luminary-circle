@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getRelativeTime } from '../utils/time'
-import { fetchItems, fetchPrices } from '../services/api'
-import type { ItemDto, PriceDto } from '../services/api'
+import { fetchItems, fetchComparePrices } from '../services/api'
+import type { ItemDto, ComparePriceEntry } from '../services/api'
 import ReportPriceModal from './ReportPriceModal'
 
 interface ProductOption {
@@ -22,7 +22,8 @@ export default function ComparePrices() {
   const [state, setState] = useState<State>('loading')
   const [items, setItems] = useState<ItemDto[]>([])
   const [activeIdx, setActiveIdx] = useState(0)
-  const [prices, setPrices] = useState<PriceDto[]>([])
+  const [compareEntries, setCompareEntries] = useState<ComparePriceEntry[]>([])
+  const [comparisonPossible, setComparisonPossible] = useState(false)
   const [pricesLoading, setPricesLoading] = useState(false)
   const [reportTarget, setReportTarget] = useState<{ product: string; market: string; price: string } | null>(null)
 
@@ -62,29 +63,14 @@ export default function ComparePrices() {
   useEffect(() => {
     if (!active) return
     setPricesLoading(true)
-    fetchPrices({ itemId: active.itemId, unitId: active.unitId, pageSize: 50 })
-      .then((res) => setPrices(res.items))
-      .catch(() => setPrices([]))
+    fetchComparePrices(active.itemId, active.unitId)
+      .then((res) => {
+        setCompareEntries(res.items)
+        setComparisonPossible(res.comparisonPossible)
+      })
+      .catch(() => { setCompareEntries([]); setComparisonPossible(false) })
       .finally(() => setPricesLoading(false))
   }, [active?.itemId, active?.unitId])
-
-  const entries = useMemo(() => {
-    const map = new Map<string, PriceDto>()
-    for (const p of prices) {
-      const key = p.market.name || p.market.id
-      if (!key) continue
-      const existing = map.get(key)
-      if (!existing || new Date(p.createdAt) > new Date(existing.createdAt)) {
-        map.set(key, p)
-      }
-    }
-    return Array.from(map.values())
-  }, [prices])
-
-  const cheapestPrice = useMemo(() => {
-    const unflagged = entries.filter((e) => !e.isFlagged)
-    return unflagged.length > 0 ? Math.min(...unflagged.map((e) => e.price)) : null
-  }, [entries])
 
   function handleFlag(marketName: string, price: number) {
     if (!isAuthenticated) {
@@ -163,7 +149,7 @@ export default function ComparePrices() {
   }
 
   // ===== ITEMS LOADED - MAIN UI =====
-  const isLoadingPrices = pricesLoading && prices.length === 0
+  const isLoadingPrices = pricesLoading && compareEntries.length === 0
 
   return (
     <section id="compare" className="px-6 sm:px-12 lg:px-20 mt-10 relative z-10">
@@ -180,13 +166,13 @@ export default function ComparePrices() {
           <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-6">
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold text-text-black mb-1">Compare prices across markets</h2>
-              {entries.length > 0 && (
+              {compareEntries.length > 0 && (
                 <p className="text-lg font-medium text-black">Showing prices for: {active?.label}</p>
               )}
             </div>
-            {entries.length > 1 && (
+            {compareEntries.length > 1 && (
               <span className="text-sm font-medium text-[#1E1E1E] whitespace-nowrap">
-                updated {getRelativeTime(Math.min(...entries.map((e) => new Date(e.createdAt).getTime())).toString())}
+                updated {getRelativeTime(Math.min(...compareEntries.map((e) => new Date(e.createdAt).getTime())).toString())}
               </span>
             )}
           </div>
@@ -235,7 +221,7 @@ export default function ComparePrices() {
             </div>
           )}
 
-          {!isLoadingPrices && entries.length === 0 && (
+          {!isLoadingPrices && compareEntries.length === 0 && (
             <div className="text-center py-16">
               <div className="w-16 h-16 rounded-full bg-input-bg flex items-center justify-center mx-auto mb-5">
                 <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7">
@@ -251,8 +237,8 @@ export default function ComparePrices() {
             </div>
           )}
 
-          {!isLoadingPrices && entries.length === 1 && (() => {
-            const e = entries[0]
+          {!isLoadingPrices && (compareEntries.length === 1 || !comparisonPossible) && (() => {
+            const e = compareEntries[0]
             return (
               <div className="border border-days-grey rounded-[12px] p-8 max-w-[600px] mx-auto">
                 <div className="flex items-center justify-center gap-1.5 text-green-text text-sm font-medium mb-6">
@@ -284,7 +270,7 @@ export default function ComparePrices() {
             )
           })()}
 
-          {!isLoadingPrices && entries.length >= 2 && (
+          {!isLoadingPrices && compareEntries.length >= 2 && comparisonPossible && (
             <div className="w-full overflow-x-auto">
               <div className="min-w-[700px]">
                 <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] pb-4 border-b border-text-dark text-sm font-bold text-text-dark">
@@ -295,12 +281,10 @@ export default function ComparePrices() {
                   <span />
                 </div>
 
-                {entries.map((e) => {
+                {compareEntries.map((e) => {
                   const marketName = e.market.name || ''
-                  const marketLga = e.market.lga || ''
-                  const marketState = e.market.state || ''
-                  const area = [marketLga, marketState].filter(Boolean).join(', ')
-                  const isCheapest = cheapestPrice !== null && e.price === cheapestPrice && !e.isFlagged
+                  const area = [e.market.lga, e.market.state].filter(Boolean).join(', ')
+                  const isCheapest = e.isCheapest
                   const stale = e.isStale
                   const reported = e.flagCount >= 2 || e.isFlagged
 
@@ -331,7 +315,7 @@ export default function ComparePrices() {
                               reported
                             </span>
                           )}
-                          {e.source === 'SEED' && (
+                          {e.source === 'TEAM_TEST' && (
                             <span className="text-[10px] font-medium text-[#8a7a3a] bg-[#f6d99a] px-2 py-0.5 rounded-full leading-normal">
                               Source: NBS
                             </span>
@@ -356,9 +340,9 @@ export default function ComparePrices() {
               </div>
 
               <p className="text-sm font-medium text-text-dark py-5">
-                Average across {entries.length} markets: ₦{Math.round(entries.reduce((a, e) => a + e.price, 0) / entries.length).toLocaleString()}
-                {cheapestPrice !== null && (() => {
-                  const cheapestEntry = entries.find((e) => e.price === cheapestPrice && !e.isFlagged)
+                Average across {compareEntries.length} markets: ₦{Math.round(compareEntries.reduce((a, e) => a + e.price, 0) / compareEntries.length).toLocaleString()}
+                {(() => {
+                  const cheapestEntry = compareEntries.find((e) => e.isCheapest)
                   return cheapestEntry ? <> — <span className="text-green-text">{cheapestEntry.market.name} is cheapest</span></> : null
                 })()}
               </p>
