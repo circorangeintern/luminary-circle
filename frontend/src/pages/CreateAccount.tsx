@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getApiError } from '../utils/errors'
 
 export default function CreateAccount() {
-  const { signup, phoneExists } = useAuth()
+  const { signup } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const returnUrl = searchParams.get('returnUrl') || '/'
@@ -31,17 +32,12 @@ export default function CreateAccount() {
       return
     }
 
-    if (phoneExists(phone)) {
-      setError('An account with this phone number already exists.')
-      return
-    }
-
     setLoading(true)
     try {
       await signup(displayName, phone, password)
       navigate(returnUrl, { replace: true })
-    } catch {
-      setError('Something went wrong. Please try again.')
+    } catch (err) {
+      setError(getApiError(err))
     } finally {
       setLoading(false)
     }

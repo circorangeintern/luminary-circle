@@ -1,72 +1,65 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
-
-interface User {
-  displayName: string
-  phone: string
-}
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { register as apiRegister, login as apiLogin, fetchMe, setToken, clearToken } from '../services/api'
+import type { UserDto } from '../services/api'
 
 interface AuthContextType {
-  user: User | null
+  user: UserDto | null
   isAuthenticated: boolean
   login: (phone: string, password: string) => Promise<void>
   signup: (displayName: string, phone: string, password: string) => Promise<void>
   logout: () => void
-  phoneExists: (phone: string) => boolean
-}
-
-const PHONES_KEY = 'registered_phones'
-
-function getRegisteredPhones(): string[] {
-  try {
-    const raw = localStorage.getItem(PHONES_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
-}
-
-function saveRegisteredPhones(phones: string[]) {
-  localStorage.setItem(PHONES_KEY, JSON.stringify(phones))
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem('user')
-    return stored ? JSON.parse(stored) : null
-  })
+  const [user, setUser] = useState<UserDto | null>(null)
+  const [initialised, setInitialised] = useState(false)
 
-  const phoneExists = useCallback((phone: string) => {
-    return getRegisteredPhones().includes(phone)
-  }, [])
-
-  const login = useCallback(async (phone: string, _password: string) => {
-    await new Promise((r) => setTimeout(r, 500))
-    const u: User = { displayName: phone, phone }
-    localStorage.setItem('user', JSON.stringify(u))
-    setUser(u)
-  }, [])
-
-  const signup = useCallback(async (displayName: string, phone: string, _password: string) => {
-    await new Promise((r) => setTimeout(r, 500))
-    const phones = getRegisteredPhones()
-    if (!phones.includes(phone)) {
-      phones.push(phone)
-      saveRegisteredPhones(phones)
+  useEffect(() => {
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      setToken(token)
+      fetchMe()
+        .then(setUser)
+        .catch(() => {
+          clearToken()
+          localStorage.removeItem('user')
+        })
+        .finally(() => setInitialised(true))
+    } else {
+      setInitialised(true)
     }
-    const u: User = { displayName, phone }
-    localStorage.setItem('user', JSON.stringify(u))
-    setUser(u)
+  }, [])
+
+  const login = useCallback(async (phone: string, password: string) => {
+    const res = await apiLogin(phone, password)
+    setToken(res.accessToken)
+    setUser(res.user)
+  }, [])
+
+  const signup = useCallback(async (displayName: string, phone: string, password: string) => {
+    const res = await apiRegister(displayName, phone, password)
+    setToken(res.accessToken)
+    setUser(res.user)
   }, [])
 
   const logout = useCallback(() => {
+    clearToken()
     localStorage.removeItem('user')
     setUser(null)
   }, [])
 
+  if (!initialised) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-bg-grey">
+        <div className="skeleton h-8 w-48 rounded-lg" />
+      </div>
+    )
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout, phoneExists }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   )

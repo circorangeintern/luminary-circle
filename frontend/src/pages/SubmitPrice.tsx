@@ -1,61 +1,54 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-
-interface FoodItem {
-  name: string
-  measures: string[]
-}
-
-const foodItems: FoodItem[] = [
-  { name: 'Rice', measures: ['derica', 'paint bucket', '50kg bag'] },
-  { name: 'Beans', measures: ['derica', 'paint bucket', '50kg bag'] },
-  { name: 'Eggs', measures: ['crate', 'piece'] },
-  { name: 'Garri', measures: ['derica', 'paint bucket', '50kg bag'] },
-  { name: 'Yam', measures: ['piece', 'tubers'] },
-  { name: 'Tomatoes', measures: ['basket', 'piece'] },
-  { name: 'Maize', measures: ['derica', 'paint bucket'] },
-  { name: 'Cassava', measures: ['tubers', '50kg bag'] },
-  { name: 'Palm oil', measures: ['derica', 'gallon', 'litre'] },
-  { name: 'Plantain', measures: ['piece', 'bunch'] },
-]
-
-interface MarketEntry {
-  name: string
-  area: string
-}
-
-const markets: MarketEntry[] = [
-  { name: 'Bodija Market', area: 'Ibadan, Oyo' },
-  { name: 'Dugbe Market', area: 'Ibadan, Oyo' },
-  { name: 'Gbagi Market', area: 'Ibadan, Oyo' },
-]
+import { fetchItems, fetchMarkets, submitPrice as apiSubmitPrice } from '../services/api'
+import type { ItemDto, MarketDto } from '../services/api'
 
 type State = 'loading' | 'empty' | 'form' | 'validationError' | 'offline' | 'confirm' | 'duplicate' | 'rateLimited'
 
 export default function SubmitPrice() {
   const [state, setState] = useState<State>('loading')
-  const [selectedItem, setSelectedItem] = useState<FoodItem | null>(null)
-  const [selectedMeasure, setSelectedMeasure] = useState('')
-  const [market, setMarket] = useState('')
+  const [items, setItems] = useState<ItemDto[]>([])
+  const [markets, setMarkets] = useState<MarketDto[]>([])
+
+  const [selectedItem, setSelectedItem] = useState<ItemDto | null>(null)
+  const [selectedUnitId, setSelectedUnitId] = useState('')
+  const [marketId, setMarketId] = useState('')
+  const [marketLabel, setMarketLabel] = useState('')
   const [price, setPrice] = useState('')
   const [note, setNote] = useState('')
-  const [pickerStep, setPickerStep] = useState<'item' | 'measure'>('item')
+  const [pickerStep, setPickerStep] = useState<'item' | 'unit'>('item')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [marketOpen, setMarketOpen] = useState(false)
 
   useEffect(() => {
-    const timer = setTimeout(() => setState('form'), 1200)
-    return () => clearTimeout(timer)
+    let cancelled = false
+    Promise.all([fetchItems(), fetchMarkets()])
+      .then(([itemsData, marketsData]) => {
+        if (cancelled) return
+        setItems(itemsData)
+        setMarkets(marketsData)
+        if (marketsData.length === 0) {
+          setState('empty')
+        } else {
+          setState('form')
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setState('offline')
+      })
+    return () => { cancelled = true }
   }, [])
 
-  const itemMeasure = selectedItem && selectedMeasure ? `${selectedItem.name}, ${selectedMeasure}` : ''
+  const itemMeasure = selectedItem && selectedUnitId
+    ? `${selectedItem.name}, ${selectedItem.units.find((u) => u.id === selectedUnitId)?.label || ''}`
+    : ''
 
-  const marketError = state === 'validationError' && !market
+  const marketError = state === 'validationError' && !marketId
   const itemError = state === 'validationError' && !itemMeasure
   const priceError = state === 'validationError' && !price
 
   function validate() {
-    if (!itemMeasure || !market || !price) {
+    if (!itemMeasure || !marketId || !price) {
       setState('validationError')
       return false
     }
@@ -66,16 +59,32 @@ export default function SubmitPrice() {
     return true
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!validate()) return
-    setState('confirm')
+
+    try {
+      await apiSubmitPrice({ itemId: selectedItem!.id, unitId: selectedUnitId, marketId, price: parseInt(price, 10), note: note || '' })
+      setState('confirm')
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } }).response?.status
+      if (status === 409) {
+        setState('duplicate')
+      } else if (status === 429) {
+        setState('rateLimited')
+      } else if (!status || status === 0) {
+        setState('offline')
+      } else {
+        setState('offline')
+      }
+    }
   }
 
   function resetForm() {
     setSelectedItem(null)
-    setSelectedMeasure('')
-    setMarket('')
+    setSelectedUnitId('')
+    setMarketId('')
+    setMarketLabel('')
     setPrice('')
     setNote('')
     setPickerStep('item')
@@ -87,14 +96,14 @@ export default function SubmitPrice() {
     setPickerOpen(true)
   }
 
-  function selectItem(item: FoodItem) {
+  function selectItem(item: ItemDto) {
     setSelectedItem(item)
-    setSelectedMeasure('')
-    setPickerStep('measure')
+    setSelectedUnitId('')
+    setPickerStep('unit')
   }
 
-  function selectMeasure(m: string) {
-    setSelectedMeasure(m)
+  function selectUnit(unitId: string) {
+    setSelectedUnitId(unitId)
     setPickerOpen(false)
     if (state === 'validationError' && itemError) setState('form')
   }
@@ -106,7 +115,7 @@ export default function SubmitPrice() {
         <div className="w-full max-w-[600px]">
           <div className="skeleton h-[56px] rounded-[12px] w-[36%] mx-auto mb-[22px]" />
           <div className="skeleton h-[14px] rounded-[8px] w-[34%] mx-auto mb-[44px]" />
-          {[...Array(5)].map((_, i) => (
+          {[...Array(4)].map((_, i) => (
             <div key={i}>
               <div className="skeleton h-[16px] rounded-[8px] w-[110px] mb-3" />
               <div className="skeleton h-[64px] rounded-[12px] mb-[30px]" />
@@ -119,7 +128,7 @@ export default function SubmitPrice() {
     )
   }
 
-  // ===== NO MARKET ADDED =====
+  // ===== EMPTY =====
   if (state === 'empty') {
     return (
       <main className="px-6 sm:px-12 lg:px-20 py-16 flex justify-center">
@@ -141,14 +150,7 @@ export default function SubmitPrice() {
             <p className="text-base leading-relaxed text-[#4a4a4a] mb-8">
               We don't have any markets in your area yet. Be the first to add a market and help your community shop smarter.
             </p>
-            <button className="inline-flex items-center gap-2.5 px-[30px] py-[18px] bg-white border border-days-grey rounded-[12px] text-base font-bold text-black hover:bg-gray-50 transition cursor-pointer mb-6">
-              <svg viewBox="0 0 24 24" fill="none" className="w-[18px] h-[18px]">
-                <circle cx="12" cy="12" r="9" stroke="#000" strokeWidth="1.7" />
-                <path d="M12 8V16M8 12H16" stroke="#000" strokeWidth="1.7" strokeLinecap="round" />
-              </svg>
-              Suggest a market
-            </button>
-            <p className="text-sm text-[#4a4a4a]">or check back later — markets are added regularly</p>
+            <p className="text-sm text-[#4a4a4a]">Check back later — markets are added regularly</p>
           </div>
         </div>
       </main>
@@ -179,36 +181,14 @@ export default function SubmitPrice() {
             </div>
             <h2 className="text-[28px] font-extrabold text-black mb-4">Can't reach the server</h2>
             <p className="text-base leading-relaxed text-[#4a4a4a] mb-8">
-              Your price could not be submitted. This could be a network issue or the server may be temporarily down. Your data has been saved and will submit automatically when you reconnect.
+              Your price could not be submitted. Check your connection and try again.
             </p>
-            <span className="inline-block bg-[#f5f5f5] rounded-lg px-5 py-3 text-sm font-mono tracking-wider text-[#5a5a5a] mb-7">
-              ERROR: 503 SERVICE UNAVAILABLE
-            </span>
-            <div className="bg-[#f6d99a] border border-[#e4bd6d] rounded-[12px] px-5 py-5 text-left mb-9">
-              <div className="flex items-center gap-2 font-bold text-[#7a5a13] text-sm mb-2">
-                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
-                  <path d="M5 3H15L19 7V21H5V3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-                  <path d="M9 13.5L11 15.5L15 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span>Saved locally</span>
-              </div>
-              <div className="text-base text-[#1a1a1a]">
-                {itemMeasure || 'Item'} - {price ? `₦${price}` : 'Price'} - waiting to sync
-              </div>
-            </div>
-            <div className="flex justify-center mb-[22px]">
-              <button
-                onClick={() => setState('confirm')}
-                className="min-w-[280px] inline-flex items-center justify-center gap-2.5 px-[30px] py-[18px] bg-input-bg border border-grey-border rounded-[12px] text-base font-bold text-black hover:bg-gray-200 transition cursor-pointer"
-              >
-                <svg viewBox="0 0 24 24" fill="none" className="w-[18px] h-[18px]">
-                  <path d="M4 4V9H9" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M4.6 15A8 8 0 1 0 6 7.3L4 9" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Try again
-              </button>
-            </div>
-            <p className="text-sm text-[#4a4a4a]">Check your internet connection and try again</p>
+            <button
+              onClick={resetForm}
+              className="min-w-[280px] h-[58px] flex items-center justify-center gap-2.5 bg-input-bg border border-grey-border rounded-[12px] text-base font-bold text-black hover:bg-gray-200 transition cursor-pointer"
+            >
+              Try again
+            </button>
           </div>
         </div>
       </main>
@@ -235,23 +215,16 @@ export default function SubmitPrice() {
             </div>
             <h2 className="text-[28px] font-extrabold text-black mb-3">Seems this was already submitted</h2>
             <p className="text-base leading-relaxed text-[#4a4a4a] mb-7">
-              The exact same price for {itemMeasure} at {market} was submitted very recently. If you meant to submit a different price or item, please go back and adjust.
+              The exact same price for {itemMeasure} was submitted very recently. If you meant to submit a different price or item, please go back and adjust.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <button
                 onClick={resetForm}
                 className="min-w-[200px] h-[58px] flex items-center justify-center gap-2.5 bg-input-bg border border-grey-border rounded-[12px] text-base font-bold text-black hover:bg-gray-200 transition cursor-pointer"
               >
-                <svg viewBox="0 0 24 24" fill="none" className="w-[18px] h-[18px]">
-                  <path d="M4 4V9H9" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M4.6 15A8 8 0 1 0 6 7.3L4 9" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
                 Go back
               </button>
-              <Link
-                to="/prices"
-                className="min-w-[200px] h-[58px] flex items-center justify-center gap-2.5 bg-input-bg border border-grey-border rounded-[12px] text-base font-bold text-black hover:bg-gray-200 transition cursor-pointer"
-              >
+              <Link to="/prices" className="min-w-[200px] h-[58px] flex items-center justify-center gap-2.5 bg-input-bg border border-grey-border rounded-[12px] text-base font-bold text-black hover:bg-gray-200 transition cursor-pointer">
                 View prices
               </Link>
             </div>
@@ -323,7 +296,7 @@ export default function SubmitPrice() {
               </div>
               <div className="flex justify-between items-center py-3.5">
                 <span className="text-[17px] text-black">Market</span>
-                <span className="text-[17px] text-black text-right">{market}</span>
+                <span className="text-[17px] text-black text-right">{marketLabel}</span>
               </div>
               <div className="flex justify-between items-center py-3.5">
                 <span className="text-[17px] text-black">Price</span>
@@ -339,22 +312,9 @@ export default function SubmitPrice() {
                 onClick={resetForm}
                 className="flex-1 min-w-[220px] h-[58px] flex items-center justify-center gap-2.5 bg-input-bg border border-grey-border rounded-[12px] text-base font-bold text-black hover:bg-gray-200 transition cursor-pointer"
               >
-                <svg viewBox="0 0 24 24" fill="none" className="w-[18px] h-[18px]">
-                  <circle cx="12" cy="12" r="9" stroke="#000" strokeWidth="1.7" />
-                  <path d="M12 8V16M8 12H16" stroke="#000" strokeWidth="1.7" strokeLinecap="round" />
-                </svg>
                 Add another
               </button>
-              <Link
-                to="/prices"
-                className="flex-1 min-w-[220px] h-[58px] flex items-center justify-center gap-2.5 bg-input-bg border border-grey-border rounded-[12px] text-base font-bold text-black hover:bg-gray-200 transition cursor-pointer"
-              >
-                <svg viewBox="0 0 24 24" fill="none" className="w-[18px] h-[18px]">
-                  <rect x="4" y="4" width="7" height="7" rx="1.2" stroke="#000" strokeWidth="1.6" />
-                  <rect x="13" y="4" width="7" height="7" rx="1.2" stroke="#000" strokeWidth="1.6" />
-                  <rect x="4" y="13" width="7" height="7" rx="1.2" stroke="#000" strokeWidth="1.6" />
-                  <rect x="13" y="13" width="7" height="7" rx="1.2" stroke="#000" strokeWidth="1.6" />
-                </svg>
+              <Link to="/prices" className="flex-1 min-w-[220px] h-[58px] flex items-center justify-center gap-2.5 bg-input-bg border border-grey-border rounded-[12px] text-base font-bold text-black hover:bg-gray-200 transition cursor-pointer">
                 View comparison
               </Link>
             </div>
@@ -372,7 +332,7 @@ export default function SubmitPrice() {
   if (priceError) errorFields.push('price')
   const fieldCount = errorFields.length
   const itemOpen = pickerOpen && pickerStep === 'item'
-  const measureOpen = pickerOpen && pickerStep === 'measure'
+  const unitOpen = pickerOpen && pickerStep === 'unit'
 
   return (
     <main className="px-6 sm:px-12 lg:px-20 py-16 flex justify-center">
@@ -407,7 +367,7 @@ export default function SubmitPrice() {
                 }`}
               >
                 <span className={itemMeasure ? 'text-black' : 'text-days-grey'}>
-                  {itemMeasure || (selectedItem ? `Choose measure for ${selectedItem.name}` : 'Select item')}
+                  {itemMeasure || (selectedItem ? `Choose unit for ${selectedItem.name}` : 'Select item')}
                 </span>
                 <svg viewBox="0 0 24 24" fill="none" className="w-[18px] h-[18px] shrink-0">
                   <path d="M6 9L12 15L18 9" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -415,17 +375,17 @@ export default function SubmitPrice() {
               </button>
               {itemOpen && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-days-grey rounded-[12px] z-10 overflow-hidden max-h-[260px] overflow-y-auto">
-                  {foodItems.map((item) => (
+                  {items.map((item) => (
                     <button
-                      key={item.name}
+                      key={item.id}
                       type="button"
                       onClick={() => selectItem(item)}
                       className={`w-full px-5 py-3 text-base text-left hover:bg-input-bg transition cursor-pointer flex items-center justify-between ${
-                        selectedItem?.name === item.name ? 'bg-input-bg font-semibold' : ''
+                        selectedItem?.id === item.id ? 'bg-input-bg font-semibold' : ''
                       }`}
                     >
                       {item.name}
-                      {selectedItem?.name === item.name && (
+                      {selectedItem?.id === item.id && (
                         <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-green-text">
                           <path d="M5 13L10 18L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -434,7 +394,7 @@ export default function SubmitPrice() {
                   ))}
                 </div>
               )}
-              {measureOpen && selectedItem && (
+              {unitOpen && selectedItem && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-days-grey rounded-[12px] z-10 overflow-hidden">
                   <button
                     type="button"
@@ -447,19 +407,19 @@ export default function SubmitPrice() {
                     Back to {selectedItem.name}
                   </button>
                   <div className="px-5 py-2.5 text-xs font-semibold text-days-grey border-b border-days-grey">
-                    {selectedItem.name} — pick a measure
+                    {selectedItem.name} — pick a unit
                   </div>
-                  {selectedItem.measures.map((m) => (
+                  {selectedItem.units.map((u) => (
                     <button
-                      key={m}
+                      key={u.id}
                       type="button"
-                      onClick={() => selectMeasure(m)}
+                      onClick={() => selectUnit(u.id)}
                       className={`w-full px-5 py-3 text-base text-left hover:bg-input-bg transition cursor-pointer flex items-center justify-between ${
-                        selectedMeasure === m ? 'bg-input-bg font-semibold' : ''
+                        selectedUnitId === u.id ? 'bg-input-bg font-semibold' : ''
                       }`}
                     >
-                      {m}
-                      {selectedMeasure === m && (
+                      {u.label}
+                      {selectedUnitId === u.id && (
                         <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-green-text">
                           <path d="M5 13L10 18L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -476,7 +436,7 @@ export default function SubmitPrice() {
                   <path d="M12 8V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                   <circle cx="12" cy="16.2" r="1.1" fill="currentColor" />
                 </svg>
-                <span className="text-sm font-semibold text-[#b40000]">Please select an item and measure</span>
+                <span className="text-sm font-semibold text-[#b40000]">Please select an item and unit</span>
               </div>
             )}
           </div>
@@ -491,7 +451,7 @@ export default function SubmitPrice() {
                   marketError ? 'border-[#b40000] bg-[#fbd7d7]' : 'border-days-grey'
                 }`}
               >
-                <span className={market ? 'text-black' : 'text-days-grey'}>{market || 'Select market'}</span>
+                <span className={marketId ? 'text-black' : 'text-days-grey'}>{marketLabel || 'Select market'}</span>
                 <svg viewBox="0 0 24 24" fill="none" className="w-[18px] h-[18px]">
                   <path d="M6 9L12 15L18 9" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -500,15 +460,15 @@ export default function SubmitPrice() {
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-days-grey rounded-[12px] z-10 overflow-hidden max-h-[260px] overflow-y-auto">
                   {markets.map((m) => (
                     <button
-                      key={m.name + m.area}
+                      key={m.id}
                       type="button"
-                      onClick={() => { setMarket(`${m.name} (${m.area})`); setMarketOpen(false); if (marketError) setState('form') }}
+                      onClick={() => { setMarketId(m.id); setMarketLabel(`${m.name} (${m.lga}, ${m.state})`); setMarketOpen(false); if (marketError) setState('form') }}
                       className={`w-full px-5 py-3 text-base text-left hover:bg-input-bg transition cursor-pointer flex items-center justify-between ${
-                        market === `${m.name} (${m.area})` ? 'bg-input-bg font-semibold' : ''
+                        marketId === m.id ? 'bg-input-bg font-semibold' : ''
                       }`}
                     >
                       <span>{m.name}</span>
-                      <span className="text-sm text-days-grey">{m.area}</span>
+                      <span className="text-sm text-days-grey">{m.lga}, {m.state}</span>
                     </button>
                   ))}
                 </div>

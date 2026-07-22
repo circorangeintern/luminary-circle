@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getApiError } from '../utils/errors'
 
 export default function SignIn() {
   const { login } = useAuth()
@@ -24,8 +25,8 @@ export default function SignIn() {
     try {
       await login(phone, password)
       navigate(returnUrl, { replace: true })
-    } catch {
-      setError('Phone number or password is incorrect')
+    } catch (err) {
+      setError(getApiError(err))
     } finally {
       setLoading(false)
     }
