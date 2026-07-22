@@ -7,9 +7,12 @@ import { AppException } from '../common/errors/app.exception';
 import { PRICE_SELECT, PriceWithRelations, toPriceDto } from './price.mapper';
 import { PriceQueryDto, PriceQueryResponseDto } from './dto/query-price.dto';
 import { CompareResponseDto } from './dto/compare-response.dto';
+import { TrendResponseDto } from './dto/trend-response.dto';
 
 const DEDUPE_WINDOW_MINUTES = 10;
 const DEFAULT_PAGE_SIZE = 20;
+const TREND_WINDOW = 9; // last N submissions considered
+const STABLE_THRESHOLD_PCT = 2; // +/- this % counts as STABLE
 
 /** Raw row shape returned by the comparison query. */
 interface CompareRow {
@@ -289,6 +292,137 @@ export class PricesService {
       })),
       marketsWithData,
       comparisonPossible,
+    };
+  }
+
+  async trend(
+    itemId: string,
+    unitId: string,
+    marketId: string,
+  ): Promise<TrendResponseDto> {
+    const pair = await this.prisma.itemUnit.findUnique({
+      where: { itemId_unitId: { itemId, unitId } },
+      select: {
+        item: {
+          select: { id: true, name: true, status: true },
+        },
+        unit: {
+          select: { id: true, label: true },
+        },
+      },
+    });
+
+    if (!pair || pair.item.status !== 'ACTIVE') {
+      throw new AppException(
+        'VALIDATION_ERROR',
+        'That measure is not valid for the selected item',
+        [
+          {
+            field: 'unitId',
+            message: 'Choose a measure from the list for this item',
+          },
+        ],
+      );
+    }
+
+    const market = await this.prisma.market.findUnique({
+      where: { id: marketId },
+      select: {
+        id: true,
+        name: true,
+        lga: true,
+        state: true,
+        status: true,
+      },
+    });
+
+    if (!market || market.status !== 'ACTIVE') {
+      throw new AppException(
+        'VALIDATION_ERROR',
+        'That market is not available',
+        [
+          {
+            field: 'marketId',
+            message: 'Choose a market from the list',
+          },
+        ],
+      );
+    }
+
+    const excludeThreshold = this.config.flagExcludeThreshold;
+
+    // Fetch a bit more than the window, because some rows may be flagged out.
+    // We over-fetch, filter, THEN slice to the window — otherwise a flagged
+    // row inside the window would shrink our sample below what's available.
+    const rows = await this.prisma.priceSubmission.findMany({
+      where: { itemId, unitId, marketId, status: 'ACTIVE' },
+      select: PRICE_SELECT,
+      orderBy: { createdAt: 'desc' },
+      take: TREND_WINDOW * 3, // headroom for flagged exclusions
+    });
+
+    // Exclude flagged-out prices (same rule as compare), then take the window.
+    const valid = rows
+      .filter((r) => r._count.flags < excludeThreshold)
+      .slice(0, TREND_WINDOW);
+
+    const mapperOptions = {
+      freshnessWindowDays: this.config.freshnessWindowDays,
+      flagMarkThreshold: this.config.flagMarkThreshold,
+    };
+
+    const header = {
+      item: {
+        id: pair.item.id,
+        name: pair.item.name,
+      },
+      unit: {
+        id: pair.unit.id,
+        label: pair.unit.label,
+      },
+      market: {
+        id: market.id,
+        name: market.name,
+        lga: market.lga,
+        state: market.state,
+      },
+    };
+
+    // points: lightweight, chronological (oldest -> newest) for a left-to-right chart.
+    const points = valid
+      .map((r) => ({ price: r.price, createdAt: r.createdAt.toISOString() }))
+      .reverse();
+
+    if (valid.length < 2) {
+      return {
+        ...header,
+        direction: 'INSUFFICIENT_DATA',
+        sampleSize: valid.length,
+        latest: valid.length === 1 ? toPriceDto(valid[0], mapperOptions) : null,
+        points,
+      };
+    }
+
+    // valid[0] is newest (desc order), valid[last] is oldest.
+    const newest = valid[0].price;
+    const oldest = valid[valid.length - 1].price;
+    const pctChange = ((newest - oldest) / oldest) * 100;
+
+    let direction: string;
+    if (Math.abs(pctChange) <= STABLE_THRESHOLD_PCT) {
+      direction = 'STABLE';
+    } else if (newest > oldest) {
+      direction = 'UP';
+    } else {
+      direction = 'DOWN';
+    }
+
+    return {
+      ...header,
+      direction,
+      sampleSize: valid.length,
+      latest: toPriceDto(valid[0], mapperOptions),
+      points,
     };
   }
 }
