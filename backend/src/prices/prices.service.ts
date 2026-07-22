@@ -7,7 +7,6 @@ import { AppException } from '../common/errors/app.exception';
 import { PRICE_SELECT, PriceWithRelations, toPriceDto } from './price.mapper';
 import { PriceQueryDto, PriceQueryResponseDto } from './dto/query-price.dto';
 import { CompareResponseDto } from './dto/compare-response.dto';
-import { ro } from 'zod/v4/locales/index.js';
 
 const DEDUPE_WINDOW_MINUTES = 10;
 const DEFAULT_PAGE_SIZE = 20;
@@ -198,7 +197,7 @@ export class PricesService {
     // WHERE so an excluded price never wins its market (KAN-36) — an older
     // clean price is used instead of the market disappearing.
     // Template-literal params are parameterized by Prisma: no injection risk.
-    const rows = await this.prisma.$queryRaw<CompareRow[]> `
+    const rows = await this.prisma.$queryRaw<CompareRow[]>`
       SELECT DISTINCT ON (ps.market_id)
         ps.id,
         ps.price,
@@ -251,7 +250,12 @@ export class PricesService {
         createdAt: r.created_at,
         item: { id: r.item_id, name: r.item_name },
         unit: { id: r.unit_id, label: r.unit_label },
-        market: { id: r.market_id, name: r.market_name, lga: r.market_lga, state: r.market_state },
+        market: {
+          id: r.market_id,
+          name: r.market_name,
+          lga: r.market_lga,
+          state: r.market_state,
+        },
         user: { displayName: r.display_name },
         _count: { flags: r.flag_count },
       };

@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PriceDto, PriceItemDto, PriceMarketDto, PriceUnitDto } from './price-response.dto';
+import {
+  PriceDto,
+  PriceItemDto,
+  PriceMarketDto,
+  PriceUnitDto,
+} from './price-response.dto';
 
 export class ComparisonEntryDto {
   @ApiProperty({ type: PriceMarketDto })
@@ -21,7 +26,7 @@ export class CompareResponseDto {
 
   @ApiProperty({ type: PriceUnitDto })
   unit!: PriceUnitDto;
-  
+
   @ApiProperty({ type: [ComparisonEntryDto] })
   comparison!: ComparisonEntryDto[];
 

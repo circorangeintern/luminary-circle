@@ -38,7 +38,9 @@ export class CatalogController {
   }
 
   @Get('markets/compare')
-  @ApiOperation({ summary: 'Compare the latest price for an item across markets' })
+  @ApiOperation({
+    summary: 'Compare the latest price for an item across markets',
+  })
   @ApiResponse({
     status: 200,
     description: 'Comparison result',
