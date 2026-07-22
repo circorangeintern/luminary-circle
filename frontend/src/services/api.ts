@@ -222,9 +222,32 @@ export interface CompareResult {
   comparisonPossible: boolean
 }
 
+interface RawPriceData {
+  id: string
+  item: PriceItemDto
+  unit: PriceUnitDto
+  market: PriceMarketDto
+  price: number
+  note: string | null
+  status: string
+  source: 'REAL_USER' | 'TEAM_TEST' | 'SEED_DEMO'
+  isStale: boolean
+  isFlagged: boolean
+  flagCount: number
+  submitterDisplayName: string
+  createdAt: string
+}
+
 export async function fetchComparePrices(itemId: string, unitId: string): Promise<CompareResult> {
-  const { data } = await api.get<ApiResponse<CompareResult>>('/markets/compare', { params: { itemId, unitId } })
-  return data.data
+  const { data } = await api.get<ApiResponse<{
+    comparison: { market: PriceMarketDto; latestPrice: RawPriceData; isCheapest: boolean }[]
+    comparisonPossible: boolean
+  }>>('/markets/compare', { params: { itemId, unitId } })
+  const raw = data.data
+  return {
+    items: raw.comparison.map((c) => ({ ...c.latestPrice, isCheapest: c.isCheapest })),
+    comparisonPossible: raw.comparisonPossible,
+  }
 }
 
 export default api
