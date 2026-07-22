@@ -109,7 +109,7 @@ export interface CreatePriceDto {
   unitId: string
   marketId: string
   price: number
-  note: string
+  note?: string
 }
 
 export interface PriceItemDto {
@@ -137,7 +137,7 @@ export interface PriceDto {
   price: number
   note: string | null
   status: string
-  source: 'REAL_USER' | 'SEED' | 'SEED_DEMO'
+  source: 'REAL_USER' | 'TEAM_TEST' | 'SEED_DEMO'
   isStale: boolean
   isFlagged: boolean
   flagCount: number
@@ -196,6 +196,35 @@ export async function fetchPrices(params: PriceQueryParams = {}): Promise<PriceQ
 export async function submitPrice(payload: CreatePriceDto): Promise<PriceDto> {
   const { data } = await api.post<ApiResponse<{ price: PriceDto }>>('/prices', payload)
   return data.data.price
+}
+
+// ----- Compare endpoint (pre-computed isCheapest) -----
+
+export interface ComparePriceEntry {
+  id: string
+  item: PriceItemDto
+  unit: PriceUnitDto
+  market: PriceMarketDto
+  price: number
+  note: string | null
+  status: string
+  source: 'REAL_USER' | 'TEAM_TEST' | 'SEED_DEMO'
+  isStale: boolean
+  isFlagged: boolean
+  flagCount: number
+  submitterDisplayName: string
+  createdAt: string
+  isCheapest: boolean
+}
+
+export interface CompareResult {
+  items: ComparePriceEntry[]
+  comparisonPossible: boolean
+}
+
+export async function fetchComparePrices(itemId: string, unitId: string): Promise<CompareResult> {
+  const { data } = await api.get<ApiResponse<CompareResult>>('/markets/compare', { params: { itemId, unitId } })
+  return data.data
 }
 
 export default api
