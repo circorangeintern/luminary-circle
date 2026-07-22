@@ -34,13 +34,13 @@ export class PriceDto {
   @ApiProperty({ example: 'cmrqexjbk00005kdjpmoq2mo3' })
   id!: string;
 
-  @ApiProperty({ type: [PriceItemDto] })
+  @ApiProperty({ type: PriceItemDto })
   item!: PriceItemDto;
 
-  @ApiProperty({ type: [PriceUnitDto] })
+  @ApiProperty({ type: PriceUnitDto })
   unit!: PriceUnitDto;
 
-  @ApiProperty({ type: [PriceMarketDto] })
+  @ApiProperty({ type: PriceMarketDto })
   market!: PriceMarketDto;
 
   @ApiProperty({ example: 2100 })

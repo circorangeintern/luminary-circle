@@ -1,4 +1,4 @@
-@base = http://localhost:3000/api/v1
+@base = https://staging.marketcompare.name.ng/api/v1
 @session = ses_local_test
 
 ### 0. Login first — copy accessToken from the response into @token below
