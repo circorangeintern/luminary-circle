@@ -1,6 +1,16 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function Hero() {
+  const [query, setQuery] = useState('')
+  const navigate = useNavigate()
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' && query.trim()) {
+      navigate(`/prices?search=${encodeURIComponent(query.trim())}`)
+    }
+  }
+
   return (
     <section className="bg-cream relative overflow-hidden pb-16 lg:pb-24">
       <div className="px-6 sm:px-12 lg:px-20 pt-8 pb-10">
@@ -9,7 +19,15 @@ export default function Hero() {
             <circle cx="9" cy="9" r="6" stroke="#A1A1A1" strokeWidth="1.5" />
             <path d="M14 14L17.5 17.5" stroke="#A1A1A1" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          <input type="text" placeholder="Search foodstuffs" className="bg-transparent border-none outline-none text-sm text-days-grey w-full placeholder-days-grey tracking-tight" style={{ letterSpacing: '-0.24px', lineHeight: '20px' }} />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Search foodstuffs"
+            className="bg-transparent border-none outline-none text-sm text-days-grey w-full placeholder-days-grey tracking-tight"
+            style={{ letterSpacing: '-0.24px', lineHeight: '20px' }}
+          />
         </div>
       </div>
 

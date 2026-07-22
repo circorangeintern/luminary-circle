@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getRelativeTime } from '../utils/time'
 import { fetchItems, fetchPrices } from '../services/api'
@@ -17,6 +17,8 @@ type State = 'loading' | 'itemsLoaded' | 'offline' | 'emptyItems'
 export default function ComparePrices() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const searchQuery = searchParams.get('search') || ''
   const [state, setState] = useState<State>('loading')
   const [items, setItems] = useState<ItemDto[]>([])
   const [activeIdx, setActiveIdx] = useState(0)
@@ -24,7 +26,7 @@ export default function ComparePrices() {
   const [pricesLoading, setPricesLoading] = useState(false)
   const [reportTarget, setReportTarget] = useState<{ product: string; market: string; price: string } | null>(null)
 
-  const products = useMemo(() => {
+  const allProducts = useMemo(() => {
     const result: ProductOption[] = []
     for (const item of items) {
       for (const unit of item.units) {
@@ -33,6 +35,12 @@ export default function ComparePrices() {
     }
     return result
   }, [items])
+
+  const products = useMemo(() => {
+    if (!searchQuery) return allProducts
+    const q = searchQuery.toLowerCase()
+    return allProducts.filter((p) => p.label.toLowerCase().includes(q))
+  }, [allProducts, searchQuery])
 
   const active = products[activeIdx]
 
@@ -44,6 +52,12 @@ export default function ComparePrices() {
       })
       .catch(() => setState('offline'))
   }, [])
+
+  useEffect(() => {
+    if (activeIdx >= products.length && products.length > 0) {
+      setActiveIdx(0)
+    }
+  }, [products.length, activeIdx])
 
   useEffect(() => {
     if (!active) return
@@ -199,7 +213,21 @@ export default function ComparePrices() {
                 {p.label}
               </button>
             ))}
+            {searchQuery && (
+              <button
+                onClick={() => { setSearchParams({}); setActiveIdx(0) }}
+                className="px-4 py-2 rounded-lg text-sm tracking-tight transition cursor-pointer bg-white border border-red text-red hover:bg-red/5"
+              >
+                Clear search
+              </button>
+            )}
           </div>
+
+          {searchQuery && products.length === 0 && allProducts.length > 0 && (
+            <div className="text-center py-12">
+              <p className="text-base text-[#666]">No items match &ldquo;{searchQuery}&rdquo;</p>
+            </div>
+          )}
 
           {isLoadingPrices && (
             <div className="flex justify-center py-16">
