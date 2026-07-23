@@ -111,6 +111,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           message: 'You are submitting very fast. Please try again shortly.',
         };
       }
+
+      // Express's default is "Cannot PATCH /api/v1/...", which leaks framework
+      // phrasing to clients.
+      if (status === 404) {
+        return {
+          code: 'NOT_FOUND',
+          message: 'That endpoint could not be found',
+        };
+      }
+
       const map: Record<number, ErrorCode> = {
         400: 'VALIDATION_ERROR',
         401: 'AUTHENTICATION_ERROR',
