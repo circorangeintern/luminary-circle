@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getRelativeTime } from '../utils/time'
-import { fetchItems, fetchPrices } from '../services/api'
-import type { ItemDto, PriceDto } from '../services/api'
+import { fetchItems, fetchMarkets, fetchTrend } from '../services/api'
+import type { ItemDto, MarketDto, TrendResponse } from '../services/api'
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 
 interface ProductOption {
@@ -16,15 +16,22 @@ interface ProductOption {
 
 type State = 'loading' | 'itemsLoaded' | 'offline' | 'emptyItems'
 
-const CHART_COLORS = ['#1D9E75', '#378ADD', '#F73939', '#9B59B6', '#E67E22', '#2C3E50']
+const DIRECTION_META: Record<string, { label: string; arrow: string; color: string }> = {
+  UP: { label: 'Going up', arrow: '↗', color: '#F73939' },
+  DOWN: { label: 'Going down', arrow: '↘', color: '#1D9E75' },
+  STABLE: { label: 'Stable', arrow: '→', color: '#378ADD' },
+  INSUFFICIENT_DATA: { label: 'Not enough data', arrow: '—', color: '#A1A1A1' },
+}
 
 export default function PriceTrend() {
   const { isAuthenticated } = useAuth()
   const [state, setState] = useState<State>('loading')
   const [items, setItems] = useState<ItemDto[]>([])
+  const [markets, setMarkets] = useState<MarketDto[]>([])
   const [activeIdx, setActiveIdx] = useState(0)
-  const [prices, setPrices] = useState<PriceDto[]>([])
-  const [pricesLoading, setPricesLoading] = useState(false)
+  const [activeMarketIdx, setActiveMarketIdx] = useState(0)
+  const [trend, setTrend] = useState<TrendResponse | null>(null)
+  const [trendLoading, setTrendLoading] = useState(false)
 
   const products = useMemo(() => {
     const result: ProductOption[] = []
@@ -37,99 +44,38 @@ export default function PriceTrend() {
   }, [items])
 
   useEffect(() => {
-    fetchItems()
-      .then((data) => {
-        setItems(data)
-        setState(data.length === 0 ? 'emptyItems' : 'itemsLoaded')
+    Promise.all([fetchItems(), fetchMarkets()])
+      .then(([itemsData, marketsData]) => {
+        setItems(itemsData)
+        setMarkets(marketsData)
+        setState(itemsData.length === 0 ? 'emptyItems' : 'itemsLoaded')
       })
       .catch(() => setState('offline'))
   }, [])
 
   const active = products[activeIdx]
+  const activeMarket = markets[activeMarketIdx]
 
   useEffect(() => {
-    if (!active) return
-    setPricesLoading(true)
-    fetchPrices({ itemId: active.itemId, unitId: active.unitId, pageSize: 50 })
-      .then((res) => setPrices(res.items))
-      .catch(() => setPrices([]))
-      .finally(() => setPricesLoading(false))
-  }, [active?.itemId, active?.unitId])
-
-  const marketSeries = useMemo(() => {
-    const groups = new Map<string, PriceDto[]>()
-    for (const p of prices) {
-      const name = p.market.name
-      if (!name) continue
-      if (!groups.has(name)) groups.set(name, [])
-      groups.get(name)!.push(p)
-    }
-    for (const [, arr] of groups) {
-      arr.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    }
-    return groups
-  }, [prices])
-
-  const marketNames = useMemo(() => Array.from(marketSeries.keys()), [marketSeries])
+    if (!active || !activeMarket) return
+    setTrendLoading(true)
+    fetchTrend(active.itemId, active.unitId, activeMarket.id)
+      .then(setTrend)
+      .catch(() => setTrend(null))
+      .finally(() => setTrendLoading(false))
+  }, [active?.itemId, active?.unitId, activeMarket?.id])
 
   const chartData = useMemo(() => {
-    const allDates = new Set<string>()
-    for (const [, arr] of marketSeries) {
-      for (const p of arr) {
-        allDates.add(new Date(p.createdAt).toISOString())
-      }
-    }
-    const sortedDates = Array.from(allDates).sort(
-      (a, b) => new Date(a).getTime() - new Date(b).getTime(),
-    )
+    if (!trend) return []
+    return trend.points.map((p) => ({
+      fullDate: p.createdAt,
+      price: p.price,
+    }))
+  }, [trend])
 
-    return sortedDates.map((dateStr) => {
-      const point: Record<string, string | number | null> = { fullDate: dateStr }
-      for (const name of marketNames) {
-        const series = marketSeries.get(name)!
-        const match = series
-          .filter((p) => new Date(p.createdAt).getTime() <= new Date(dateStr).getTime())
-          .pop()
-        point[name] = match?.price ?? null
-      }
-      return point
-    })
-  }, [marketSeries, marketNames])
-
-  const summary = useMemo(() => {
-    if (marketNames.length === 0 || prices.length === 0) return null
-
-    let latestPrice: PriceDto | null = null
-    for (const [, arr] of marketSeries) {
-      const last = arr[arr.length - 1]
-      if (!last) continue
-      if (!latestPrice || new Date(last.createdAt) > new Date(latestPrice.createdAt)) {
-        latestPrice = last
-      }
-    }
-
-    const latestPerMarket = marketNames
-      .map((name) => {
-        const arr = marketSeries.get(name)!
-        return arr[arr.length - 1]
-      })
-      .filter(Boolean) as PriceDto[]
-
-    const avg = latestPerMarket.length > 0
-      ? Math.round(latestPerMarket.reduce((s, p) => s + p.price, 0) / latestPerMarket.length)
-      : 0
-
-    const allSorted = prices.slice().sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    )
-    const firstPrice = allSorted[0]?.price ?? 0
-    const lastPriceRaw = allSorted[allSorted.length - 1]?.price ?? 0
-    const diff = lastPriceRaw - firstPrice
-
-    return { latestPrice, avg, firstPrice, lastPriceRaw, diff }
-  }, [marketSeries, marketNames, prices])
-
+  const directionMeta = trend ? DIRECTION_META[trend.direction] : null
   const measure = active?.label.split(', ')[1] || ''
+  const isLoading = trendLoading && !trend
 
   // ===== LOADING =====
   if (state === 'loading') {
@@ -197,8 +143,6 @@ export default function PriceTrend() {
   }
 
   // ===== MAIN UI =====
-  const isLoadingPrices = pricesLoading && prices.length === 0
-
   return (
     <div className="px-6 sm:px-12 lg:px-20 pb-12">
       <div className="max-w-[1240px] mx-auto bg-white border border-grey-border rounded-2xl p-6 sm:p-8 lg:p-12 mt-12">
@@ -207,7 +151,7 @@ export default function PriceTrend() {
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold text-text-black mb-1">Price trend - {active?.label}</h2>
               <p className="text-lg font-medium text-black">
-                {isLoadingPrices ? 'Loading...' : chartData.length > 0 ? `Last ${chartData.length} observations across ${marketNames.length} markets` : 'Waiting for submissions'}
+                {isLoading ? 'Loading...' : trend ? `${trend.sampleSize} observations at ${activeMarket?.name}` : 'Select a market'}
               </p>
             </div>
           </div>
@@ -220,11 +164,11 @@ export default function PriceTrend() {
             <span className="text-sm text-black">{active?.label}</span>
           </div>
 
-          <div className="flex gap-2 flex-wrap mb-8">
+          <div className="flex gap-2 flex-wrap mb-3">
             {products.map((p, i) => (
               <button
                 key={`${p.itemId}-${p.unitId}`}
-                onClick={() => setActiveIdx(i)}
+                onClick={() => { setActiveIdx(i); setActiveMarketIdx(0) }}
                 className={`px-4 py-2 rounded-lg text-sm tracking-tight transition cursor-pointer ${
                   i === activeIdx
                     ? 'bg-ink text-white border-ink'
@@ -236,13 +180,29 @@ export default function PriceTrend() {
             ))}
           </div>
 
-          {isLoadingPrices && (
+          <div className="flex gap-2 flex-wrap mb-8">
+            {markets.map((m, i) => (
+              <button
+                key={m.id}
+                onClick={() => setActiveMarketIdx(i)}
+                className={`px-4 py-2 rounded-lg text-sm tracking-tight transition cursor-pointer ${
+                  i === activeMarketIdx
+                    ? 'bg-ink text-white border-ink'
+                    : 'bg-input-bg border border-input-border text-[#252323] hover:bg-gray-100'
+                }`}
+              >
+                {m.name}
+              </button>
+            ))}
+          </div>
+
+          {isLoading && (
             <div className="flex justify-center py-16">
               <div className="skeleton h-8 w-32 rounded-lg" />
             </div>
           )}
 
-          {!isLoadingPrices && chartData.length === 0 && (
+          {!isLoading && (!trend || trend.points.length === 0) && (
             <div className="text-center py-16 mb-6">
               <div className="w-16 h-16 rounded-full bg-input-bg flex items-center justify-center mx-auto mb-5">
                 <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7">
@@ -251,58 +211,47 @@ export default function PriceTrend() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-black mb-2">No trend data yet</h3>
-              <p className="text-sm text-[#666] mb-5">Be the first to submit a price for {active?.label}!</p>
+              <p className="text-sm text-[#666] mb-5">Be the first to submit a price for {active?.label} at {activeMarket?.name}!</p>
               <Link to={isAuthenticated ? '/submit' : '/signin?returnUrl=/submit'} className="inline-flex items-center gap-2 bg-red text-white px-6 py-3 rounded-lg text-sm font-semibold hover:brightness-110 transition">
                 Submit a price
               </Link>
             </div>
           )}
 
-          {!isLoadingPrices && chartData.length > 0 && summary && (
+          {!isLoading && trend && trend.points.length > 0 && (
             <>
               <div className="flex gap-6 flex-wrap mb-8">
                 <div className="flex-1 min-w-[220px] border border-days-grey rounded-lg px-5 py-4">
                   <p className="text-xs text-text-dark mb-0.5">Latest price</p>
                   <p className="text-xl font-semibold text-text-dark mb-0.5">
-                    ₦{summary.latestPrice!.price.toLocaleString()} / {measure}
+                    ₦{trend.latest!.price.toLocaleString()} / {measure}
                   </p>
                   <p className="text-xs text-green-text">
-                    {summary.latestPrice!.market.name} - {getRelativeTime(summary.latestPrice!.createdAt)}
+                    {trend.market.name} - {getRelativeTime(trend.latest!.createdAt)}
                   </p>
                 </div>
                 <div className="flex-1 min-w-[220px] border border-days-grey rounded-lg px-5 py-4">
-                  <p className="text-xs text-text-dark mb-0.5">Market average (latest)</p>
-                  <p className="text-xl font-semibold text-text-dark mb-0.5">₦{summary.avg.toLocaleString()}</p>
-                  <p className="text-xs text-green-text">across {marketNames.length} market{marketNames.length > 1 ? 's' : ''}</p>
+                  <p className="text-xs text-text-dark mb-0.5">Sample size</p>
+                  <p className="text-xl font-semibold text-text-dark mb-0.5">{trend.sampleSize} observations</p>
+                  <p className="text-xs text-green-text">over the data collection period</p>
                 </div>
-                <div className="flex-1 min-w-[220px] border border-days-grey rounded-lg px-5 py-4">
-                  <p className="text-xs text-text-dark mb-0.5">Overall direction</p>
-                  <p className="text-xl font-semibold text-text-dark mb-0.5">
-                    {summary.diff < 0 ? 'Going up' : summary.diff > 0 ? 'Going down' : 'Stable'}
-                  </p>
-                  <p className="text-xs text-green-text">
-                    {summary.diff > 0
-                      ? `↘ ₦${summary.diff.toLocaleString()} drop`
-                      : summary.diff < 0
-                        ? `↗ ₦${Math.abs(summary.diff).toLocaleString()} rise`
-                        : '— No change'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 sm:gap-8 flex-wrap mb-6">
-                {marketNames.map((name) => {
-                  const idx = marketNames.indexOf(name)
-                  return (
-                    <div key={name} className="flex items-center gap-2.5">
-                      <span
-                        className="w-3.5 h-3.5 rounded-full shrink-0"
-                        style={{ background: CHART_COLORS[idx % CHART_COLORS.length] }}
-                      />
-                      <span className="font-semibold text-sm sm:text-base text-text-dark">{name}</span>
-                    </div>
-                  )
-                })}
+                {directionMeta && (
+                  <div className="flex-1 min-w-[220px] border border-days-grey rounded-lg px-5 py-4">
+                    <p className="text-xs text-text-dark mb-0.5">Direction</p>
+                    <p className="text-xl font-semibold mb-0.5" style={{ color: directionMeta.color }}>
+                      {directionMeta.arrow} {directionMeta.label}
+                    </p>
+                    <p className="text-xs text-green-text">
+                      {trend.direction === 'UP'
+                        ? `↗₦${(trend.points[trend.points.length - 1].price - trend.points[0].price).toLocaleString()} rise`
+                        : trend.direction === 'DOWN'
+                          ? `↘₦${(trend.points[0].price - trend.points[trend.points.length - 1].price).toLocaleString()} drop`
+                          : trend.direction === 'STABLE'
+                            ? '— No significant change'
+                            : 'Not enough data points'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="w-full h-72 sm:h-80 mb-6">
@@ -319,21 +268,14 @@ export default function PriceTrend() {
                       tick={{ fontSize: 13, fill: '#121212' }}
                     />
                     <Tooltip labelFormatter={(val) => getRelativeTime(String(val))} />
-                    <Legend />
-                    {marketNames.map((name) => {
-                      const idx = marketNames.indexOf(name)
-                      return (
-                        <Line
-                          key={name}
-                          type="monotone"
-                          dataKey={name}
-                          stroke={CHART_COLORS[idx % CHART_COLORS.length]}
-                          strokeWidth={2.5}
-                          dot={{ r: 5, fill: CHART_COLORS[idx % CHART_COLORS.length] }}
-                          connectNulls
-                        />
-                      )
-                    })}
+                    <Line
+                      type="monotone"
+                      dataKey="price"
+                      stroke="#1D9E75"
+                      strokeWidth={2.5}
+                      dot={{ r: 5, fill: '#1D9E75' }}
+                      connectNulls
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

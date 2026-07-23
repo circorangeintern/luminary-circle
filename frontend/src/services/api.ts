@@ -250,4 +250,28 @@ export async function fetchComparePrices(itemId: string, unitId: string): Promis
   }
 }
 
+// ----- Trend endpoint -----
+
+export interface TrendPoint {
+  price: number
+  createdAt: string
+}
+
+export interface TrendResponse {
+  item: PriceItemDto
+  unit: PriceUnitDto
+  market: PriceMarketDto
+  direction: 'UP' | 'DOWN' | 'STABLE' | 'INSUFFICIENT_DATA'
+  sampleSize: number
+  latest: PriceDto | null
+  points: TrendPoint[]
+}
+
+export async function fetchTrend(itemId: string, unitId: string, marketId: string): Promise<TrendResponse> {
+  const { data } = await api.get<ApiResponse<TrendResponse>>(`/items/${itemId}/trend`, {
+    params: { unitId, marketId },
+  })
+  return data.data
+}
+
 export default api
