@@ -237,7 +237,7 @@ export default function ComparePrices() {
             </div>
           )}
 
-          {!isLoadingPrices && (compareEntries.length === 1 || !comparisonPossible) && (() => {
+          {!isLoadingPrices && compareEntries.length > 0 && (compareEntries.length === 1 || !comparisonPossible) && (() => {
             const e = compareEntries[0]
             return (
               <div className="border border-days-grey rounded-[12px] p-8 max-w-[600px] mx-auto">

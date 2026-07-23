@@ -222,8 +222,55 @@ export interface CompareResult {
   comparisonPossible: boolean
 }
 
+interface RawPriceData {
+  id: string
+  item: PriceItemDto
+  unit: PriceUnitDto
+  market: PriceMarketDto
+  price: number
+  note: string | null
+  status: string
+  source: 'REAL_USER' | 'TEAM_TEST' | 'SEED_DEMO'
+  isStale: boolean
+  isFlagged: boolean
+  flagCount: number
+  submitterDisplayName: string
+  createdAt: string
+}
+
 export async function fetchComparePrices(itemId: string, unitId: string): Promise<CompareResult> {
-  const { data } = await api.get<ApiResponse<CompareResult>>('/markets/compare', { params: { itemId, unitId } })
+  const { data } = await api.get<ApiResponse<{
+    comparison: { market: PriceMarketDto; latestPrice: RawPriceData; isCheapest: boolean }[]
+    comparisonPossible: boolean
+  }>>('/markets/compare', { params: { itemId, unitId } })
+  const raw = data.data
+  return {
+    items: raw.comparison.map((c) => ({ ...c.latestPrice, isCheapest: c.isCheapest })),
+    comparisonPossible: raw.comparisonPossible,
+  }
+}
+
+// ----- Trend endpoint -----
+
+export interface TrendPoint {
+  price: number
+  createdAt: string
+}
+
+export interface TrendResponse {
+  item: PriceItemDto
+  unit: PriceUnitDto
+  market: PriceMarketDto
+  direction: 'UP' | 'DOWN' | 'STABLE' | 'INSUFFICIENT_DATA'
+  sampleSize: number
+  latest: PriceDto | null
+  points: TrendPoint[]
+}
+
+export async function fetchTrend(itemId: string, unitId: string, marketId: string): Promise<TrendResponse> {
+  const { data } = await api.get<ApiResponse<TrendResponse>>(`/items/${itemId}/trend`, {
+    params: { unitId, marketId },
+  })
   return data.data
 }
 
