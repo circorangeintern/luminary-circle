@@ -466,9 +466,13 @@ export class PricesService {
       throw e;
     }
 
-    // Threshold engine: the write path sets status, so every read path
-    // (compare, trend, feed) can simply filter on status = ACTIVE.
-    const flagCount = await this.prisma.flag.count({ where: { submissionId } });
+    // Only unresolved flags count toward the threshold. After an admin RESTORE,
+    // prior flags become DISMISSED, so the effective count resets to zero and it
+    // takes a fresh threshold-worth of new reports to re-quarantine. Otherwise a
+    // single new flag would instantly overturn the admin's decision.
+    const flagCount = await this.prisma.flag.count({
+      where: { submissionId, status: 'PENDING' },
+    });
     let submissionStatus: string = submission.status;
 
     if (

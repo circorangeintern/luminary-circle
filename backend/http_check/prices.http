@@ -226,7 +226,7 @@ GET {{base}}/prices?sortBy=price
 @adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJ4b210Y2cwMDJmZDBkaml0ajhjZjVuIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODQ4MjE0OTIsImV4cCI6MTc4NDkwNzg5Mn0.8uDz0uHh0ev3bXo2kl_wmQ6HV2nZtG7XuVo9ex01-Zk
 
 @submissionId = cmruyzhew000a4gdjtlw5kz9e
-@requestId = cmrxpmrxw0030d0djrzdlo5zo
+@requestId = 
 
 ### 
 # POST {{base}}/auth/register
