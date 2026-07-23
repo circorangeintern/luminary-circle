@@ -1,139 +1,61 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { flagPrice } from '../services/api'
 
 interface ReportPriceModalProps {
+  priceId: string
   product: string
   market: string
   price: string
   onClose: () => void
-  onReported?: () => void
 }
 
-const reasons = [
-  {
-    title: 'Price is too low - seems incorrect',
-    desc: 'The amount looks unrealistically cheap',
-  },
-  {
-    title: 'Price is too high - seems incorrect',
-    desc: 'The amount looks unrealistically expensive',
-  },
-  {
-    title: 'Price is outdated',
-    desc: 'This no longer reflects current market price',
-  },
-  {
-    title: 'Wrong market or item',
-    desc: 'This was submitted for the wrong location or food',
-  },
+const REASONS = [
+  { title: 'Price is too low - seems incorrect', desc: 'The amount looks unrealistically cheap', apiReason: 'WRONG_PRICE' as const },
+  { title: 'Price is too high - seems incorrect', desc: 'The amount looks unrealistically expensive', apiReason: 'WRONG_PRICE' as const },
+  { title: 'Price is outdated', desc: 'This no longer reflects current market price', apiReason: 'OUTDATED' as const },
+  { title: 'Wrong market or item', desc: 'This was submitted for the wrong location or food', apiReason: 'OTHER' as const },
 ]
 
-type State = 'loading' | 'default' | 'validationError' | 'notSent' | 'confirm'
+type State = 'form' | 'validationError' | 'submitting' | 'confirm' | 'error'
 
-export default function ReportPriceModal({ product, market, price, onClose, onReported }: ReportPriceModalProps) {
-  const [state, setState] = useState<State>('loading')
+export default function ReportPriceModal({ priceId, product, market, price, onClose }: ReportPriceModalProps) {
+  const [state, setState] = useState<State>('form')
   const [selected, setSelected] = useState<number | null>(null)
-  const [details, setDetails] = useState('')
+  const [flagCount, setFlagCount] = useState(0)
 
-  useEffect(() => {
-    const timer = setTimeout(() => setState('default'), 1200)
-    return () => clearTimeout(timer)
-  }, [])
-
-  function handleSubmit() {
+  async function handleSubmit() {
     if (selected === null) {
       setState('validationError')
       return
     }
-    setState('confirm')
+    setState('submitting')
+    try {
+      const res = await flagPrice(priceId, REASONS[selected].apiReason)
+      setFlagCount(res.flagCount)
+      setState('confirm')
+    } catch {
+      setState('error')
+    }
   }
 
-  if (state === 'loading') {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
-        <div className="w-full max-w-[680px] bg-white rounded-[16px] p-8">
-          <div className="flex items-center justify-between pb-5 border-b border-days-grey mb-8">
-            <h1 className="text-xl font-bold text-black">Report this price</h1>
-            <span className="text-sm text-days-grey">Loading price data...</span>
-          </div>
-          <div className="skeleton h-[74px] rounded-[12px] mb-6" />
-          <div className="skeleton h-[34px] rounded-[12px] w-[52%] mb-6" />
-          <div className="skeleton h-[74px] rounded-[12px] mb-6" />
-          <div className="skeleton h-[74px] rounded-[12px] mb-6" />
-          <div className="skeleton h-[74px] rounded-[12px] mb-6" />
-          <div className="flex gap-5">
-            <div className="skeleton h-[74px] rounded-[12px] flex-[0_0_42%]" />
-            <div className="skeleton h-[74px] rounded-[12px] flex-1" />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (state === 'notSent') {
+  // ===== SUBMITTING =====
+  if (state === 'submitting') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
         <div className="w-full max-w-[640px] bg-white rounded-[16px] p-8">
           <div className="flex items-center justify-between pb-5 border-b border-days-grey mb-8">
             <h1 className="text-xl font-bold text-black">Report this price</h1>
-            <span className="text-sm text-days-grey">No internet connection</span>
+            <span className="text-sm text-days-grey">Submitting report...</span>
           </div>
-          <div className="text-center max-w-[520px] mx-auto">
-            <div className="w-20 h-20 rounded-full bg-input-bg flex items-center justify-center mx-auto mb-8">
-              <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8">
-                <path d="M2 8.5C7 4 17 4 22 8.5" stroke="#111" strokeWidth="1.8" strokeLinecap="round" />
-                <path d="M5.5 12C9 9 15 9 18.5 12" stroke="#111" strokeWidth="1.8" strokeLinecap="round" />
-                <path d="M9 15.5C10.8 14 13.2 14 15 15.5" stroke="#111" strokeWidth="1.8" strokeLinecap="round" />
-                <circle cx="12" cy="19" r="1.1" fill="#111" />
-                <path d="M2 2L22 22" stroke="#111" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-extrabold text-black mb-4">Report couldn't be sent</h2>
-            <p className="text-base leading-relaxed text-[#4a4a4a] mb-8">
-              Your report was saved but could not be submitted — you appear to be offline. It will be sent automatically once you reconnect.
-            </p>
-            <span className="inline-block bg-[#f5f5f5] rounded-lg px-5 py-2.5 text-sm font-mono text-[#6a6a6a] mb-7">
-              Error: 503 - Network unavailable
-            </span>
-            <div className="bg-[#f6d99a] border border-[#e4bd6d] rounded-[12px] px-5 py-5 text-left mb-7">
-              <div className="flex items-center gap-2 font-bold text-[#7a5a13] text-sm mb-2">
-                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
-                  <path d="M5 3H15L19 7V21H5V3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-                  <path d="M9 13.5L11 15.5L15 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span>Saved locally</span>
-              </div>
-              <div className="text-sm text-[#2a2a2a]">
-                {product} - {price} - {market} — &ldquo;{selected !== null ? reasons[selected].title : 'No reason selected'}&rdquo; — waiting to send
-              </div>
-            </div>
-            <div className="flex gap-5 max-w-[520px] mx-auto mb-6">
-              <button
-                onClick={() => setState('confirm')}
-                className="flex-1 h-12 flex items-center justify-center gap-2 bg-input-bg border border-grey-border rounded-[12px] text-sm text-black hover:bg-gray-200 transition cursor-pointer"
-              >
-                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
-                  <path d="M4 4V9H9" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M4.6 15A8 8 0 1 0 6 7.3L4 9" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Retry now
-              </button>
-              <button
-                onClick={onClose}
-                className="flex-1 h-12 flex items-center justify-center gap-2 bg-white border border-days-grey rounded-[12px] text-sm text-black hover:bg-gray-50 transition cursor-pointer"
-              >
-                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
-                  <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Back to comparison
-              </button>
-            </div>
-            <p className="text-sm text-[#4a4a4a]">Your report will not be lost</p>
+          <div className="flex justify-center py-12">
+            <div className="skeleton h-8 w-48 rounded-lg" />
           </div>
         </div>
       </div>
     )
   }
 
+  // ===== CONFIRM =====
   if (state === 'confirm') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
@@ -146,14 +68,14 @@ export default function ReportPriceModal({ product, market, price, onClose, onRe
             </div>
             <h2 className="text-2xl font-extrabold text-black mb-4">Report submitted</h2>
             <p className="text-base leading-relaxed text-[#4a4a4a] mb-8">
-              Thanks for keeping MarketCompare accurate. Our team will review this price and remove it if confirmed wrong.
+              Thanks for keeping MarketCompare accurate. This price has been flagged ({flagCount} report{flagCount > 1 ? 's' : ''}) and will be reviewed.
             </p>
             <div className="border border-days-grey rounded-[12px] px-6 mb-8 divide-y divide-days-grey">
               {[
                 { label: 'Food item', value: product },
                 { label: 'Price', value: price },
                 { label: 'Market', value: market },
-                { label: 'Reason', value: selected !== null ? reasons[selected].title : '' },
+                { label: 'Reason', value: selected !== null ? REASONS[selected].title : '' },
               ].map((row) => (
                 <div key={row.label} className="flex justify-between items-center py-3.5">
                   <span className="text-sm text-black">{row.label}</span>
@@ -161,25 +83,12 @@ export default function ReportPriceModal({ product, market, price, onClose, onRe
                 </div>
               ))}
             </div>
-            <div className="flex gap-5">
+            <div className="flex justify-center">
               <button
-                onClick={() => { onReported?.(); onClose() }}
-                className="flex-1 h-12 flex items-center justify-center gap-2 bg-white border border-days-grey rounded-[12px] text-sm text-black hover:bg-gray-50 transition cursor-pointer"
+                onClick={onClose}
+                className="h-12 px-8 flex items-center justify-center bg-[#161111] rounded-[12px] text-sm text-white hover:brightness-125 transition cursor-pointer"
               >
-                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
-                  <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
                 Back to comparison
-              </button>
-              <button
-                onClick={() => { onReported?.(); setState('default'); setSelected(null); setDetails('') }}
-                className="flex-1 h-12 flex items-center justify-center gap-2 bg-[#161111] rounded-[12px] text-sm text-white hover:brightness-125 transition cursor-pointer"
-              >
-                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
-                  <circle cx="12" cy="12" r="9" stroke="#fff" strokeWidth="1.8" />
-                  <path d="M12 8V16M8 12H16" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-                Submit another
               </button>
             </div>
           </div>
@@ -188,6 +97,47 @@ export default function ReportPriceModal({ product, market, price, onClose, onRe
     )
   }
 
+  // ===== ERROR =====
+  if (state === 'error') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
+        <div className="w-full max-w-[640px] bg-white rounded-[16px] p-8">
+          <div className="flex items-center justify-between pb-5 border-b border-days-grey mb-8">
+            <h1 className="text-xl font-bold text-black">Report this price</h1>
+            <span className="text-sm text-red-flag">Something went wrong</span>
+          </div>
+          <div className="text-center max-w-[520px] mx-auto">
+            <div className="w-20 h-20 rounded-full bg-[#fbd7d7] flex items-center justify-center mx-auto mb-8">
+              <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-[#b40000]">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+                <path d="M12 8V12M12 16H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-extrabold text-black mb-4">Report couldn't be sent</h2>
+            <p className="text-base leading-relaxed text-[#4a4a4a] mb-8">
+              Please check your connection and try again.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={handleSubmit}
+                className="h-12 px-6 flex items-center justify-center bg-input-bg border border-grey-border rounded-[12px] text-sm text-black hover:bg-gray-200 transition cursor-pointer"
+              >
+                Retry
+              </button>
+              <button
+                onClick={onClose}
+                className="h-12 px-6 flex items-center justify-center border border-days-grey rounded-[12px] text-sm text-black hover:bg-gray-50 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ===== FORM =====
   const showValidationError = state === 'validationError'
 
   return (
@@ -217,29 +167,24 @@ export default function ReportPriceModal({ product, market, price, onClose, onRe
             </div>
           )}
 
-          {showValidationError ? (
-            <div className="flex items-center justify-between gap-4 border border-days-grey rounded-[10px] px-5 py-[18px] mb-8 flex-wrap">
-              <span className="text-[17px] text-black">{product} - {price}</span>
-              <span className="text-sm text-days-grey whitespace-nowrap">{market} - today</span>
-            </div>
-          ) : (
-            <div className="mb-9">
-              <p className="text-lg font-normal text-black mb-5">You are Reporting</p>
-              <p className="text-[19px] text-black mb-1.5">{product} - {price}</p>
-              <p className="text-sm text-days-grey">{market} - submitted today</p>
-            </div>
-          )}
+          <div className="mb-9">
+            <p className="text-lg font-normal text-black mb-5">You are Reporting</p>
+            <p className="text-[19px] text-black mb-1.5">{product} - {price}</p>
+            <p className="text-sm text-days-grey">{market}</p>
+          </div>
 
           <p className="text-[19px] font-semibold text-black mb-[18px]">Why is the pricing wrong?</p>
           <div className="flex flex-col gap-[18px] mb-2">
-            {reasons.map((reason, i) => (
+            {REASONS.map((reason, i) => (
               <button
                 key={i}
-                onClick={() => { setSelected(i); if (showValidationError) setState('default') }}
+                onClick={() => { setSelected(i); if (showValidationError) setState('form') }}
                 className={`flex items-start gap-5 w-full px-[26px] py-[22px] border rounded-[14px] text-left cursor-pointer transition ${
                   showValidationError && selected === i
                     ? 'border-[#fbd7d7] bg-[#fbd7d7]'
-                    : 'border-days-grey bg-white hover:border-black/30'
+                    : selected === i
+                      ? 'border-ink bg-gray-50'
+                      : 'border-days-grey bg-white hover:border-black/30'
                 }`}
               >
                 <div className={`w-[22px] h-[22px] rounded-full border shrink-0 mt-0.5 flex items-center justify-center transition ${
@@ -270,17 +215,7 @@ export default function ReportPriceModal({ product, market, price, onClose, onRe
             </div>
           )}
 
-          <p className="text-[17px] font-semibold text-black mb-4 mt-8">
-            Extra details <span className="font-normal text-days-grey">(optional)</span>
-          </p>
-          <textarea
-            value={details}
-            onChange={(e) => setDetails(e.target.value)}
-            placeholder="e.g I was at Bodija today and it was ₦1,800 / mudu"
-            className="w-full min-h-[110px] border border-days-grey rounded-[12px] px-5 py-5 text-sm text-days-grey resize-y outline-none focus:border-black focus:text-black mb-10"
-          />
-
-          <div className="flex gap-[22px]">
+          <div className="flex gap-[22px] mt-10">
             <button
               onClick={onClose}
               className="flex-[0_0_260px] h-12 flex items-center justify-center border border-days-grey rounded-[12px] text-sm font-semibold text-black bg-white hover:bg-gray-50 transition cursor-pointer"

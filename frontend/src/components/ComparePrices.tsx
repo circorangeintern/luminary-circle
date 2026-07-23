@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { getRelativeTime } from '../utils/time'
 import { fetchItems, fetchComparePrices } from '../services/api'
 import type { ItemDto, ComparePriceEntry } from '../services/api'
+import { trackComparisonView } from '../services/events'
 import ReportPriceModal from './ReportPriceModal'
 
 interface ProductOption {
@@ -25,7 +26,7 @@ export default function ComparePrices() {
   const [compareEntries, setCompareEntries] = useState<ComparePriceEntry[]>([])
   const [comparisonPossible, setComparisonPossible] = useState(false)
   const [pricesLoading, setPricesLoading] = useState(false)
-  const [reportTarget, setReportTarget] = useState<{ product: string; market: string; price: string } | null>(null)
+  const [reportTarget, setReportTarget] = useState<{ priceId: string; product: string; market: string; price: string } | null>(null)
 
   const allProducts = useMemo(() => {
     const result: ProductOption[] = []
@@ -67,17 +68,19 @@ export default function ComparePrices() {
       .then((res) => {
         setCompareEntries(res.items)
         setComparisonPossible(res.comparisonPossible)
+        trackComparisonView(res.items.length)
       })
       .catch(() => { setCompareEntries([]); setComparisonPossible(false) })
       .finally(() => setPricesLoading(false))
   }, [active?.itemId, active?.unitId])
 
-  function handleFlag(marketName: string, price: number) {
+  function handleFlag(priceId: string, marketName: string, price: number) {
     if (!isAuthenticated) {
       navigate('/signin?returnUrl=/prices#compare')
       return
     }
     setReportTarget({
+      priceId,
       product: active?.label || '',
       market: marketName,
       price: `₦${price.toLocaleString()}`,
@@ -155,6 +158,7 @@ export default function ComparePrices() {
     <section id="compare" className="px-6 sm:px-12 lg:px-20 mt-10 relative z-10">
       {reportTarget && (
         <ReportPriceModal
+          priceId={reportTarget.priceId}
           product={reportTarget.product}
           market={reportTarget.market}
           price={reportTarget.price}
@@ -260,7 +264,7 @@ export default function ComparePrices() {
                 </div>
                 <div className="flex justify-center mt-7">
                   <button
-                    onClick={() => handleFlag(e.market.name || '', e.price)}
+                    onClick={() => handleFlag(e.id, e.market.name || '', e.price)}
                     className="border border-days-grey rounded-lg px-4 py-2 text-sm text-red-flag hover:bg-gray-50 transition cursor-pointer"
                   >
                     ⚑ Flag
@@ -329,7 +333,7 @@ export default function ComparePrices() {
                       <span className="text-xs text-text-dark text-center">{getRelativeTime(e.createdAt)}</span>
                       <span className="text-sm text-text-dark text-center">{e.submitterDisplayName}</span>
                       <button
-                        onClick={() => handleFlag(marketName, e.price)}
+                        onClick={() => handleFlag(e.id, marketName, e.price)}
                         className="border border-days-grey rounded-lg px-3.5 py-2 text-sm text-red-flag justify-self-center hover:bg-gray-50 transition cursor-pointer"
                       >
                         ⚑ Flag

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchItems, fetchMarkets, submitPrice as apiSubmitPrice } from '../services/api'
+import { fetchItems, fetchMarkets, submitPrice as apiSubmitPrice, createMarketRequest } from '../services/api'
 import type { ItemDto, MarketDto } from '../services/api'
+import { trackPriceSubmission } from '../services/events'
 
 type State = 'loading' | 'empty' | 'form' | 'validationError' | 'offline' | 'confirm' | 'duplicate' | 'rateLimited'
 
@@ -19,6 +20,12 @@ export default function SubmitPrice() {
   const [pickerStep, setPickerStep] = useState<'item' | 'unit'>('item')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [marketOpen, setMarketOpen] = useState(false)
+  const [requestMode, setRequestMode] = useState(false)
+  const [requestName, setRequestName] = useState('')
+  const [requestLga, setRequestLga] = useState('')
+  const [requestState, setRequestState] = useState('')
+  const [requestSubmitting, setRequestSubmitting] = useState(false)
+  const [requestDone, setRequestDone] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -64,6 +71,7 @@ export default function SubmitPrice() {
     if (!validate()) return
 
     try {
+      trackPriceSubmission()
       await apiSubmitPrice({ itemId: selectedItem!.id, unitId: selectedUnitId, marketId, price: parseInt(price, 10), note: note || '' })
       setState('confirm')
     } catch (err: unknown) {
@@ -80,6 +88,17 @@ export default function SubmitPrice() {
     }
   }
 
+  async function handleRequestSubmit() {
+    if (!requestName || !requestLga || !requestState) return
+    setRequestSubmitting(true)
+    try {
+      await createMarketRequest(requestName, requestLga, requestState)
+      setRequestDone(true)
+    } catch {
+      setRequestDone(true)
+    }
+  }
+
   function resetForm() {
     setSelectedItem(null)
     setSelectedUnitId('')
@@ -88,6 +107,7 @@ export default function SubmitPrice() {
     setPrice('')
     setNote('')
     setPickerStep('item')
+    setRequestMode(false)
     setState('form')
   }
 
@@ -471,6 +491,76 @@ export default function SubmitPrice() {
                       <span className="text-sm text-days-grey">{m.lga}, {m.state}</span>
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => { setMarketOpen(false); setRequestMode(true) }}
+                    className="w-full px-5 py-3 text-base text-left hover:bg-gray-100 transition cursor-pointer border-t border-days-grey text-red font-semibold"
+                  >
+                    + Request new market
+                  </button>
+                </div>
+              )}
+              {requestMode && !requestDone && (
+                <div className="mt-3 border border-days-grey rounded-[12px] p-5 bg-white">
+                  {requestSubmitting ? (
+                    <div className="flex justify-center py-6">
+                      <div className="skeleton h-6 w-40 rounded-lg" />
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm font-semibold text-black mb-4">Suggest a market to add</p>
+                      <input
+                        type="text"
+                        value={requestName}
+                        onChange={(e) => setRequestName(e.target.value)}
+                        placeholder="Market name (e.g. Rumuokoro Market)"
+                        className="w-full border border-days-grey rounded-[12px] px-4 py-3 text-sm text-black outline-none focus:border-black placeholder-days-grey mb-3"
+                      />
+                      <div className="flex gap-3 mb-3">
+                        <input
+                          type="text"
+                          value={requestLga}
+                          onChange={(e) => setRequestLga(e.target.value)}
+                          placeholder="LGA (e.g. Obio/Akpor)"
+                          className="flex-1 border border-days-grey rounded-[12px] px-4 py-3 text-sm text-black outline-none focus:border-black placeholder-days-grey"
+                        />
+                        <input
+                          type="text"
+                          value={requestState}
+                          onChange={(e) => setRequestState(e.target.value)}
+                          placeholder="State (e.g. Rivers)"
+                          className="flex-1 border border-days-grey rounded-[12px] px-4 py-3 text-sm text-black outline-none focus:border-black placeholder-days-grey"
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => { setRequestMode(false); setRequestName(''); setRequestLga(''); setRequestState('') }}
+                          className="flex-1 h-11 border border-days-grey rounded-[12px] text-sm text-black hover:bg-gray-50 transition cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRequestSubmit}
+                          disabled={!requestName || !requestLga || !requestState}
+                          className="flex-1 h-11 bg-[#161111] rounded-[12px] text-sm text-white hover:brightness-125 transition cursor-pointer disabled:opacity-40"
+                        >
+                          Submit request
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              {requestDone && (
+                <div className="mt-3 border border-days-grey rounded-[12px] p-5 bg-white text-center">
+                  <p className="text-sm text-green-text font-semibold">
+                    ✓ Request submitted — our team will review it.
+                  </p>
+                  <p className="text-xs text-days-grey mt-2">
+                    Approved markets appear on the list above.
+                  </p>
                 </div>
               )}
             </div>
