@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DeviceType, Prisma, ResponseStatus } from '../generated/prisma';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateEventsDto, EventsResultDto, FRONTEND_EVENT_NAMES, IncomingEventDto } from './dto/event.dto';
+import {
+  CreateEventsDto,
+  EventsResultDto,
+  FRONTEND_EVENT_NAMES,
+} from './dto/event.dto';
 
 export interface EmitEventInput {
   name: string;

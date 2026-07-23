@@ -69,7 +69,7 @@ export class IncomingEventDto {
 
   @ApiPropertyOptional({ example: 'SUCCESS', enum: RESPONSE_STATUSES })
   @IsOptional()
-  @IsIn(RESPONSE_STATUSES as unknown as string[])
+  @IsIn(RESPONSE_STATUSES)
   responseStatus?: string;
 
   @ApiPropertyOptional({ example: 'VALIDATION_ERROR' })
@@ -80,7 +80,7 @@ export class IncomingEventDto {
 
   @ApiPropertyOptional({ example: 'MOBILE', enum: DEVICE_TYPES })
   @IsOptional()
-  @IsIn(DEVICE_TYPES as unknown as string[])
+  @IsIn(DEVICE_TYPES)
   deviceType?: string;
 
   @ApiPropertyOptional({ example: { itemId: 'cmrm...', marketsDisplayed: 3 } })
@@ -100,7 +100,7 @@ export class CreateEventsDto {
   @ArrayMinSize(1)
   @ArrayMaxSize(20, { message: 'A batch may contain at most 20 events' })
   @ValidateNested({ each: true }) // validates every item in the array
-  @Type(() => IncomingEventDto)   // tells class-transformer what to instantiate
+  @Type(() => IncomingEventDto) // tells class-transformer what to instantiate
   events!: IncomingEventDto[];
 }
 
