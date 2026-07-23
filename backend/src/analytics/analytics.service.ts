@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DeviceType, ResponseStatus } from '../generated/prisma';
+import { DeviceType, Prisma, ResponseStatus } from '../generated/prisma';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateEventsDto, EventsResultDto, FRONTEND_EVENT_NAMES } from './dto/event.dto';
+import { CreateEventsDto, EventsResultDto, FRONTEND_EVENT_NAMES, IncomingEventDto } from './dto/event.dto';
 
 export interface EmitEventInput {
   name: string;
@@ -59,62 +59,50 @@ export class AnalyticsService {
     dto: CreateEventsDto,
     userId: string | null,
   ): Promise<EventsResultDto> {
-    let accepted = 0;
-    let duplicates = 0;
+    const valid: Prisma.AnalyticsEventCreateManyInput[] = [];
     let rejected = 0;
 
+    // 1. Filter and shape in memory
     for (const event of dto.events) {
-      // Reject backend-owned names: those are emitted server-side, and
-      // accepting them here would double-count them in Michael's KPIs.
       if (!FRONTEND_EVENT_NAMES.includes(event.name as never)) {
         rejected++;
         this.logger.warn(`Rejected non-frontend event name: ${event.name}`);
         continue;
       }
-
-      try {
-        await this.prisma.analyticsEvent.create({
-          data: {
-            clientEventId: event.clientEventId,
-            name: event.name,
-            sessionId: event.sessionId,
-            userId,
-            screenName: event.screenName ?? null,
-            responseStatus: (event.responseStatus as ResponseStatus) ?? null,
-            errorCode: event.errorCode ?? null,
-            deviceType: (event.deviceType as DeviceType) ?? null,
-            properties: (event.properties ?? undefined) as never,
-            // Client timestamp when supplied, else server time. Client clocks
-            // can be wrong, but for UI events the client's own ordering is
-            // more useful than network-arrival time.
-            createdAt: event.occurredAt ? new Date(event.occurredAt) : new Date(),
-          },
-        });
-        accepted++;
-      } catch (e) {
-        // The unique constraint on clientEventId makes retries safe: a
-        // replayed batch counts as duplicates, not errors.
-        if (this.isUniqueViolation(e)) {
-          duplicates++;
-        } else {
-          rejected++;
-          this.logger.warn(
-            `Failed to store event "${event.name}": ${
-              e instanceof Error ? e.message : String(e)
-            }`,
-          );
-        }
-      }
+      valid.push({
+        clientEventId: event.clientEventId,
+        name: event.name,
+        sessionId: event.sessionId,
+        userId,
+        screenName: event.screenName ?? null,
+        responseStatus: (event.responseStatus as ResponseStatus) ?? null,
+        errorCode: event.errorCode ?? null,
+        deviceType: (event.deviceType as DeviceType) ?? null,
+        properties: (event.properties ?? undefined) as never,
+        // Client timestamp when supplied, else server time. Client clocks
+        // can be wrong, but for UI events the client's own ordering is
+        // more useful than network-arrival time.
+        createdAt: event.occurredAt ? new Date(event.occurredAt) : new Date(),
+      });
     }
 
-    return { accepted, duplicates, rejected };
-  }
+    if (valid.length === 0) {
+      return { accepted: 0, duplicates: 0, rejected };
+    }
 
-  private isUniqueViolation(e: unknown): boolean {
-    return (
-      typeof e === 'object' &&
-      e !== null &&
-      (e as { code?: string }).code === 'P2002'
-    );
+    // 2. ONE round trip for the whole batch. skipDuplicates makes the unique
+    //    constraint on clientEventId a silent no-op instead of an error, so
+    //    retried batches are still safe, i just infer the duplicate count
+    //    from what actually landed.
+    const result = await this.prisma.analyticsEvent.createMany({
+      data: valid,
+      skipDuplicates: true,
+    });
+
+    return {
+      accepted: result.count,
+      duplicates: valid.length - result.count,
+      rejected,
+    };
   }
 }
