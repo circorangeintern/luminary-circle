@@ -274,4 +274,60 @@ export async function fetchTrend(itemId: string, unitId: string, marketId: strin
   return data.data
 }
 
+// ----- Flag endpoint -----
+
+export interface FlagResponse {
+  flagId: string
+  submissionId: string
+  flagCount: number
+  submissionStatus: 'ACTIVE' | 'UNDER_REVIEW' | 'REMOVED'
+}
+
+export async function flagPrice(priceId: string, reason: 'WRONG_PRICE' | 'OUTDATED' | 'OTHER'): Promise<FlagResponse> {
+  const { data } = await api.post<ApiResponse<FlagResponse>>(`/prices/${priceId}/flag`, { reason })
+  return data.data
+}
+
+// ----- Market request endpoint -----
+
+export interface MarketRequestDto {
+  id: string
+  proposedName: string
+  lga: string
+  state: string
+  status: 'PENDING' | 'APPROVED' | 'DECLINED'
+  createdAt: string
+  reviewedAt: string | null
+}
+
+export async function createMarketRequest(proposedName: string, lga: string, state: string): Promise<MarketRequestDto> {
+  const { data } = await api.post<ApiResponse<MarketRequestDto>>('/market-requests', { proposedName, lga, state })
+  return data.data
+}
+
+// ----- Events / analytics -----
+
+export interface IncomingEvent {
+  clientEventId: string
+  name: string
+  sessionId: string
+  screenName?: string
+  responseStatus?: string
+  errorCode?: string
+  deviceType?: 'MOBILE' | 'TABLET' | 'DESKTOP'
+  properties?: Record<string, unknown>
+  occurredAt: string
+}
+
+export interface EventsResult {
+  accepted: number
+  duplicates: number
+  rejected: number
+}
+
+export async function submitEvents(events: IncomingEvent[]): Promise<EventsResult> {
+  const { data } = await api.post<ApiResponse<EventsResult>>('/events', { events })
+  return data.data
+}
+
 export default api

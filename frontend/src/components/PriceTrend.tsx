@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { getRelativeTime } from '../utils/time'
 import { fetchItems, fetchMarkets, fetchTrend } from '../services/api'
 import type { ItemDto, MarketDto, TrendResponse } from '../services/api'
+import { trackTrendView } from '../services/events'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -60,8 +61,8 @@ export default function PriceTrend() {
     if (!active || !activeMarket) return
     setTrendLoading(true)
     fetchTrend(active.itemId, active.unitId, activeMarket.id)
-      .then(setTrend)
-      .catch(() => setTrend(null))
+      .then((t) => { setTrend(t); trackTrendView(t.points.length > 0) })
+      .catch(() => { setTrend(null); trackTrendView(false) })
       .finally(() => setTrendLoading(false))
   }, [active?.itemId, active?.unitId, activeMarket?.id])
 
