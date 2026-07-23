@@ -8,6 +8,8 @@ import { PRICE_SELECT, PriceWithRelations, toPriceDto } from './price.mapper';
 import { PriceQueryDto, PriceQueryResponseDto } from './dto/query-price.dto';
 import { CompareResponseDto } from './dto/compare-response.dto';
 import { TrendResponseDto } from './dto/trend-response.dto';
+import { FlagResponseDto } from './dto/flag.dto';
+import { FlagReason } from '../generated/prisma';
 
 const DEDUPE_WINDOW_MINUTES = 10;
 const DEFAULT_PAGE_SIZE = 20;
@@ -424,5 +426,75 @@ export class PricesService {
       latest: toPriceDto(valid[0], mapperOptions),
       points,
     };
+  }
+
+  async flagPrice(
+    userId: string,
+    submissionId: string,
+    reason: string,
+  ): Promise<FlagResponseDto> {
+    const submission = await this.prisma.priceSubmission.findUnique({
+      where: { id: submissionId },
+      select: { id: true, status: true },
+    });
+
+    if (!submission || submission.status === 'REMOVED') {
+      throw new AppException('NOT_FOUND', 'That price could not be found');
+    }
+
+    // The unique (submissionId, flaggedById) constraint enforces one flag per
+    // user. We catch P2002 here to give a specific message rather than the
+    // generic CONFLICT the global filter would produce
+    let flagId: string;
+    try {
+      const flag = await this.prisma.flag.create({
+        data: {
+          submissionId,
+          flaggedById: userId,
+          reason: reason as FlagReason,
+        },
+        select: { id: true },
+      });
+      flagId = flag.id;
+    } catch (e) {
+      if (this.isUniqueViolation(e)) {
+        throw new AppException(
+          'CONFLICT',
+          'You have already reported this price',
+        );
+      }
+      throw e;
+    }
+
+    // Threshold engine: the write path sets status, so every read path
+    // (compare, trend, feed) can simply filter on status = ACTIVE.
+    const flagCount = await this.prisma.flag.count({ where: { submissionId } });
+    let submissionStatus: string = submission.status;
+
+    if (
+      submissionStatus === 'ACTIVE' &&
+      flagCount >= this.config.flagExcludeThreshold
+    ) {
+      await this.prisma.priceSubmission.update({
+        where: { id: submissionId },
+        data: { status: 'UNDER_REVIEW' },
+      });
+      submissionStatus = 'UNDER_REVIEW';
+    }
+
+    return {
+      flagId,
+      submissionId,
+      flagCount,
+      submissionStatus,
+    };
+  }
+
+  private isUniqueViolation(e: unknown): boolean {
+    return (
+      typeof e === 'object' &&
+      e !== null &&
+      (e as { code?: string }).code === 'P2002'
+    );
   }
 }
