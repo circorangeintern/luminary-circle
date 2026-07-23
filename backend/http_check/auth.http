@@ -1,4 +1,4 @@
-@base = http://localhost:3000/api/v1
+@base = https://staging.marketcompare.name.ng/api/v1
 
 ### register — expect 201 + { success, data: { user, accessToken } }
 POST {{base}}/auth/register
