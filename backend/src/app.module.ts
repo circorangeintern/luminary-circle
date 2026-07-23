@@ -15,6 +15,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { AppConfigService } from './config/app-config.service';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { Redis } from 'ioredis';
+import { MarketRequestsModule } from './market-requests/market-requests.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -57,6 +59,8 @@ import { Redis } from 'ioredis';
     AuthModule,
     CatalogModule,
     PricesModule,
+    MarketRequestsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
