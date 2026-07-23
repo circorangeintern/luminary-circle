@@ -1,0 +1,317 @@
+@base = http://localhost:3000/api/v1
+@session = ses_local_test
+
+### 0. Login first — copy accessToken from the response into @token below
+POST {{base}}/auth/login
+Content-Type: application/json
+X-Session-Id: {{session}}
+
+{
+  "phone": "08031234567",
+  "password": "testpass123"
+}
+
+### --- paste values here before running the rest ---
+# token from step 0; IDs from catalog.http (GET /items, GET /markets)
+# @token = paste.jwt.here
+# @riceId = paste_rice_item_id
+# @dericaId = paste_derica_unit_id
+# @eggsId = paste_eggs_item_id
+# @bagId = paste_50kg_bag_unit_id
+# @mile3Id = paste_mile3_market_id
+@token = paste.jwt.here
+@riceId = cmrmtby0c000apwdjuuy3cixh
+@dericaId = cmrmtbv820000pwdjwt3ouvbi
+@eggsId = cmrmtbyn0000epwdj81z5j7sm
+@bagId = cmrmtbx0x0003pwdjra33zskz
+@mile3Id = cmrmtc86f000fpwdjrju0rwac
+@oilMillId = cmrmtc9gl000hpwdjkuevpsex
+
+### 1. no token -> 401 AUTHENTICATION_ERROR
+POST {{base}}/prices
+Content-Type: application/json
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100
+}
+
+### 2. valid submission -> 201
+# check: isStale false, flagCount 0, isFlagged false, submitterDisplayName set,
+# nested item/unit/market objects, createdAt is an ISO string
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100,
+  "note": "big derica"
+}
+
+### 3. SAME submission again -> 409 CONFLICT (dedupe window, 10 min)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100,
+  "note": "big derica"
+}
+
+### 4. different price, same everything else -> 201 (dedupe is price-specific)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2150
+}
+
+### 5. illegal pair: eggs + 50kg bag -> 400, details[0].field = "unitId"
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{eggsId}}",
+  "unitId": "{{bagId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 6000
+}
+
+### 6. nonexistent market -> 400, details[0].field = "marketId"
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "cmnotarealmarketid00000",
+  "price": 2100
+}
+
+### 7. price 0 -> 400 (DTO Min, before the DB constraint)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 0
+}
+
+### 8. decimal price -> 400 (IsInt)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100.50
+}
+
+### 9. extra field -> 400 (forbidNonWhitelisted proves itself)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100,
+  "reporter": "me"
+}
+
+### 10. missing required field -> 400 (details should name itemId)
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100
+}
+
+### 11. note over 200 chars -> 400
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer {{token}}
+X-Session-Id: {{session}}
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2200,
+  "note": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}
+
+### 12. bogus token -> 401
+POST {{base}}/prices
+Content-Type: application/json
+Authorization: Bearer not.a.real.token
+
+{
+  "itemId": "{{riceId}}",
+  "unitId": "{{dericaId}}",
+  "marketId": "{{mile3Id}}",
+  "price": 2100
+}
+
+
+# QUERY 
+
+### feed: default page -> 20 items, newest first, totalItems ~160
+GET {{base}}/prices
+
+### feed: page 2
+GET {{base}}/prices?page=2
+
+### feed: filter by item
+GET {{base}}/prices?itemId={{riceId}}
+
+### feed: filter by item + market (the combination the compare view will use)
+GET {{base}}/prices?itemId={{riceId}}&marketId={{mile3Id}}
+
+### feed: no auth header at all -> still 200 (public endpoint)
+GET {{base}}/prices?pageSize=5
+
+### feed: pageSize over the max -> 400
+GET {{base}}/prices?pageSize=100
+
+### feed: decimal page -> 400 (IsInt catches what Min alone would let through)
+GET {{base}}/prices?page=1.5
+
+### feed: unknown query param -> 400 (forbidNonWhitelisted applies to queries too)
+GET {{base}}/prices?sortBy=price
+
+
+
+
+
+
+
+
+# ADMINS
+@tokenA = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJ4b2xtMHUwMDI5ZDBkajAyMnJuc3Z1Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODQ4MjE0MzYsImV4cCI6MTc4NDkwNzgzNn0.fmFk4SgwhADip51FVlnRTv6m2pDI7J8U4nygJw_5uLE
+@tokenB = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJ4b20wNzEwMDJiZDBkamRyZDc3djJzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODQ4MjE0NTQsImV4cCI6MTc4NDkwNzg1NH0.HG9Go0yi5dJL4GxD-UJHrAfMQgx_ssz5DKHMmBaHluY
+@tokenC = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJ4b21jNDEwMDJkZDBkanBzdGhkaHpsIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODQ4MjE0NzAsImV4cCI6MTc4NDkwNzg3MH0.z9w0WgpOm5IFZkycOzxDUYY2MDcACzUMjjQNICrDj5M
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJ4b210Y2cwMDJmZDBkaml0ajhjZjVuIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODQ4MjE0OTIsImV4cCI6MTc4NDkwNzg5Mn0.8uDz0uHh0ev3bXo2kl_wmQ6HV2nZtG7XuVo9ex01-Zk
+
+@submissionId = cmruyzhew000a4gdjtlw5kz9e
+@requestId = 
+
+### 
+# POST {{base}}/auth/register
+# Content-Type: application/json
+
+# { "displayName": "admin tester 1", "phone": "08020000000", "password": "testpass123" }
+
+# ### 
+# POST {{base}}/auth/login
+# X-Session-Id: ses_test_2
+# Content-Type: application/json
+
+# { "phone": "08031234567", "password": "testpass123" }
+
+
+### 1. flag a price (user A) -> 201, flagCount 1, status ACTIVE
+POST {{base}}/prices/{{submissionId}}/flag
+Authorization: Bearer {{tokenA}}
+Content-Type: application/json
+
+{ "reason": "WRONG_PRICE" }
+
+### 2. same user again -> 409 "already reported"
+POST {{base}}/prices/{{submissionId}}/flag
+Authorization: Bearer {{tokenA}}
+Content-Type: application/json
+
+{ "reason": "WRONG_PRICE" }
+
+### 3. user B flags -> flagCount 2, still ACTIVE
+POST {{base}}/prices/{{submissionId}}/flag
+Authorization: Bearer {{tokenB}}
+Content-Type: application/json
+
+{ "reason": "WRONG_PRICE" }
+
+### 4. user C flags -> flagCount 3, status UNDER_REVIEW
+POST {{base}}/prices/{{submissionId}}/flag
+Authorization: Bearer {{tokenC}}
+Content-Type: application/json
+
+{ "reason": "OUTDATED" }
+
+### 5. that price is now GONE from compare and the feed
+GET {{base}}/markets/compare?itemId={{riceId}}&unitId={{dericaId}}
+
+### 6. admin sees it in the queue
+GET {{base}}/admin/moderation
+Authorization: Bearer {{adminToken}}
+
+### 7. non-admin hits admin -> 403
+GET {{base}}/admin/moderation
+Authorization: Bearer {{tokenA}}
+
+### 8. admin restores it -> back to ACTIVE, flags DISMISSED
+PATCH {{base}}/admin/moderation/{{submissionId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "action": "RESTORE" }
+
+### 9. market request -> 201 PENDING
+POST {{base}}/market-requests
+Authorization: Bearer {{tokenA}}
+Content-Type: application/json
+
+{ "proposedName": "Rumuokoro Market", "lga": "Obio/Akpor", "state": "Rivers" }
+
+### 10. duplicate request -> 409
+POST {{base}}/market-requests
+Authorization: Bearer {{tokenA}}
+Content-Type: application/json
+
+{ "proposedName": "Rumuokoro Market", "lga": "Obio/Akpor", "state": "Rivers" }
+
+### 11. GET /market-requests/mine -> your request
+GET {{base}}/market-requests/mine
+Authorization: Bearer {{tokenA}}
+
+### 12. admin approves -> creates a Market
+PATCH {{base}}/admin/market-requests/{{requestId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "action": "APPROVE" }
+
+### 13. GET /markets now includes Rumuokoro
+GET {{base}}/markets
