@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiHeader,
@@ -18,6 +26,7 @@ import { PriceResponseDto } from './dto/price-response.dto';
 import { ErrorResponseDto } from '../common/errors/error-response.dto';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { PriceQueryDto, PriceQueryResponseDto } from './dto/query-price.dto';
+import { CreateFlagDto, FlagResponseDto } from './dto/flag.dto';
 
 @ApiTags('prices')
 @ApiHeader({
@@ -119,5 +128,70 @@ export class PricesController {
   })
   async list(@Query() query: PriceQueryDto) {
     return this.prices.getPrices(query);
+  }
+
+  @Post(':id/flag')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Report a price as wrong or outdated' })
+  @ApiResponse({
+    status: 201,
+    description: 'Flag recorded',
+    type: FlagResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not signed in',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Price not found',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Already reported by this user',
+    type: ErrorResponseDto,
+  })
+  async flag(
+    @Param('id') id: string,
+    @Body() dto: CreateFlagDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @SessionId() sessionId: string,
+  ) {
+    try {
+      const result = await this.prices.flagPrice(user.id, id, dto.reason);
+
+      this.analytics.emit({
+        name: 'price_flag_submitted',
+        sessionId,
+        userId: user.id,
+        responseStatus: 'SUCCESS',
+        properties: {
+          flagId: result.flagId,
+          submissionId: id,
+          reason: dto.reason,
+          flagCount: result.flagCount,
+        },
+      });
+
+      return result;
+    } catch (e) {
+      this.analytics.emit({
+        name: 'price_flag_failed',
+        sessionId,
+        userId: user.id,
+        responseStatus:
+          e instanceof AppException &&
+          (e.code === 'CONFLICT' || e.code === 'NOT_FOUND')
+            ? 'VALIDATION_ERROR'
+            : 'SERVER_ERROR',
+        errorCode: e instanceof AppException ? e.code : 'UNKNOWN',
+        properties: { submissionId: id },
+      });
+
+      throw e;
+    }
   }
 }

@@ -1,4 +1,4 @@
-@base = https://staging.marketcompare.name.ng/api/v1
+@base = http://localhost:3000/api/v1
 @session = ses_local_test
 
 ### 0. Login first — copy accessToken from the response into @token below
@@ -211,3 +211,107 @@ GET {{base}}/prices?page=1.5
 
 ### feed: unknown query param -> 400 (forbidNonWhitelisted applies to queries too)
 GET {{base}}/prices?sortBy=price
+
+
+
+
+
+
+
+
+# ADMINS
+@tokenA = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJ4b2xtMHUwMDI5ZDBkajAyMnJuc3Z1Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODQ4MjE0MzYsImV4cCI6MTc4NDkwNzgzNn0.fmFk4SgwhADip51FVlnRTv6m2pDI7J8U4nygJw_5uLE
+@tokenB = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJ4b20wNzEwMDJiZDBkamRyZDc3djJzIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODQ4MjE0NTQsImV4cCI6MTc4NDkwNzg1NH0.HG9Go0yi5dJL4GxD-UJHrAfMQgx_ssz5DKHMmBaHluY
+@tokenC = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJ4b21jNDEwMDJkZDBkanBzdGhkaHpsIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODQ4MjE0NzAsImV4cCI6MTc4NDkwNzg3MH0.z9w0WgpOm5IFZkycOzxDUYY2MDcACzUMjjQNICrDj5M
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJ4b210Y2cwMDJmZDBkaml0ajhjZjVuIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODQ4MjE0OTIsImV4cCI6MTc4NDkwNzg5Mn0.8uDz0uHh0ev3bXo2kl_wmQ6HV2nZtG7XuVo9ex01-Zk
+
+@submissionId = cmruyzhew000a4gdjtlw5kz9e
+@requestId = 
+
+### 
+# POST {{base}}/auth/register
+# Content-Type: application/json
+
+# { "displayName": "admin tester 1", "phone": "08020000000", "password": "testpass123" }
+
+# ### 
+# POST {{base}}/auth/login
+# X-Session-Id: ses_test_2
+# Content-Type: application/json
+
+# { "phone": "08031234567", "password": "testpass123" }
+
+
+### 1. flag a price (user A) -> 201, flagCount 1, status ACTIVE
+POST {{base}}/prices/{{submissionId}}/flag
+Authorization: Bearer {{tokenA}}
+Content-Type: application/json
+
+{ "reason": "WRONG_PRICE" }
+
+### 2. same user again -> 409 "already reported"
+POST {{base}}/prices/{{submissionId}}/flag
+Authorization: Bearer {{tokenA}}
+Content-Type: application/json
+
+{ "reason": "WRONG_PRICE" }
+
+### 3. user B flags -> flagCount 2, still ACTIVE
+POST {{base}}/prices/{{submissionId}}/flag
+Authorization: Bearer {{tokenB}}
+Content-Type: application/json
+
+{ "reason": "WRONG_PRICE" }
+
+### 4. user C flags -> flagCount 3, status UNDER_REVIEW
+POST {{base}}/prices/{{submissionId}}/flag
+Authorization: Bearer {{tokenC}}
+Content-Type: application/json
+
+{ "reason": "OUTDATED" }
+
+### 5. that price is now GONE from compare and the feed
+GET {{base}}/markets/compare?itemId={{riceId}}&unitId={{dericaId}}
+
+### 6. admin sees it in the queue
+GET {{base}}/admin/moderation
+Authorization: Bearer {{adminToken}}
+
+### 7. non-admin hits admin -> 403
+GET {{base}}/admin/moderation
+Authorization: Bearer {{tokenA}}
+
+### 8. admin restores it -> back to ACTIVE, flags DISMISSED
+PATCH {{base}}/admin/moderation/{{submissionId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "action": "RESTORE" }
+
+### 9. market request -> 201 PENDING
+POST {{base}}/market-requests
+Authorization: Bearer {{tokenA}}
+Content-Type: application/json
+
+{ "proposedName": "Rumuokoro Market", "lga": "Obio/Akpor", "state": "Rivers" }
+
+### 10. duplicate request -> 409
+POST {{base}}/market-requests
+Authorization: Bearer {{tokenA}}
+Content-Type: application/json
+
+{ "proposedName": "Rumuokoro Market", "lga": "Obio/Akpor", "state": "Rivers" }
+
+### 11. GET /market-requests/mine -> your request
+GET {{base}}/market-requests/mine
+Authorization: Bearer {{tokenA}}
+
+### 12. admin approves -> creates a Market
+PATCH {{base}}/admin/market-requests/{{requestId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "action": "APPROVE" }
+
+### 13. GET /markets now includes Rumuokoro
+GET {{base}}/markets
