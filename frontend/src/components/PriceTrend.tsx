@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getRelativeTime } from '../utils/time'
@@ -33,8 +33,11 @@ export default function PriceTrend() {
   const [activeMarketIdx, setActiveMarketIdx] = useState(0)
   const [trend, setTrend] = useState<TrendResponse | null>(null)
   const [trendLoading, setTrendLoading] = useState(false)
+  const [searchInput, setSearchInput] = useState('')
+  const [showDropdown, setShowDropdown] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
 
-  const products = useMemo(() => {
+  const allProducts = useMemo(() => {
     const result: ProductOption[] = []
     for (const item of items) {
       for (const unit of item.units) {
@@ -43,6 +46,22 @@ export default function PriceTrend() {
     }
     return result
   }, [items])
+
+  const suggestions = useMemo(() => {
+    if (!searchInput.trim()) return []
+    const q = searchInput.toLowerCase()
+    return allProducts.filter((p) => p.label.toLowerCase().includes(q)).slice(0, 20)
+  }, [allProducts, searchInput])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   useEffect(() => {
     Promise.all([fetchItems(), fetchMarkets()])
@@ -54,8 +73,14 @@ export default function PriceTrend() {
       .catch(() => setState('offline'))
   }, [])
 
-  const active = products[activeIdx]
+  const active = allProducts[activeIdx]
   const activeMarket = markets[activeMarketIdx]
+
+  useEffect(() => {
+    if (activeIdx >= allProducts.length && allProducts.length > 0) {
+      setActiveIdx(0)
+    }
+  }, [allProducts.length, activeIdx])
 
   useEffect(() => {
     if (!active || !activeMarket) return
@@ -77,6 +102,13 @@ export default function PriceTrend() {
   const directionMeta = trend ? DIRECTION_META[trend.direction] : null
   const measure = active?.label.split(', ')[1] || ''
   const isLoading = trendLoading && !trend
+
+  function selectProduct(idx: number) {
+    setActiveIdx(idx)
+    setSearchInput(allProducts[idx]?.label || '')
+    setShowDropdown(false)
+    setActiveMarketIdx(0)
+  }
 
   // ===== LOADING =====
   if (state === 'loading') {
@@ -157,19 +189,45 @@ export default function PriceTrend() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-input-bg border border-input-border rounded-lg px-4 py-3.5 mb-4">
-            <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
-              <circle cx="9" cy="9" r="6" stroke="#A1A1A1" strokeWidth="1.5" />
-              <path d="M14 14L17.5 17.5" stroke="#A1A1A1" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <span className="text-sm text-black">{active?.label}</span>
+          {/* Search / Autocomplete */}
+          <div className="relative mb-4" ref={searchRef}>
+            <div className="flex items-center gap-3 bg-input-bg border border-input-border rounded-lg px-4 py-3.5">
+              <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
+                <circle cx="9" cy="9" r="6" stroke="#A1A1A1" strokeWidth="1.5" />
+                <path d="M14 14L17.5 17.5" stroke="#A1A1A1" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => { setSearchInput(e.target.value); setShowDropdown(true) }}
+                onFocus={() => setShowDropdown(true)}
+                placeholder={active?.label || 'Search items...'}
+                className="bg-transparent border-none outline-none w-full text-sm text-black placeholder:text-[#999]"
+              />
+            </div>
+            {showDropdown && searchInput.trim() !== '' && suggestions.length > 0 && (
+              <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-grey-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                {suggestions.map((p) => {
+                  const idx = allProducts.indexOf(p)
+                  return (
+                    <button
+                      key={`${p.itemId}-${p.unitId}`}
+                      onClick={() => selectProduct(idx)}
+                      className="w-full text-left px-4 py-3 text-sm text-black hover:bg-input-bg transition cursor-pointer border-b border-input-border last:border-0"
+                    >
+                      {p.label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2 flex-wrap mb-3">
-            {products.map((p, i) => (
+            {allProducts.map((p, i) => (
               <button
                 key={`${p.itemId}-${p.unitId}`}
-                onClick={() => { setActiveIdx(i); setActiveMarketIdx(0) }}
+                onClick={() => selectProduct(i)}
                 className={`px-4 py-2 rounded-lg text-sm tracking-tight transition cursor-pointer ${
                   i === activeIdx
                     ? 'bg-ink text-white border-ink'
