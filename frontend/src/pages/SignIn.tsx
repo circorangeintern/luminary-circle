@@ -72,9 +72,7 @@ export default function SignIn() {
       <div className="w-full" style={{ maxWidth: 460, paddingTop: 56, paddingBottom: 120 }}>
         {/* Logo */}
         <div className="flex justify-center items-center gap-3.5 mb-[34px]">
-          <svg width="62" height="72" viewBox="0 0 62 72" fill="none">
-            <path d="M6 30C6 22 12 18 18 18C24 18 26 24 26 30V42C26 48 28 54 34 54C40 54 42 48 42 42V30C42 22 48 18 54 18" stroke="#c00000" strokeWidth="12" strokeLinecap="round" />
-          </svg>
+          <img src="/logo-icon.png" srcSet="/logo-icon@2x.png 2x" alt="Market Compare" style={{ width: 'auto', height: 72 }} />
           <div>
             <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.05, color: '#141414' }} className="m-0">
               Market<br />Compare
