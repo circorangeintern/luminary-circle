@@ -2,12 +2,11 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getRelativeTime } from '../utils/time'
-import { fetchItems, fetchMarkets, fetchTrend } from '../services/api'
+import { fetchItems, fetchMarkets, fetchComparePrices, fetchTrend } from '../services/api'
 import type { ItemDto, MarketDto, TrendResponse } from '../services/api'
 import { trackTrendView } from '../services/events'
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from 'recharts'
+import { Suspense } from 'react'
+import PriceTrendChart from './PriceTrendChart'
 
 interface ProductOption {
   label: string
@@ -16,13 +15,6 @@ interface ProductOption {
 }
 
 type State = 'loading' | 'itemsLoaded' | 'offline' | 'emptyItems'
-
-const DIRECTION_META: Record<string, { label: string; arrow: string; color: string }> = {
-  UP: { label: 'Going up', arrow: '↗', color: '#F73939' },
-  DOWN: { label: 'Going down', arrow: '↘', color: '#1D9E75' },
-  STABLE: { label: 'Stable', arrow: '→', color: '#378ADD' },
-  INSUFFICIENT_DATA: { label: 'Not enough data', arrow: '—', color: '#A1A1A1' },
-}
 
 export default function PriceTrend() {
   const { isAuthenticated } = useAuth()
@@ -33,6 +25,8 @@ export default function PriceTrend() {
   const [activeMarketIdx, setActiveMarketIdx] = useState(0)
   const [trend, setTrend] = useState<TrendResponse | null>(null)
   const [trendLoading, setTrendLoading] = useState(false)
+  const [cheapestMarketName, setCheapestMarketName] = useState('')
+  const [cheapestDirection, setCheapestDirection] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
@@ -91,6 +85,25 @@ export default function PriceTrend() {
       .finally(() => setTrendLoading(false))
   }, [active?.itemId, active?.unitId, activeMarket?.id])
 
+  useEffect(() => {
+    if (!active) return
+    fetchComparePrices(active.itemId, active.unitId)
+      .then((res) => {
+        const cheapest = res.items.find((e) => e.isCheapest)
+        if (cheapest) setCheapestMarketName(cheapest.market.name)
+      })
+      .catch(() => {})
+  }, [active?.itemId, active?.unitId])
+
+  useEffect(() => {
+    if (!active || !cheapestMarketName) return
+    const market = markets.find((m) => m.name === cheapestMarketName)
+    if (!market) return
+    fetchTrend(active.itemId, active.unitId, market.id)
+      .then((t) => setCheapestDirection(t.direction))
+      .catch(() => setCheapestDirection(''))
+  }, [active?.itemId, active?.unitId, cheapestMarketName])
+
   const chartData = useMemo(() => {
     if (!trend) return []
     return trend.points.map((p) => ({
@@ -99,7 +112,6 @@ export default function PriceTrend() {
     }))
   }, [trend])
 
-  const directionMeta = trend ? DIRECTION_META[trend.direction] : null
   const measure = active?.label.split(', ')[1] || ''
   const isLoading = trendLoading && !trend
 
@@ -110,20 +122,24 @@ export default function PriceTrend() {
     setActiveMarketIdx(0)
   }
 
+  function selectMarket(idx: number) {
+    setActiveMarketIdx(idx)
+  }
+
   // ===== LOADING =====
   if (state === 'loading') {
     return (
       <div className="px-6 sm:px-12 lg:px-20 pb-12">
-        <div className="max-w-[1240px] mx-auto bg-white border border-grey-border rounded-2xl p-6 sm:p-8 lg:p-12 mt-12">
+        <div className="max-w-[1240px] mx-auto bg-white border border-grey-border rounded-[30px] p-6 sm:p-8 lg:p-10 mt-12">
           <div className="m-8">
             <div className="skeleton h-8 w-1/2 rounded-lg mb-2" />
             <div className="skeleton h-5 w-1/3 rounded-lg mb-6" />
             <div className="skeleton h-12 rounded-lg mb-4" />
             <div className="flex gap-2 mb-8">
-              {[1,2,3,4].map((i) => <div key={i} className="skeleton h-9 rounded-lg w-24" />)}
+              {[1,2,3,4,5].map((i) => <div key={i} className="skeleton h-[47px] rounded-[10px] flex-1 max-w-[162px]" />)}
             </div>
-            <div className="flex gap-6 flex-wrap mb-8">
-              {[1,2,3].map((i) => <div key={i} className="skeleton h-24 rounded-lg flex-1 min-w-[200px]" />)}
+            <div className="flex gap-[20px] flex-wrap mb-8">
+              {[1,2,3].map((i) => <div key={i} className="skeleton h-[114px] rounded-[10px] flex-1 min-w-[220px]" />)}
             </div>
             <div className="skeleton h-80 rounded-lg" />
           </div>
@@ -136,7 +152,7 @@ export default function PriceTrend() {
   if (state === 'offline') {
     return (
       <div className="px-6 sm:px-12 lg:px-20 pb-12">
-        <div className="max-w-[1240px] mx-auto bg-white border border-grey-border rounded-2xl p-6 sm:p-8 lg:p-12 mt-12">
+        <div className="max-w-[1240px] mx-auto bg-white border border-grey-border rounded-[30px] p-6 sm:p-8 lg:p-10 mt-12">
           <div className="m-8 text-center py-12">
             <div className="w-16 h-16 rounded-full bg-input-bg flex items-center justify-center mx-auto mb-5">
               <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7">
@@ -159,7 +175,7 @@ export default function PriceTrend() {
   if (state === 'emptyItems') {
     return (
       <div className="px-6 sm:px-12 lg:px-20 pb-12">
-        <div className="max-w-[1240px] mx-auto bg-white border border-grey-border rounded-2xl p-6 sm:p-8 lg:p-12 mt-12">
+        <div className="max-w-[1240px] mx-auto bg-white border border-grey-border rounded-[30px] p-6 sm:p-8 lg:p-10 mt-12">
           <div className="m-8 text-center py-12">
             <div className="w-16 h-16 rounded-full bg-input-bg flex items-center justify-center mx-auto mb-5">
               <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7">
@@ -177,20 +193,11 @@ export default function PriceTrend() {
 
   // ===== MAIN UI =====
   return (
-    <div className="px-6 sm:px-12 lg:px-20 pb-12">
-      <div className="max-w-[1240px] mx-auto bg-white border border-grey-border rounded-2xl p-6 sm:p-8 lg:p-12 mt-12">
-        <div className="m-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-text-black mb-1">Price trend - {active?.label}</h2>
-              <p className="text-lg font-medium text-black">
-                {isLoading ? 'Loading...' : trend ? `${trend.sampleSize} observations at ${activeMarket?.name}` : 'Select a market'}
-              </p>
-            </div>
-          </div>
-
-          {/* Search / Autocomplete */}
-          <div className="relative mb-4" ref={searchRef}>
+    <div id="trend" className="px-6 sm:px-12 lg:px-20 pb-12">
+      <div className="max-w-[1240px] mx-auto bg-white border border-grey-border rounded-[30px] p-[34px_10px_10px] sm:p-10 mt-12">
+        <div className="pl-4 sm:pl-10 pr-4 sm:pr-4 mb-2">
+          {/* Search bar */}
+          <div className="relative" ref={searchRef}>
             <div className="flex items-center gap-3 bg-input-bg border border-input-border rounded-lg px-4 py-3.5">
               <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
                 <circle cx="9" cy="9" r="6" stroke="#A1A1A1" strokeWidth="1.5" />
@@ -201,9 +208,12 @@ export default function PriceTrend() {
                 value={searchInput}
                 onChange={(e) => { setSearchInput(e.target.value); setShowDropdown(true) }}
                 onFocus={() => setShowDropdown(true)}
-                placeholder={active?.label || 'Search items...'}
+                placeholder="Search items..."
                 className="bg-transparent border-none outline-none w-full text-sm text-black placeholder:text-[#999]"
               />
+              <svg viewBox="0 0 14 8" fill="none" className="w-3.5 h-2 shrink-0">
+                <path d="M1 1L7 7L13 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
             {showDropdown && searchInput.trim() !== '' && suggestions.length > 0 && (
               <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-grey-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
@@ -222,39 +232,38 @@ export default function PriceTrend() {
               </div>
             )}
           </div>
+        </div>
 
-          <div className="flex gap-2 flex-wrap mb-3">
-            {allProducts.map((p, i) => (
-              <button
-                key={`${p.itemId}-${p.unitId}`}
-                onClick={() => selectProduct(i)}
-                className={`px-4 py-2 rounded-lg text-sm tracking-tight transition cursor-pointer ${
-                  i === activeIdx
-                    ? 'bg-ink text-white border-ink'
-                    : 'bg-input-bg border border-input-border text-[#252323] hover:bg-gray-100'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
+        <div className="pl-4 sm:pl-10 pr-4 sm:pr-4">
+          {/* Heading */}
+          <div className="flex flex-col items-start gap-[9px] mb-[27px]">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-text-black leading-tight">
+              Price trend - {active?.label.split(',')[0] || ''}
+            </h2>
+            <p className="text-sm sm:text-lg text-black">last 6 days submission across all markets</p>
           </div>
+        </div>
 
-          <div className="flex gap-2 flex-wrap mb-8">
+        {/* Market pills */}
+        <div className="pl-4 sm:pl-10 pr-4 sm:pr-4 mb-[28px]">
+          <div className="flex gap-2 flex-wrap">
             {markets.map((m, i) => (
               <button
                 key={m.id}
-                onClick={() => setActiveMarketIdx(i)}
-                className={`px-4 py-2 rounded-lg text-sm tracking-tight transition cursor-pointer ${
+                onClick={() => selectMarket(i)}
+                className={`rounded-xl text-sm tracking-tight cursor-pointer transition px-4 py-2 ${
                   i === activeMarketIdx
                     ? 'bg-ink text-white border-ink'
-                    : 'bg-input-bg border border-input-border text-[#252323] hover:bg-gray-100'
+                    : 'bg-white border border-days-grey text-black hover:bg-gray-50'
                 }`}
               >
                 {m.name}
               </button>
             ))}
           </div>
+        </div>
 
+        <div className="px-4 sm:px-10 pb-[2px]">
           {isLoading && (
             <div className="flex justify-center py-16">
               <div className="skeleton h-8 w-32 rounded-lg" />
@@ -279,76 +288,74 @@ export default function PriceTrend() {
 
           {!isLoading && trend && trend.points.length > 0 && (
             <>
-              <div className="flex gap-6 flex-wrap mb-8">
-                <div className="flex-1 min-w-[220px] border border-days-grey rounded-lg px-5 py-4">
-                  <p className="text-xs text-text-dark mb-0.5">Latest price</p>
-                  <p className="text-xl font-semibold text-text-dark mb-0.5">
-                    ₦{trend.latest!.price.toLocaleString()} / {measure}
-                  </p>
-                  <p className="text-xs text-green-text">
-                    {trend.market.name} - {getRelativeTime(trend.latest!.createdAt)}
-                  </p>
+              {/* Stats cards */}
+              <div className="flex gap-[20px] flex-wrap mb-[47px]">
+                <div className="flex-1 min-w-[200px] border border-days-grey rounded-[10px] px-4 py-3">
+                  <div className="flex flex-col gap-[6px]">
+                    <span className="text-xs font-semibold text-muted-text tracking-tight">Latest price</span>
+                    <span className="text-sm font-semibold text-text-dark tracking-tight">
+                      ₦{trend.latest?.price.toLocaleString()}{measure ? ` / ${measure}` : ''}
+                    </span>
+                    <span className="text-xs text-green-text tracking-tight">
+                      {activeMarket?.name} - {getRelativeTime(trend.latest?.createdAt || '')}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-[220px] border border-days-grey rounded-lg px-5 py-4">
-                  <p className="text-xs text-text-dark mb-0.5">Sample size</p>
-                  <p className="text-xl font-semibold text-text-dark mb-0.5">{trend.sampleSize} observations</p>
-                  <p className="text-xs text-green-text">over the data collection period</p>
+
+                <div className="flex-1 min-w-[200px] border border-days-grey rounded-[10px] px-4 py-3">
+                  <div className="flex flex-col gap-[6px]">
+                    <span className="text-xs font-semibold text-muted-text tracking-tight">Sample size</span>
+                    <span className="text-sm font-semibold text-text-dark tracking-tight">{trend.sampleSize} Observations</span>
+                    <span className="text-xs text-green-text tracking-tight">Over the data collection period</span>
+                  </div>
                 </div>
-                {directionMeta && (
-                  <div className="flex-1 min-w-[220px] border border-days-grey rounded-lg px-5 py-4">
-                    <p className="text-xs text-text-dark mb-0.5">Direction</p>
-                    <p className="text-xl font-semibold mb-0.5" style={{ color: directionMeta.color }}>
-                      {directionMeta.arrow} {directionMeta.label}
-                    </p>
-                    <p className="text-xs text-green-text">
+
+                <div className="flex-1 min-w-[200px] border border-days-grey rounded-[10px] px-4 py-3">
+                  <div className="flex flex-col gap-[6px]">
+                    <span className="text-xs font-semibold text-muted-text tracking-tight">Overall direction</span>
+                    <span className="text-sm font-semibold text-text-dark tracking-tight">{trend.direction === 'UP' ? 'Going up' : trend.direction === 'DOWN' ? 'Going down' : trend.direction === 'STABLE' ? 'Stable' : 'Not enough data'}</span>
+                    <span className="text-xs text-green-text tracking-tight">
                       {trend.direction === 'UP'
-                        ? `↗₦${(trend.points[trend.points.length - 1].price - trend.points[0].price).toLocaleString()} rise`
+                        ? `↗ ₦${(trend.points[trend.points.length - 1].price - trend.points[0].price).toLocaleString()} rise total`
                         : trend.direction === 'DOWN'
-                          ? `↘₦${(trend.points[0].price - trend.points[trend.points.length - 1].price).toLocaleString()} drop`
+                          ? `↘ ₦${(trend.points[0].price - trend.points[trend.points.length - 1].price).toLocaleString()} drop total`
                           : trend.direction === 'STABLE'
                             ? '— No significant change'
                             : 'Not enough data points'}
-                    </p>
+                    </span>
                   </div>
-                )}
+                </div>
               </div>
 
-              <div className="w-full h-72 sm:h-80 mb-6">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke="rgba(208,213,221,0.87)" />
-                    <XAxis
-                      dataKey="fullDate"
-                      tickFormatter={(val: string) => getRelativeTime(val)}
-                      tick={{ fontSize: 11, fill: '#121212' }}
-                    />
-                    <YAxis
-                      domain={['dataMin - 200', 'dataMax + 200']}
-                      tick={{ fontSize: 13, fill: '#121212' }}
-                    />
-                    <Tooltip labelFormatter={(val) => getRelativeTime(String(val))} />
-                    <Line
-                      type="monotone"
-                      dataKey="price"
-                      stroke="#1D9E75"
-                      strokeWidth={2.5}
-                      dot={{ r: 5, fill: '#1D9E75' }}
-                      connectNulls
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              {/* Chart */}
+              <div className="w-full h-72 sm:h-[420px] mb-[46px]">
+                <Suspense fallback={<div className="skeleton h-full w-full rounded-lg" />}>
+                  <PriceTrendChart chartData={chartData} />
+                </Suspense>
               </div>
             </>
           )}
 
-          <div className="flex justify-center gap-5 flex-wrap pt-6 border-t border-dashed border-[rgba(208,213,221,0.87)]">
-            <Link
-              to={isAuthenticated ? '/submit' : '/signin?returnUrl=/submit'}
-              className="min-w-[220px] bg-[#2C2424] border border-grey-border text-white px-4 py-4 rounded-lg text-sm text-center hover:brightness-110 transition cursor-pointer block"
-            >
-              Submit price
-            </Link>
-          </div>
+          {/* Insight + Submit button */}
+          {!isLoading && trend && trend.points.length > 0 && (
+            <>
+              <div className="border-t border-dashed border-[rgba(208,213,221,0.87)] mb-5" />
+              <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 lg:gap-[161px]">
+                <div className="px-3 py-2.5">
+                  <span className="text-sm font-medium text-[#121212] tracking-tight">
+                    {cheapestMarketName || activeMarket?.name} is cheapest{cheapestDirection === 'DOWN' ? ' and still falling' : cheapestDirection === 'UP' ? ' but rising' : ''} - good time to buy
+                  </span>
+                </div>
+                <Link
+                  to={isAuthenticated ? '/submit' : '/signin?returnUrl=/submit'}
+                  className="inline-flex items-center justify-center px-4 h-[66px] w-[378px] max-w-full bg-[#2C2424] border border-[#BDBDBD] rounded-[10px] text-sm font-bold text-white tracking-tight hover:brightness-110 transition cursor-pointer"
+                  style={{ borderWidth: '0.5px' }}
+                >
+                  Submit price
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

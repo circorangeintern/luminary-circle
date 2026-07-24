@@ -65,7 +65,7 @@ export default function Header() {
       </button>
 
       <div
-        className={`lg:hidden absolute top-full right-4 sm:right-12 bg-ink border border-white/10 rounded-xl py-4 px-6 transition-all duration-200 z-40 min-w-[200px] ${
+        className={`lg:hidden absolute top-full left-4 right-4 sm:left-auto sm:right-12 bg-ink border border-white/10 rounded-xl py-4 px-6 transition-all duration-200 z-40 sm:min-w-[200px] ${
           open ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-2'
         }`}
       >

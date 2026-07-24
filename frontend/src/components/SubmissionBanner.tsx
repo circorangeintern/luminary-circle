@@ -12,9 +12,9 @@ export default function SubmissionBanner() {
         </div>
         <Link
           to="/submit"
-          className="bg-white text-black px-10 py-5 rounded-2xl text-lg sm:text-xl whitespace-nowrap hover:-translate-y-0.5 transition"
+          className="bg-white text-black px-10 py-5 rounded-2xl text-lg sm:text-xl sm:whitespace-nowrap hover:-translate-y-0.5 transition"
         >
-          Click HERE
+          Submit a price
         </Link>
       </div>
     </div>
