@@ -131,7 +131,7 @@ export default function Hero() {
               alt="Basket with rice, beans, and oil"
               width={607}
               height={456}
-              fetchpriority="high"
+              fetchPriority="high"
               className="relative z-10 w-full h-auto drop-shadow-[0_30px_40px_rgba(0,0,0,0.18)]"
             />
           </picture>
