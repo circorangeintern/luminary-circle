@@ -41,11 +41,11 @@ export default function Hero() {
           </p>
           <div className="flex gap-5 flex-wrap">
             <Link
-              to="/prices"
+              to="/prices/list"
               className="inline-flex items-center gap-2 bg-red text-white px-8 py-4 rounded-lg text-base hover:brightness-110 transition"
             >
-              See Prices
-              <span className="w-5 h-5 rounded-full border-2 border-current flex items-center justify-center text-sm leading-none shrink-0">+</span>
+              Live Market Prices
+            
             </Link>
             <Link
               to="/submit"
