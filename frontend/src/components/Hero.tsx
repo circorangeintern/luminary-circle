@@ -77,7 +77,7 @@ export default function Hero() {
               onKeyDown={handleKeyDown}
               onFocus={() => setShowDropdown(true)}
               placeholder="Search foodstuffs"
-              className="bg-transparent border-none outline-none text-sm text-days-grey w-full placeholder-days-grey tracking-tight"
+              className="bg-transparent border-none outline-none text-sm text-muted-text w-full placeholder-muted-text tracking-tight"
               style={{ letterSpacing: '-0.24px', lineHeight: '20px' }}
             />
           </div>
@@ -124,11 +124,17 @@ export default function Hero() {
         </div>
 
         <div className="relative w-full max-w-[607px] shrink-0 flex items-center justify-center">
-          <img
-            src="/hero-image.png"
-            alt="Basket with rice, beans, and oil"
-            className="relative z-10 w-full h-auto drop-shadow-[0_30px_40px_rgba(0,0,0,0.18)]"
-          />
+          <picture>
+            <source srcSet="/hero-image.webp" type="image/webp" />
+            <img
+              src="/hero-image.png"
+              alt="Basket with rice, beans, and oil"
+              width={607}
+              height={456}
+              fetchpriority="high"
+              className="relative z-10 w-full h-auto drop-shadow-[0_30px_40px_rgba(0,0,0,0.18)]"
+            />
+          </picture>
         </div>
       </div>
     </section>

@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getApiError } from '../utils/errors'
+import { trackScreenView } from '../services/events'
 
 type State = 'form' | 'invalidPassword' | 'wrongCreds' | 'networkError' | 'submitting' | 'success'
 
 export default function SignIn() {
+  useEffect(() => { trackScreenView('signin') }, [])
   const { login, user } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -99,7 +101,7 @@ export default function SignIn() {
               <line x1="12" y1="7" x2="12" y2="13" stroke="#c62828" strokeWidth="2" />
               <circle cx="12" cy="16.5" r="1" fill="#c62828" />
             </svg>
-            Your email or password is incorrect. Please try again.
+            Your phone number or password is incorrect. Please try again.
           </div>
         )}
         {state === 'networkError' && (

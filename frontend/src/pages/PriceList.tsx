@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getRelativeTime, isStale, formatDate } from '../utils/time'
+import { trackScreenView } from '../services/events'
 
 interface PriceItem {
   name: string
@@ -44,6 +46,7 @@ const products: PriceItem[] = [
 ]
 
 export default function PriceList() {
+  useEffect(() => { trackScreenView('price-list') }, [])
   return (
     <div className="min-h-screen bg-bg-grey">
       <div className="max-w-[797px] mx-auto flex flex-col">

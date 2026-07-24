@@ -151,15 +151,17 @@ export default function ComparePrices() {
               <div className="skeleton h-6 rounded-lg w-20" />
             </div>
           </div>
-          {[1,2,3].map((i) => (
-            <div key={i} className="grid grid-cols-[1.7fr_1fr_1fr_1fr_0.8fr] gap-4 mb-5">
-              <div className="skeleton h-20 rounded-lg" />
-              <div className="skeleton h-20 rounded-lg" />
-              <div className="skeleton h-20 rounded-lg" />
-              <div className="skeleton h-20 rounded-lg" />
-              <div className="skeleton h-20 rounded-lg" />
-            </div>
-          ))}
+          <div className="overflow-x-auto">
+            {[1,2,3].map((i) => (
+              <div key={i} className="grid grid-cols-[1.7fr_1fr_1fr_1fr_0.8fr] gap-4 mb-5 min-w-[600px]">
+                <div className="skeleton h-20 rounded-lg" />
+                <div className="skeleton h-20 rounded-lg" />
+                <div className="skeleton h-20 rounded-lg" />
+                <div className="skeleton h-20 rounded-lg" />
+                <div className="skeleton h-20 rounded-lg" />
+              </div>
+            ))}
+          </div>
           <div className="skeleton h-4 rounded-lg w-3/5 mb-8 mt-4" />
           <div className="flex gap-6">
             <div className="skeleton h-16 rounded-xl flex-1" />
@@ -176,7 +178,7 @@ export default function ComparePrices() {
       <section id="compare" className="px-6 sm:px-12 lg:px-20 mt-10 relative z-10">
         <div className="max-w-[1240px] mx-3 sm:mx-6 lg:mx-auto bg-white border border-grey-border rounded-2xl p-6 sm:p-12">
           <div className="flex items-start justify-between gap-5 pb-5 border-b border-days-grey mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-black">Compare price</h1>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-black">Compare price</h2>
             <span className="text-sm font-medium text-[#8a8a8a] whitespace-nowrap mt-3">No internet connection</span>
           </div>
 
@@ -270,9 +272,9 @@ export default function ComparePrices() {
         <div>
           {/* Heading */}
           <div className="flex justify-between items-start flex-wrap gap-3 mb-3">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-black leading-tight">Compare prices across markets</h1>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-black leading-tight">Compare prices across markets</h2>
             {compareEntries.length > 0 && (
-              <span className="text-sm text-[#9a9a9a] whitespace-nowrap mt-3">
+              <span className="text-sm text-muted-text whitespace-nowrap mt-3">
                 {itemName} - {compareEntries.length} market{compareEntries.length !== 1 ? 's' : ''}- updated now
               </span>
             )}
@@ -428,7 +430,7 @@ export default function ComparePrices() {
                       {/* Flag */}
                       <button
                         onClick={() => handleFlag(e.id, marketName, e.price)}
-                        className="border border-days-grey rounded-lg px-3 py-1.5 text-sm font-semibold text-highest-red justify-self-center bg-white hover:bg-gray-50 transition cursor-pointer"
+                        className="border border-days-grey rounded-lg px-3 py-1.5 text-sm font-semibold text-red justify-self-center bg-white hover:bg-gray-50 transition cursor-pointer"
                       >
                         Flag
                       </button>

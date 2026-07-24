@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export default function Footer() {
   return (
     <footer className="bg-ink mt-20 px-6 sm:px-12 lg:px-20 py-16 pb-10">
@@ -5,22 +7,18 @@ export default function Footer() {
         <div>
           <h4 className="text-white text-lg font-bold mb-5">PLATFORM</h4>
           <ul className="list-none">
-            {['Price Charts', 'Real-Time Prices', 'Compare Prices', 'Market trends'].map((item) => (
-              <li key={item} className="mb-4">
-                <a href="#" className="text-white text-sm opacity-90 hover:opacity-100 hover:underline transition">{item}</a>
-              </li>
-            ))}
+            <li className="mb-4"><Link to="/prices/list" onClick={() => window.scrollTo(0, 0)} className="text-white text-sm opacity-90 hover:opacity-100 hover:underline transition">Price Charts</Link></li>
+            <li className="mb-4"><Link to="/prices#compare" className="text-white text-sm opacity-90 hover:opacity-100 hover:underline transition">Real-Time Prices</Link></li>
+            <li className="mb-4"><Link to="/prices#compare" className="text-white text-sm opacity-90 hover:opacity-100 hover:underline transition">Compare Prices</Link></li>
+            <li className="mb-4"><Link to="/prices#trend" className="text-white text-sm opacity-90 hover:opacity-100 hover:underline transition">Market trends</Link></li>
           </ul>
         </div>
 
         <div>
           <h4 className="text-white text-lg font-bold mb-5">COMPANY</h4>
           <ul className="list-none">
-            {['About Us', 'Our Team', 'Contact Us', 'FAQ'].map((item) => (
-              <li key={item} className="mb-4">
-                <a href="#" className="text-white text-sm opacity-90 hover:opacity-100 hover:underline transition">{item}</a>
-              </li>
-            ))}
+            <li className="mb-4"><Link to="/about" onClick={() => window.scrollTo(0, 0)} className="text-white text-sm opacity-90 hover:opacity-100 hover:underline transition">About Us</Link></li>
+            <li className="mb-4"><Link to="/contact" onClick={() => window.scrollTo(0, 0)} className="text-white text-sm opacity-90 hover:opacity-100 hover:underline transition">Contact Us</Link></li>
           </ul>
         </div>
 
@@ -37,7 +35,7 @@ export default function Footer() {
             Get weekly market intelligence and price updates delivered to your inbox.
           </p>
           <div className="flex items-center bg-input-bg border border-input-border rounded-lg px-4 py-3.5 mb-3">
-            <input type="email" placeholder="Enter your email address" className="bg-transparent border-none outline-none text-sm text-black w-full placeholder-days-grey" />
+            <input type="email" placeholder="Enter your email address" className="bg-transparent border-none outline-none text-sm text-black w-full placeholder-muted-text" />
           </div>
           <button className="text-white text-base opacity-90 hover:opacity-70 hover:underline transition cursor-pointer bg-transparent border-none">
             Get Updates

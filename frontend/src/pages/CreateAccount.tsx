@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getApiError } from '../utils/errors'
+import { trackScreenView, trackSignupStarted } from '../services/events'
 
 type State = 'form' | 'validationError' | 'phoneExists' | 'networkError' | 'submitting' | 'success'
 
 export default function CreateAccount() {
+  useEffect(() => { trackScreenView('create-account') }, [])
   const { signup } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -32,6 +34,7 @@ export default function CreateAccount() {
     setState('form')
     setErrors({})
     if (!validate()) { setState('validationError'); return }
+    trackSignupStarted()
     setState('submitting')
     try {
       await signup(displayName, phone, password)

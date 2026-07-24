@@ -49,6 +49,7 @@ function flush() {
 }
 
 window.addEventListener('beforeunload', flush)
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush() })
 
 export function trackScreenView(screenName: string) {
   push({ name: 'screen_viewed', screenName, responseStatus: 'SUCCESS' })
