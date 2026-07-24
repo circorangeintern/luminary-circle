@@ -17,7 +17,7 @@ export default function Header() {
     <header className="bg-ink sticky top-0 z-50 h-20 lg:h-24">
       <div className="max-w-7xl mx-auto px-6 sm:px-12 lg:px-20 flex items-center justify-between h-full">
       <Link to="/" className="flex items-center shrink-0">
-        <img src="/logo.png" alt="Market Compare" className="h-9 w-auto brightness-0 invert" />
+        <img src="/logo.png" alt="Market Compare" className="h-9 w-auto" />
       </Link>
 
       <div className="hidden lg:flex items-center gap-[340px]">
@@ -65,7 +65,7 @@ export default function Header() {
       </button>
 
       <div
-        className={`lg:hidden absolute top-full right-4 sm:right-12 bg-ink border border-white/10 rounded-xl py-4 px-6 transition-all duration-200 z-40 min-w-[200px] ${
+        className={`lg:hidden absolute top-full left-4 right-4 sm:left-auto sm:right-12 bg-ink border border-white/10 rounded-xl py-4 px-6 transition-all duration-200 z-40 sm:min-w-[200px] ${
           open ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-2'
         }`}
       >
