@@ -62,10 +62,10 @@ export default function Hero() {
   }
 
   return (
-    <section className="bg-cream relative overflow-hidden pb-16 lg:pb-24">
-      <div className="px-6 sm:px-12 lg:px-20 pt-8 pb-10">
-        <div className="max-w-[800px] mx-auto relative" ref={searchRef}>
-          <div className="flex items-center gap-3 px-4 h-[65px] bg-input-bg border border-days-grey rounded-[10px] w-full" style={{ borderWidth: '0.5px' }}>
+    <section className="bg-cream relative overflow-hidden pb-10 lg:pb-24">
+      <div className="px-6 sm:px-12 lg:px-20 pt-6 lg:pt-8 pb-6 lg:pb-10">
+        <div className="max-w-[800px] mx-auto relative hidden lg:block" ref={searchRef}>
+          <div className="flex items-center gap-2 lg:gap-3 px-3 lg:px-4 h-[44px] lg:h-[65px] bg-input-bg border border-days-grey rounded-lg lg:rounded-[10px] w-full" style={{ borderWidth: '0.5px' }}>
             <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5 shrink-0">
               <circle cx="9" cy="9" r="6" stroke="#A1A1A1" strokeWidth="1.5" />
               <path d="M14 14L17.5 17.5" stroke="#A1A1A1" strokeWidth="1.5" strokeLinecap="round" />
@@ -97,33 +97,33 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-12 lg:px-20 flex flex-col lg:flex-row items-center gap-10">
-        <div className="relative z-10 max-w-[637px]">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black leading-tight tracking-tight mb-5">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-12 lg:px-20 flex flex-col lg:flex-row items-center gap-6 lg:gap-10">
+        <div className="relative z-10 max-w-[637px] w-full text-center lg:text-left">
+          <h1 className="text-[26px] sm:text-5xl lg:text-6xl font-bold text-black leading-tight tracking-tight mb-3 lg:mb-5">
             Know Market Prices Before You Shop.
           </h1>
-          <p className="text-lg sm:text-xl lg:text-2xl leading-relaxed text-[#1a1a1a] max-w-[605px] mb-11">
+          <p className="text-sm sm:text-xl lg:text-2xl leading-relaxed text-[#1a1a1a] max-w-[605px] mb-6 lg:mb-11 mx-auto lg:mx-0">
             Compare food prices across nearby markets and plan smarter before leaving home.
           </p>
-          <div className="flex gap-5 flex-wrap">
+          <div className="flex gap-3 lg:gap-5 flex-wrap justify-center lg:justify-start">
             <Link
               to="/prices/list"
-              className="inline-flex items-center gap-2 bg-red text-white px-8 py-4 rounded-lg text-base hover:brightness-110 transition"
+              className="inline-flex items-center gap-2 bg-red text-white px-5 lg:px-8 py-3 lg:py-4 rounded-lg text-sm lg:text-base hover:brightness-110 transition"
             >
               Live Market Prices
             
             </Link>
             <Link
               to="/submit"
-              className="inline-flex items-center gap-2 bg-transparent text-black border border-black px-8 py-4 rounded-lg text-base hover:bg-black/5 transition"
+              className="inline-flex items-center gap-2 bg-transparent text-black border border-black px-5 lg:px-8 py-3 lg:py-4 rounded-lg text-sm lg:text-base hover:bg-black/5 transition"
             >
               Update Price
-              <span className="w-5 h-5 rounded-full border-2 border-current flex items-center justify-center text-sm leading-none shrink-0">+</span>
+              <span className="w-4 h-4 lg:w-5 lg:h-5 rounded-full border-2 border-current flex items-center justify-center text-xs lg:text-sm leading-none shrink-0">+</span>
             </Link>
           </div>
         </div>
 
-        <div className="relative w-full max-w-[607px] shrink-0 flex items-center justify-center">
+        <div className="relative w-full max-w-[280px] lg:max-w-[607px] shrink-0 flex items-center justify-center">
           <picture>
             <source srcSet="/hero-image.webp" type="image/webp" />
             <img

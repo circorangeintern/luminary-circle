@@ -194,8 +194,8 @@ export default function PriceTrend() {
   // ===== MAIN UI =====
   return (
     <div id="trend" className="px-6 sm:px-12 lg:px-20 pb-12">
-      <div className="max-w-[1240px] mx-auto bg-white border border-grey-border rounded-[30px] p-[34px_10px_10px] sm:p-10 mt-12">
-        <div className="pl-4 sm:pl-10 pr-4 sm:pr-4 mb-2">
+      <div className="max-w-[1240px] mx-auto bg-white border border-grey-border rounded-[30px] p-[20px_10px_10px] sm:p-10 mt-6 lg:mt-12">
+        <div className="pl-4 sm:pl-10 pr-4 sm:pr-4 mb-1 lg:mb-2">
           {/* Search bar */}
           <div className="relative" ref={searchRef}>
             <div className="flex items-center gap-3 bg-input-bg border border-input-border rounded-lg px-4 py-3.5">
@@ -236,22 +236,22 @@ export default function PriceTrend() {
 
         <div className="pl-4 sm:pl-10 pr-4 sm:pr-4">
           {/* Heading */}
-          <div className="flex flex-col items-start gap-[9px] mb-[27px]">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-text-black leading-tight">
-              Price trend - {active?.label.split(',')[0] || ''}
+          <div className="flex flex-col items-start gap-1 lg:gap-[9px] mb-3 lg:mb-[27px]">
+            <h2 className="text-lg lg:text-3xl font-bold tracking-tight text-text-black leading-tight">
+              Price trends
             </h2>
-            <p className="text-sm sm:text-lg text-black">last 6 days submission across all markets</p>
+            <p className="text-[10px] lg:text-lg text-black">{active?.label.split(',')[0] || ''} / {measure || 'unit'}</p>
           </div>
         </div>
 
         {/* Market pills */}
-        <div className="pl-4 sm:pl-10 pr-4 sm:pr-4 mb-[28px]">
-          <div className="flex gap-2 flex-wrap">
+        <div className="pl-4 sm:pl-10 pr-4 sm:pr-4 mb-3 lg:mb-[28px] overflow-x-auto -mx-1 lg:mx-0">
+          <div className="flex gap-2 px-1 lg:px-0 min-w-max">
             {markets.map((m, i) => (
               <button
                 key={m.id}
                 onClick={() => selectMarket(i)}
-                className={`rounded-xl text-sm tracking-tight cursor-pointer transition px-4 py-2 ${
+                className={`rounded-lg lg:rounded-xl text-[11px] lg:text-sm tracking-tight cursor-pointer transition shrink-0 px-3 lg:px-4 py-1.5 lg:py-2 ${
                   i === activeMarketIdx
                     ? 'bg-ink text-white border-ink'
                     : 'bg-white border border-days-grey text-black hover:bg-gray-50'
@@ -263,7 +263,7 @@ export default function PriceTrend() {
           </div>
         </div>
 
-        <div className="px-4 sm:px-10 pb-[2px]">
+        <div className="px-4 sm:px-10 pb-[2px] overflow-hidden">
           {isLoading && (
             <div className="flex justify-center py-16">
               <div className="skeleton h-8 w-32 rounded-lg" />
@@ -289,36 +289,36 @@ export default function PriceTrend() {
           {!isLoading && trend && trend.points.length > 0 && (
             <>
               {/* Stats cards */}
-              <div className="flex gap-[20px] flex-wrap mb-[47px]">
-                <div className="flex-1 min-w-[200px] border border-days-grey rounded-[10px] px-4 py-3">
-                  <div className="flex flex-col gap-[6px]">
-                    <span className="text-xs font-semibold text-muted-text tracking-tight">Latest price</span>
-                    <span className="text-sm font-semibold text-text-dark tracking-tight">
+              <div className="grid grid-cols-3 lg:flex gap-2 lg:gap-[20px] mb-4 lg:mb-[47px]">
+                <div className="border border-days-grey rounded-[10px] px-2 lg:px-4 py-2 lg:py-3">
+                  <div className="flex flex-col gap-1 lg:gap-[6px]">
+                    <span className="text-[9px] lg:text-xs font-semibold text-muted-text tracking-tight">Latest price</span>
+                    <span className="text-[10px] lg:text-sm font-semibold text-text-dark tracking-tight">
                       ₦{trend.latest?.price.toLocaleString()}{measure ? ` / ${measure}` : ''}
                     </span>
-                    <span className="text-xs text-green-text tracking-tight">
+                    <span className="text-[8px] lg:text-xs text-green-text tracking-tight">
                       {activeMarket?.name} - {getRelativeTime(trend.latest?.createdAt || '')}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex-1 min-w-[200px] border border-days-grey rounded-[10px] px-4 py-3">
-                  <div className="flex flex-col gap-[6px]">
-                    <span className="text-xs font-semibold text-muted-text tracking-tight">Sample size</span>
-                    <span className="text-sm font-semibold text-text-dark tracking-tight">{trend.sampleSize} Observations</span>
-                    <span className="text-xs text-green-text tracking-tight">Over the data collection period</span>
+                <div className="border border-days-grey rounded-[10px] px-2 lg:px-4 py-2 lg:py-3">
+                  <div className="flex flex-col gap-1 lg:gap-[6px]">
+                    <span className="text-[9px] lg:text-xs font-semibold text-muted-text tracking-tight">Sample size</span>
+                    <span className="text-[10px] lg:text-sm font-semibold text-text-dark tracking-tight">{trend.sampleSize}</span>
+                    <span className="text-[8px] lg:text-xs text-green-text tracking-tight">Observations</span>
                   </div>
                 </div>
 
-                <div className="flex-1 min-w-[200px] border border-days-grey rounded-[10px] px-4 py-3">
-                  <div className="flex flex-col gap-[6px]">
-                    <span className="text-xs font-semibold text-muted-text tracking-tight">Overall direction</span>
-                    <span className="text-sm font-semibold text-text-dark tracking-tight">{trend.direction === 'UP' ? 'Going up' : trend.direction === 'DOWN' ? 'Going down' : trend.direction === 'STABLE' ? 'Stable' : 'Not enough data'}</span>
-                    <span className="text-xs text-green-text tracking-tight">
+                <div className="border border-days-grey rounded-[10px] px-2 lg:px-4 py-2 lg:py-3">
+                  <div className="flex flex-col gap-1 lg:gap-[6px]">
+                    <span className="text-[9px] lg:text-xs font-semibold text-muted-text tracking-tight">Direction</span>
+                    <span className="text-[10px] lg:text-sm font-semibold text-text-dark tracking-tight">{trend.direction === 'UP' ? 'Going up' : trend.direction === 'DOWN' ? 'Going down' : trend.direction === 'STABLE' ? 'Stable' : 'Not enough data'}</span>
+                    <span className="text-[8px] lg:text-xs text-green-text tracking-tight">
                       {trend.direction === 'UP'
-                        ? `↗ ₦${(trend.points[trend.points.length - 1].price - trend.points[0].price).toLocaleString()} rise total`
+                        ? `↗ ₦${(trend.points[trend.points.length - 1].price - trend.points[0].price).toLocaleString()}`
                         : trend.direction === 'DOWN'
-                          ? `↘ ₦${(trend.points[0].price - trend.points[trend.points.length - 1].price).toLocaleString()} drop total`
+                          ? `↘ ₦${(trend.points[0].price - trend.points[trend.points.length - 1].price).toLocaleString()}`
                           : trend.direction === 'STABLE'
                             ? '— No significant change'
                             : 'Not enough data points'}
@@ -328,9 +328,9 @@ export default function PriceTrend() {
               </div>
 
               {/* Chart */}
-              <div className="w-full h-72 sm:h-[420px] mb-[46px]">
+              <div className="w-full h-[208px] lg:h-[420px] mb-4 lg:mb-[46px]">
                 <Suspense fallback={<div className="skeleton h-full w-full rounded-lg" />}>
-                  <PriceTrendChart chartData={chartData} />
+                  <PriceTrendChart chartData={chartData} compact />
                 </Suspense>
               </div>
             </>
@@ -339,16 +339,14 @@ export default function PriceTrend() {
           {/* Insight + Submit button */}
           {!isLoading && trend && trend.points.length > 0 && (
             <>
-              <div className="border-t border-dashed border-[rgba(208,213,221,0.87)] mb-5" />
-              <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 lg:gap-[161px]">
-                <div className="px-3 py-2.5">
-                  <span className="text-sm font-medium text-[#121212] tracking-tight">
-                    {cheapestMarketName || activeMarket?.name} is cheapest{cheapestDirection === 'DOWN' ? ' and still falling' : cheapestDirection === 'UP' ? ' but rising' : ''} - good time to buy
-                  </span>
-                </div>
+              <div className="border-t border-dashed border-[rgba(208,213,221,0.87)] mb-3 lg:mb-5" />
+              <div className="flex flex-row items-center justify-between gap-2 lg:gap-6">
+                <span className="text-[10px] lg:text-sm font-medium text-[#121212] tracking-tight leading-tight">
+                  {cheapestMarketName || activeMarket?.name} is cheapest{cheapestDirection === 'DOWN' ? ' and still falling' : cheapestDirection === 'UP' ? ' but rising' : ''} - good time to buy
+                </span>
                 <Link
                   to={isAuthenticated ? '/submit' : '/signin?returnUrl=/submit'}
-                  className="inline-flex items-center justify-center px-4 h-[66px] w-[378px] max-w-full bg-[#2C2424] border border-[#BDBDBD] rounded-[10px] text-sm font-bold text-white tracking-tight hover:brightness-110 transition cursor-pointer"
+                  className="inline-flex items-center justify-center px-3 lg:px-4 h-8 lg:h-[66px] min-w-[100px] lg:w-[378px] bg-[#2C2424] border border-[#BDBDBD] rounded-lg lg:rounded-[10px] text-[10px] lg:text-sm font-bold text-white tracking-tight hover:brightness-110 transition cursor-pointer shrink-0"
                   style={{ borderWidth: '0.5px' }}
                 >
                   Submit price

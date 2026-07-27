@@ -268,24 +268,24 @@ export default function ComparePrices() {
           onClose={() => setReportTarget(null)}
         />
       )}
-      <div className="max-w-[1240px] mx-3 sm:mx-6 lg:mx-auto bg-white border border-grey-border rounded-2xl p-6 sm:p-12">
+      <div className="max-w-[1240px] mx-3 sm:mx-6 lg:mx-auto bg-white border border-grey-border rounded-2xl p-4 sm:p-12">
         <div>
           {/* Heading */}
-          <div className="flex justify-between items-start flex-wrap gap-3 mb-3">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-black leading-tight">Compare prices across markets</h2>
+          <div className="flex justify-between items-start flex-wrap gap-1 mb-1 lg:mb-3">
+            <h2 className="text-xl lg:text-3xl font-bold tracking-tight text-black leading-tight">Compare prices</h2>
             {compareEntries.length > 0 && (
-              <span className="text-sm text-muted-text whitespace-nowrap mt-3">
-                {itemName} - {compareEntries.length} market{compareEntries.length !== 1 ? 's' : ''}- updated now
+              <span className="text-[10px] lg:text-sm text-muted-text whitespace-nowrap lg:mt-3">
+                updated {getRelativeTime(compareEntries[0]?.createdAt || '')}
               </span>
             )}
           </div>
-          <p className="text-lg text-black mb-8">
-            Showing current prices for: <b>{itemName}{unitLabel ? `- per ${unitLabel}` : ''}</b>
+          <p className="text-xs lg:text-lg text-black mb-3 lg:mb-8">
+            {itemName}{unitLabel ? ` · per ${unitLabel}` : ''}
           </p>
 
           {/* Search / Autocomplete */}
-          <div className="relative mb-8" ref={searchRef}>
-            <div className="flex items-center gap-3 bg-input-bg border border-input-border rounded-xl px-4 py-4">
+          <div className="relative mb-4 lg:mb-8" ref={searchRef}>
+            <div className="flex items-center gap-2 lg:gap-3 bg-input-bg border border-input-border rounded-lg lg:rounded-xl px-3 lg:px-4 py-2.5 lg:py-4">
               <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5 shrink-0">
                 <circle cx="9" cy="9" r="6" stroke="#A1A1A1" strokeWidth="1.5" />
                 <path d="M14 14L17.5 17.5" stroke="#A1A1A1" strokeWidth="1.5" strokeLinecap="round" />
@@ -317,29 +317,31 @@ export default function ComparePrices() {
             )}
           </div>
 
-          {/* Product pills (max 5 shown) */}
-          <div className="flex gap-3 flex-wrap mb-10">
-            {products.slice(0, 5).map((p, i) => (
-              <button
-                key={`${p.itemId}-${p.unitId}`}
-                onClick={() => selectProduct(i)}
-                className={`rounded-lg text-sm tracking-tight cursor-pointer transition ${
-                  i === activeIdx
-                    ? 'bg-ink text-white border-ink'
-                    : 'bg-white border border-days-grey text-black hover:bg-gray-50'
-                } px-4 py-2`}
-              >
-                {p.label.split(',')[0]}
-              </button>
-            ))}
-            {searchQuery && (
-              <button
-                onClick={() => { setSearchParams({}); setActiveIdx(0); setSearchInput('') }}
-                className="px-4 py-2 rounded-lg text-sm cursor-pointer bg-white border border-red text-red hover:bg-red/5"
-              >
-                Clear search
-              </button>
-            )}
+          {/* Product pills */}
+          <div className="overflow-x-auto -mx-1 mb-6 lg:mb-10">
+            <div className="flex gap-2 lg:gap-3 px-1 min-w-max">
+              {products.slice(0, 5).map((p, i) => (
+                <button
+                  key={`${p.itemId}-${p.unitId}`}
+                  onClick={() => selectProduct(i)}
+                  className={`rounded-lg lg:rounded-lg text-[11px] lg:text-sm tracking-tight cursor-pointer transition shrink-0 ${
+                    i === activeIdx
+                      ? 'bg-ink text-white border-ink'
+                      : 'bg-white border border-days-grey text-black hover:bg-gray-50'
+                  } px-3 lg:px-4 py-1.5 lg:py-2`}
+                >
+                  {p.label.split(',')[0]}
+                </button>
+              ))}
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchParams({}); setActiveIdx(0); setSearchInput('') }}
+                  className="px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg text-[11px] lg:text-sm cursor-pointer shrink-0 bg-white border border-red text-red hover:bg-red/5"
+                >
+                  Clear search
+                </button>
+              )}
+            </div>
           </div>
 
           {searchQuery && products.length === 0 && allProducts.length > 0 && (
@@ -371,18 +373,9 @@ export default function ComparePrices() {
           )}
 
           {!isLoadingPrices && compareEntries.length > 0 && (
-            <div className="w-full overflow-x-auto">
-              <div className="min-w-[700px]">
-                {/* Table header */}
-                <div className="grid grid-cols-[1.7fr_1fr_1fr_1fr_0.8fr] pb-5 border-b-2 border-black font-bold text-sm text-black">
-                  <span>Market</span>
-                  <span className="text-center">Price</span>
-                  <span className="text-center">Submitted</span>
-                  <span className="text-center">By</span>
-                  <span />
-                </div>
-
-                {/* Table rows */}
+            <>
+              {/* Mobile cards (lg:hidden) */}
+              <div className="lg:hidden space-y-3 mb-6">
                 {compareEntries.map((e) => {
                   const marketName = e.market.name || ''
                   const area = [e.market.lga, e.market.state].filter(Boolean).join(', ')
@@ -394,69 +387,118 @@ export default function ComparePrices() {
                   return (
                     <div
                       key={e.id}
-                      className={`grid grid-cols-[1.7fr_1fr_1fr_1fr_0.8fr] items-center py-6 border-b border-black gap-2 ${
-                        stale ? 'opacity-50' : reported ? 'opacity-40' : ''
-                      }`}
+                      className={`border border-[#E0E0E0] rounded-xl px-3 py-3 ${stale ? 'opacity-50' : reported ? 'opacity-40' : ''}`}
                     >
-                      {/* Market */}
-                      <div className="flex items-center gap-4 flex-wrap">
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-sm text-black">{marketName}</span>
-                          <span className="text-xs text-black">{area}</span>
+                      <div className="flex items-start justify-between mb-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-[13px] text-black">{marketName}</span>
+                          {isCheapest && (
+                            <span className="inline-flex items-center justify-center rounded px-1.5 py-0.5 text-[9px] font-bold text-white bg-green">Cheapest</span>
+                          )}
+                          {isHighest && (
+                            <span className="inline-flex items-center justify-center rounded px-1.5 py-0.5 text-[9px] font-bold text-white bg-highest-red">Highest</span>
+                          )}
                         </div>
-                        {isCheapest && (
-                          <span className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold text-white bg-green">
-                            Cheapest
+                        <div className="text-right">
+                          <span className="font-bold text-[13px] text-black">
+                            ₦{e.price.toLocaleString()}
                           </span>
-                        )}
-                        {isHighest && (
-                          <span className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold text-white bg-highest-red">
-                            Highest
-                          </span>
-                        )}
+                          <span className="text-[10px] text-black font-normal"> / {unitLabel || 'unit'}</span>
+                        </div>
                       </div>
-
-                      {/* Price */}
-                      <span className="font-semibold text-sm text-black text-center">
-                        ₦{e.price.toLocaleString()} <span className="font-normal">{unitLabel ? `/ ${unitLabel}` : ''}</span>
-                      </span>
-
-                      {/* Submitted */}
-                      <span className="text-sm text-black text-center">{getRelativeTime(e.createdAt)}</span>
-
-                      {/* By */}
-                      <span className="text-sm text-black text-center">{e.submitterDisplayName}</span>
-
-                      {/* Flag */}
-                      <button
-                        onClick={() => handleFlag(e.id, marketName, e.price)}
-                        className="border border-days-grey rounded-lg px-3 py-1.5 text-sm font-semibold text-red justify-self-center bg-white hover:bg-gray-50 transition cursor-pointer"
-                      >
-                        Flag
-                      </button>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-[#666]">{area}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-muted-text">{getRelativeTime(e.createdAt)}</span>
+                          <button
+                            onClick={() => handleFlag(e.id, marketName, e.price)}
+                            className="border border-days-grey rounded px-2 py-0.5 text-[10px] font-semibold text-red bg-white hover:bg-gray-50 transition cursor-pointer"
+                          >
+                            Flag
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )
                 })}
+                {/* Average - mobile */}
+                <p className="text-[11px] text-black pt-2">
+                  Average across all markets: <b>₦{avgPrice.toLocaleString()}{unitLabel ? ` / ${unitLabel}` : ''}</b>
+                </p>
               </div>
 
-              {/* Average */}
-              <p className="text-sm text-black py-6">
-                Average across all markets: <b>₦{avgPrice.toLocaleString()}{unitLabel ? ` / ${unitLabel}` : ''}</b>
-              </p>
-            </div>
+              {/* Desktop table (hidden on mobile) */}
+              <div className="hidden lg:block w-full overflow-x-auto">
+                <div className="min-w-[700px]">
+                  <div className="grid grid-cols-[1.7fr_1fr_1fr_1fr_0.8fr] pb-5 border-b-2 border-black font-bold text-sm text-black">
+                    <span>Market</span>
+                    <span className="text-center">Price</span>
+                    <span className="text-center">Submitted</span>
+                    <span className="text-center">By</span>
+                    <span />
+                  </div>
+
+                  {compareEntries.map((e) => {
+                    const marketName = e.market.name || ''
+                    const area = [e.market.lga, e.market.state].filter(Boolean).join(', ')
+                    const isCheapest = e.isCheapest
+                    const isHighest = !isCheapest && e.price === highestPrice && highestPrice !== cheapestPrice
+                    const stale = e.isStale
+                    const reported = e.flagCount >= 2 || e.isFlagged
+
+                    return (
+                      <div
+                        key={e.id}
+                        className={`grid grid-cols-[1.7fr_1fr_1fr_1fr_0.8fr] items-center py-6 border-b border-black gap-2 ${
+                          stale ? 'opacity-50' : reported ? 'opacity-40' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-sm text-black">{marketName}</span>
+                            <span className="text-xs text-black">{area}</span>
+                          </div>
+                          {isCheapest && (
+                            <span className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold text-white bg-green">Cheapest</span>
+                          )}
+                          {isHighest && (
+                            <span className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold text-white bg-highest-red">Highest</span>
+                          )}
+                        </div>
+                        <span className="font-semibold text-sm text-black text-center">
+                          ₦{e.price.toLocaleString()} <span className="font-normal">{unitLabel ? `/ ${unitLabel}` : ''}</span>
+                        </span>
+                        <span className="text-sm text-black text-center">{getRelativeTime(e.createdAt)}</span>
+                        <span className="text-sm text-black text-center">{e.submitterDisplayName}</span>
+                        <button
+                          onClick={() => handleFlag(e.id, marketName, e.price)}
+                          className="border border-days-grey rounded-lg px-3 py-1.5 text-sm font-semibold text-red justify-self-center bg-white hover:bg-gray-50 transition cursor-pointer"
+                        >
+                          Flag
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                <p className="text-sm text-black py-6">
+                  Average across all markets: <b>₦{avgPrice.toLocaleString()}{unitLabel ? ` / ${unitLabel}` : ''}</b>
+                </p>
+              </div>
+            </>
           )}
 
           {/* Bottom buttons */}
-          <div className="flex gap-6 flex-wrap">
+          <div className="flex flex-col lg:flex-row gap-3 lg:gap-6 mt-6 lg:mt-0">
             <Link
               to={isAuthenticated ? '/submit' : '/signin?returnUrl=/submit'}
-              className="flex-1 min-w-[220px] bg-input-bg border border-days-grey text-black px-5 py-5 rounded-xl text-sm font-bold text-center hover:bg-[#efefef] transition cursor-pointer block"
+              className="w-full lg:flex-1 bg-input-bg border border-days-grey text-black px-4 lg:px-5 py-3 lg:py-5 rounded-xl text-[11px] lg:text-sm font-bold text-center hover:bg-[#efefef] transition cursor-pointer block"
             >
               Submit price
             </Link>
             <Link
               to="/prices"
-              className="flex-1 min-w-[220px] bg-[#211a1a] text-white px-5 py-5 rounded-xl text-sm font-bold text-center hover:brightness-110 transition cursor-pointer block"
+              className="w-full lg:flex-1 bg-[#211a1a] text-white px-4 lg:px-5 py-3 lg:py-5 rounded-xl text-[11px] lg:text-sm font-bold text-center hover:brightness-110 transition cursor-pointer block"
             >
               View trends
             </Link>
