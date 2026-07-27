@@ -340,13 +340,13 @@ export default function PriceTrend() {
           {!isLoading && trend && trend.points.length > 0 && (
             <>
               <div className="border-t border-dashed border-[rgba(208,213,221,0.87)] mb-3 lg:mb-5" />
-              <div className="flex flex-row items-center justify-between gap-2 lg:gap-6">
-                <span className="text-[10px] lg:text-sm font-medium text-[#121212] tracking-tight leading-tight">
+              <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-6">
+                <span className="text-[10px] lg:text-sm font-medium text-[#121212] tracking-tight leading-tight text-center lg:text-left">
                   {cheapestMarketName || activeMarket?.name} is cheapest{cheapestDirection === 'DOWN' ? ' and still falling' : cheapestDirection === 'UP' ? ' but rising' : ''} - good time to buy
                 </span>
                 <Link
                   to={isAuthenticated ? '/submit' : '/signin?returnUrl=/submit'}
-                  className="inline-flex items-center justify-center px-3 lg:px-4 h-8 lg:h-[66px] min-w-[100px] lg:w-[378px] bg-[#2C2424] border border-[#BDBDBD] rounded-lg lg:rounded-[10px] text-[10px] lg:text-sm font-bold text-white tracking-tight hover:brightness-110 transition cursor-pointer shrink-0"
+                  className="inline-flex items-center justify-center w-full lg:w-[378px] h-9 lg:h-[66px] bg-[#2C2424] border border-[#BDBDBD] rounded-lg lg:rounded-[10px] text-[11px] lg:text-sm font-bold text-white tracking-tight hover:brightness-110 transition cursor-pointer"
                   style={{ borderWidth: '0.5px' }}
                 >
                   Submit price
