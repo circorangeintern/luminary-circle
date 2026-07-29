@@ -211,9 +211,6 @@ export default function PriceTrend() {
                 placeholder="Search items..."
                 className="bg-transparent border-none outline-none w-full text-sm text-black placeholder:text-[#999]"
               />
-              <svg viewBox="0 0 14 8" fill="none" className="w-3.5 h-2 shrink-0">
-                <path d="M1 1L7 7L13 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
             </div>
             {showDropdown && searchInput.trim() !== '' && suggestions.length > 0 && (
               <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-grey-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
@@ -340,8 +337,8 @@ export default function PriceTrend() {
           {!isLoading && trend && trend.points.length > 0 && (
             <>
               <div className="border-t border-dashed border-[rgba(208,213,221,0.87)] mb-3 lg:mb-5" />
-              <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-6">
-                <span className="text-[10px] lg:text-sm font-medium text-[#121212] tracking-tight leading-tight text-center lg:text-left">
+              <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-0 lg:justify-between">
+                <span className="text-[10px] lg:text-sm font-medium text-[#121212] tracking-tight leading-tight text-center lg:text-left flex-1">
                   {cheapestMarketName || activeMarket?.name} is cheapest{cheapestDirection === 'DOWN' ? ' and still falling' : cheapestDirection === 'UP' ? ' but rising' : ''} - good time to buy
                 </span>
                 <Link

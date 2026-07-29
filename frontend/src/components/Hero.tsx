@@ -62,7 +62,7 @@ export default function Hero() {
   }
 
   return (
-    <section className="bg-cream relative overflow-hidden pb-10 lg:pb-24">
+    <section id="hero" className="bg-cream relative overflow-hidden pb-10 lg:pb-24">
       <div className="px-6 sm:px-12 lg:px-20 pt-6 lg:pt-8 pb-6 lg:pb-10">
         <div className="max-w-[800px] mx-auto relative hidden lg:block" ref={searchRef}>
           <div className="flex items-center gap-2 lg:gap-3 px-3 lg:px-4 h-[44px] lg:h-[65px] bg-input-bg border border-days-grey rounded-lg lg:rounded-[10px] w-full" style={{ borderWidth: '0.5px' }}>
