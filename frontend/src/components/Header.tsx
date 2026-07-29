@@ -80,7 +80,7 @@ export default function Header() {
   return (
     <header className="bg-ink sticky top-0 z-50">
       <div className="h-[52px] lg:h-24 max-w-7xl mx-auto px-4 sm:px-12 lg:px-20 flex items-center justify-between">
-      <Link to="/" className="flex items-center shrink-0">
+      <Link to="/" onClick={() => { if (window.location.pathname === '/') document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' }) }} className="flex items-center shrink-0">
         <img src="/logo.png" alt="Market Compare" className="h-8 lg:h-9 w-auto" />
       </Link>
 
