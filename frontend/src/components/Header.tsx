@@ -112,7 +112,7 @@ export default function Header() {
             </button>
           </div>
         ) : (
-          <Link to="/signin" className="bg-red text-white w-[134px] h-[49px] flex items-center justify-center rounded-[10px] text-base leading-[19px] hover:brightness-110 transition">
+          <Link to="/signin" onClick={() => window.scrollTo(0, 0)} className="bg-red text-white w-[134px] h-[49px] flex items-center justify-center rounded-[10px] text-base leading-[19px] hover:brightness-110 transition">
             Sign in
           </Link>
         )}
@@ -173,7 +173,7 @@ export default function Header() {
             ) : (
               <Link
                 to="/signin"
-                onClick={() => setOpen(false)}
+                onClick={() => { setOpen(false); window.scrollTo(0, 0) }}
                 className="block py-2.5 px-3 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/5 transition"
               >
                 Sign in
