@@ -1,5 +1,3 @@
-import { HttpStatus } from '@nestjs/common';
-
 export const ErrorCodes = {
   VALIDATION_ERROR: { httpStatus: 400 },
   CAPTCHA_FAILED: { httpStatus: 400 },

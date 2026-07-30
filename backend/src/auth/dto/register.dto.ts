@@ -25,7 +25,8 @@ export class RegisterDto {
 
   @ApiProperty({
     example: '0.AbCdEf...',
-    description: 'Token from the Cloudflare Turnstile widget on the signup form.',
+    description:
+      'Token from the Cloudflare Turnstile widget on the signup form.',
   })
   @IsString()
   @IsNotEmpty({ message: 'Captcha verification is required' })

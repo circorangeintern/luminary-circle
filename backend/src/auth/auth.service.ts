@@ -23,7 +23,7 @@ export class AuthService {
     // never cost us a query, and should learn nothing about which phone
     // numbers exist.
     await this.captcha.verify(dto.captchaToken, remoteIp);
-    
+
     const phone = normalizePhone(dto.phone); // throws VALIDATION_ERROR if bad
 
     const existing = await this.prisma.user.findUnique({ where: { phone } });

@@ -62,5 +62,38 @@ Content-Type: application/json
 
 ### missing captchaToken -> 400, details[0].field = "captchaToken"
 POST {{base}}/auth/register
+Content-Type: application/json
 
 { "displayName": "Test User", "phone": "08035551235", "password": "testpass123" }
+
+### valid registration with captcha -> 201 (test key always passes)
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "displayName": "Turnstile Tester", "phone": "08035551237",
+  "password": "testpass123", "captchaToken": "any-non-empty-string" }
+
+### missing captchaToken -> 400, details has ONLY captchaToken
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "displayName": "Test User", "phone": "08035551238", "password": "testpass123" }
+
+### empty string captchaToken -> 400 (IsNotEmpty catches it)
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "displayName": "Test User", "phone": "08035551239",
+  "password": "testpass123", "captchaToken": "" }
+
+### --- swap TURNSTILE_SECRET_KEY to 2x0000000000000000000000000000000AA, restart, then: ---
+
+### valid body but Cloudflare rejects the token -> 400 CAPTCHA_FAILED
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "displayName": "Test User", "phone": "08035551240",
+  "password": "testpass123", "captchaToken": "any-non-empty-string" }
+### expect: error.code === "CAPTCHA_FAILED", no account created
+
+### --- swap TURNSTILE_SECRET_KEY back to 1x0000000000000000000000000000000AA before committing ---

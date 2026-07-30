@@ -3,6 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { CaptchaService } from './captcha.service';
+import { AppException } from '../common/errors/app.exception';
 
 // The exact string both failure paths must return. Asserting against a
 // shared constant is what makes the anti-enumeration property enforceable:
@@ -14,6 +16,7 @@ describe('AuthService', () => {
   let prisma: {
     user: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
   };
+  let captcha: { verify: jest.Mock };
 
   // Real bcrypt hash of 'correctpass123', computed once for the whole suite.
   let knownHash: string;
@@ -26,6 +29,11 @@ describe('AuthService', () => {
     prisma = {
       user: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
     };
+    // Built here, injected below by reference, so mockRejectedValue() in a
+    // test affects the same object the service actually calls.
+    // jest.fn() resolves undefined by default, so captcha passes unless a
+    // test explicitly makes it fail.
+    captcha = { verify: jest.fn() };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -34,6 +42,7 @@ describe('AuthService', () => {
         // constructor asks for PrismaService and gets this object instead.
         { provide: PrismaService, useValue: prisma },
         { provide: JwtService, useValue: { sign: () => 'fake.jwt.token' } },
+        { provide: CaptchaService, useValue: captcha },
       ],
     }).compile();
 
@@ -49,6 +58,7 @@ describe('AuthService', () => {
           displayName: 'Test',
           phone: '08031234567',
           password: 'password123',
+          captchaToken: 'valid-token',
         }),
       ).rejects.toMatchObject({ code: 'CONFLICT' });
 
@@ -68,6 +78,7 @@ describe('AuthService', () => {
         displayName: 'Test',
         phone: '08031234567',
         password: 'password123',
+        captchaToken: 'valid-token',
       });
 
       expect(result.user).not.toHaveProperty('passwordHash');
@@ -88,6 +99,7 @@ describe('AuthService', () => {
         displayName: 'Test',
         phone: '0803 123 4567', // messy input
         password: 'password123',
+        captchaToken: 'valid-token',
       });
 
       expect(prisma.user.create).toHaveBeenCalledWith(
@@ -98,6 +110,29 @@ describe('AuthService', () => {
           >,
         }),
       );
+    });
+
+    it('does not touch the database when captcha verification fails', async () => {
+      captcha.verify.mockRejectedValue(
+        new AppException(
+          'CAPTCHA_FAILED',
+          "We couldn't verify that you're human",
+        ),
+      );
+
+      await expect(
+        service.register({
+          displayName: 'Test',
+          phone: '08031234567',
+          password: 'password123',
+          captchaToken: 'bad-token',
+        }),
+      ).rejects.toMatchObject({ code: 'CAPTCHA_FAILED' });
+
+      // The assertion that matters: verify() runs BEFORE any query, so a
+      // bot never costs a database round trip and never learns whether a
+      // phone number is already registered.
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
   });
 
@@ -148,7 +183,7 @@ describe('AuthService', () => {
       expect(prisma.user.update).not.toHaveBeenCalled(); // no lastLoginAt bump
     });
 
-    it('rejects a malformed phone on login with <chosen code>', async () => {
+    it('rejects a malformed phone with the generic credentials error', async () => {
       await expect(
         service.login({ phone: 'not-a-number', password: 'whatever123' }),
       ).rejects.toMatchObject({

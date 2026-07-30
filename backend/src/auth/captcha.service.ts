@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AppConfigService } from '../config/app-config.service';
 import { AppException } from '../common/errors/app.exception';
 
-const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+const SITEVERIFY_URL =
+  'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const VERIFY_TIMEOUT_MS = 5000;
 
 interface SiteVerifyResponse {
@@ -58,7 +59,12 @@ export class CaptchaService {
       throw new AppException(
         'CAPTCHA_FAILED',
         'We could not verify your request right now. Please try again in a moment.',
-        [{ field: 'captchaToken', message: 'Verification service unavailable' }],
+        [
+          {
+            field: 'captchaToken',
+            message: 'Verification service unavailable',
+          },
+        ],
       );
     }
 
