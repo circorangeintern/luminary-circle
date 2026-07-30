@@ -13,12 +13,13 @@
   --color-input-border: #EBEBEB;
   --color-input-bg: #F7F7F7;
   --color-days-grey: #A1A1A1;
+  --color-muted-text: #767676;
   --color-text-dark: #121212;
   --color-text-black: #070707;
 }
 
-html { scroll-behavior: smooth; overflow-x: hidden; }
-body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 
 @keyframes shimmer {
   0% { background-position: -400px 0; }

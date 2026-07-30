@@ -45,7 +45,7 @@ export default function ReportPriceModal({ priceId, product, market, price, onCl
         <div className="w-full max-w-[640px] bg-white rounded-[16px] p-8">
           <div className="flex items-center justify-between pb-5 border-b border-days-grey mb-8">
             <h1 className="text-xl font-bold text-black">Report this price</h1>
-            <span className="text-sm text-days-grey">Submitting report...</span>
+            <span className="text-sm text-muted-text">Submitting report...</span>
           </div>
           <div className="flex justify-center py-12">
             <div className="skeleton h-8 w-48 rounded-lg" />
@@ -170,7 +170,7 @@ export default function ReportPriceModal({ priceId, product, market, price, onCl
           <div className="mb-9">
             <p className="text-lg font-normal text-black mb-5">You are Reporting</p>
             <p className="text-[19px] text-black mb-1.5">{product} - {price}</p>
-            <p className="text-sm text-days-grey">{market}</p>
+            <p className="text-sm text-muted-text">{market}</p>
           </div>
 
           <p className="text-[19px] font-semibold text-black mb-[18px]">Why is the pricing wrong?</p>
@@ -198,7 +198,7 @@ export default function ReportPriceModal({ priceId, product, market, price, onCl
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[18px] font-semibold text-black">{reason.title}</span>
-                  <span className="text-sm text-days-grey">{reason.desc}</span>
+                  <span className="text-sm text-muted-text">{reason.desc}</span>
                 </div>
               </button>
             ))}
@@ -218,7 +218,7 @@ export default function ReportPriceModal({ priceId, product, market, price, onCl
           <div className="flex gap-[22px] mt-10">
             <button
               onClick={onClose}
-              className="flex-[0_0_260px] h-12 flex items-center justify-center border border-days-grey rounded-[12px] text-sm font-semibold text-black bg-white hover:bg-gray-50 transition cursor-pointer"
+              className="flex-1 h-12 flex items-center justify-center border border-days-grey rounded-[12px] text-sm font-semibold text-black bg-white hover:bg-gray-50 transition cursor-pointer"
             >
               Cancel
             </button>
