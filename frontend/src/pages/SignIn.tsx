@@ -121,7 +121,7 @@ export default function SignIn() {
 
         {/* Fields */}
         <div className="mb-5">
-          <label className="block text-sm font-semibold mb-2" style={{ color: '#141414' }}>Username</label>
+          <label className="block text-sm font-semibold mb-2" style={{ color: '#141414' }}>Phone Number</label>
           <input
             type="text"
             value={phone}
@@ -154,11 +154,10 @@ export default function SignIn() {
         </div>
 
         {/* Remember me row */}
-        <div className="flex items-center justify-between mt-[14px] text-sm">
+        <div className="flex items-center mt-[14px] text-sm">
           <label className="flex items-center gap-2 cursor-pointer" style={{ color: '#141414' }}>
             <input type="checkbox" className="w-4 h-4" /> Remember me
           </label>
-          <a href="#" style={{ color: '#141414' }} className="underline">Forget password?</a>
         </div>
 
         {/* Button */}
