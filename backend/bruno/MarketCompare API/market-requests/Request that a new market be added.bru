@@ -1,0 +1,166 @@
+meta {
+  name: Request that a new market be added
+  type: http
+  seq: 1
+  tags: [
+    market-requests
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/market-requests
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "proposedName": "Rumuokor Market",
+    "lga": "Obio/Akpor",
+    "state": "Rivers"
+  }
+}
+
+example {
+  name: 201 Response
+  description: Request submitted
+  
+  request: {
+    url: {{baseUrl}}/api/v1/market-requests
+    method: POST
+    mode: json
+    body:json: {
+      {
+        "proposedName": "Rumuokor Market",
+        "lga": "Obio/Akpor",
+        "state": "Rivers"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 201
+      text: Created
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "id": "cmrm...",
+          "proposedName": "Rumuokoro Market",
+          "lga": "Obio/Akpor",
+          "state": "Rivers",
+          "status": "PENDING",
+          "createdAt": "2026-07-23T09:00:00.000Z",
+          "reviewedAt": null
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 401 Response
+  description: Not signed in
+  
+  request: {
+    url: {{baseUrl}}/api/v1/market-requests
+    method: POST
+    mode: json
+    body:json: {
+      {
+        "proposedName": "Rumuokor Market",
+        "lga": "Obio/Akpor",
+        "state": "Rivers"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 401
+      text: Unauthorized
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 409 Response
+  description: Already exists or already requested
+  
+  request: {
+    url: {{baseUrl}}/api/v1/market-requests
+    method: POST
+    mode: json
+    body:json: {
+      {
+        "proposedName": "Rumuokor Market",
+        "lga": "Obio/Akpor",
+        "state": "Rivers"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 409
+      text: Conflict
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}

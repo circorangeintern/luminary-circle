@@ -1,0 +1,133 @@
+meta {
+  name: Price trend direction for an item at one market
+  type: http
+  seq: 2
+  tags: [
+    catalog
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/items/:itemId/trend
+  body: none
+  auth: inherit
+}
+
+params:query {
+  unitId: cmrmtbv820000pwdjwt3ouvbi
+  marketId: cmrmtc86f000fpwdjrju0rwac
+}
+
+params:path {
+  itemId: 
+}
+
+example {
+  name: 200 Response
+  description: Trend result
+  
+  request: {
+    url: {{baseUrl}}/api/v1/items/:itemId/trend
+    method: GET
+    mode: none
+    params:query: {
+      unitId: cmrmtbv820000pwdjwt3ouvbi
+      marketId: cmrmtc86f000fpwdjrju0rwac
+    }
+  
+    params:path: {
+      itemId: 
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 200
+      text: OK
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "item": {
+            "id": "cmrqexjbk00005kdjpmoq2mo3",
+            "name": "Rice (local)"
+          },
+          "unit": {
+            "id": "cmrqexjbk00005kdjpmoq2mo3",
+            "label": "derica"
+          },
+          "market": {
+            "id": "cmrqexjbk00005kdjpmoq2mo3",
+            "name": "Mile 3 Market",
+            "lga": "Port Harcourt",
+            "state": "Rivers"
+          },
+          "direction": "UP",
+          "sampleSize": 4,
+          "latest": {},
+          "points": [
+            {
+              "price": 2100,
+              "createdAt": "2026-07-15T09:00:00.000Z"
+            }
+          ]
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 400 Response
+  description: Invalid item, unit, or market
+  
+  request: {
+    url: {{baseUrl}}/api/v1/items/:itemId/trend
+    method: GET
+    mode: none
+    params:query: {
+      unitId: cmrmtbv820000pwdjwt3ouvbi
+      marketId: cmrmtc86f000fpwdjrju0rwac
+    }
+  
+    params:path: {
+      itemId: 
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 400
+      text: Bad Request
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}
