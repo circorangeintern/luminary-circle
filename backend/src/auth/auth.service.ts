@@ -6,6 +6,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AppException } from '../common/errors/app.exception';
 import { normalizePhone } from '../common/utils/phone.util';
+import { CaptchaService } from './captcha.service';
 
 const BCRYPT_ROUNDS = 10;
 
@@ -14,9 +15,15 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly captcha: CaptchaService,
   ) {}
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto, remoteIp?: string) {
+    // Verify before ANY database work. A bot that fails the captcha should
+    // never cost us a query, and should learn nothing about which phone
+    // numbers exist.
+    await this.captcha.verify(dto.captchaToken, remoteIp);
+    
     const phone = normalizePhone(dto.phone); // throws VALIDATION_ERROR if bad
 
     const existing = await this.prisma.user.findUnique({ where: { phone } });

@@ -1,4 +1,4 @@
-@base = https://staging.marketcompare.name.ng/api/v1
+@base = http://localhost:3000/api/v1
 
 ### register — expect 201 + { success, data: { user, accessToken } }
 POST {{base}}/auth/register
@@ -52,3 +52,15 @@ Authorization: Bearer {{token}}
 
 ### GET /auth/me with no header — expect 401
 GET {{base}}/auth/me
+
+### register with a dummy token -> 201 (test key always passes)
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "displayName": "Test User", "phone": "08035551234",
+  "password": "testpass123", "captchaToken": "dummy-token" }
+
+### missing captchaToken -> 400, details[0].field = "captchaToken"
+POST {{base}}/auth/register
+
+{ "displayName": "Test User", "phone": "08035551235", "password": "testpass123" }
