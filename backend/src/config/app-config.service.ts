@@ -55,4 +55,8 @@ export class AppConfigService {
       infer: true,
     });
   }
+
+  get turnstileSecretKey() {
+    return this.config.get('TURNSTILE_SECRET_KEY', { infer: true });
+  }
 }

@@ -1,5 +1,6 @@
 export const ErrorCodes = {
   VALIDATION_ERROR: { httpStatus: 400 },
+  CAPTCHA_FAILED: { httpStatus: 400 },
   AUTHENTICATION_ERROR: { httpStatus: 401 },
   FORBIDDEN: { httpStatus: 403 },
   NOT_FOUND: { httpStatus: 404 },

@@ -43,6 +43,9 @@ export const envSchema = z.object({
   FRESHNESS_WINDOW_DAYS: z.coerce.number().int().positive().default(7),
   FLAG_MARK_THRESHOLD: z.coerce.number().int().positive().default(2),
   FLAG_EXCLUDE_THRESHOLD: z.coerce.number().int().positive().default(3),
+
+  // Cloudflare Turnstile
+  TURNSTILE_SECRET_KEY: z.string().min(1, 'TURNSTILE_SECRET_KEY is required'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
