@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @ApiProperty({ example: 'Chidi', minLength: 2, maxLength: 50 })
@@ -22,4 +22,13 @@ export class RegisterDto {
   @MinLength(8, { message: 'Password must at least 8 characters' })
   @MaxLength(72)
   password!: string;
+
+  @ApiProperty({
+    example: '0.AbCdEf...',
+    description:
+      'Token from the Cloudflare Turnstile widget on the signup form.',
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'Captcha verification is required' })
+  captchaToken!: string;
 }

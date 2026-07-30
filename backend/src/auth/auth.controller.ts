@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Ip,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -55,9 +56,13 @@ export class AuthController {
     description: 'Phone already registered',
     type: ErrorResponseDto,
   })
-  async register(@Body() dto: RegisterDto, @SessionId() sessionId: string) {
+  async register(
+    @Body() dto: RegisterDto,
+    @SessionId() sessionId: string,
+    @Ip() ip: string,
+  ) {
     try {
-      const result = await this.auth.register(dto);
+      const result = await this.auth.register(dto, ip);
       this.analytics.emit({
         name: 'signup_completed',
         sessionId,
@@ -71,7 +76,9 @@ export class AuthController {
         sessionId,
         responseStatus:
           e instanceof AppException &&
-          (e.code === 'CONFLICT' || e.code === 'VALIDATION_ERROR')
+          (e.code === 'CONFLICT' ||
+            e.code === 'VALIDATION_ERROR' ||
+            e.code === 'CAPTCHA_FAILED')
             ? 'VALIDATION_ERROR'
             : 'SERVER_ERROR',
         errorCode: e instanceof AppException ? e.code : 'UNKNOWN',
