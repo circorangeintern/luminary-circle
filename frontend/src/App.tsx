@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import RequireAuth from './components/RequireAuth'
+import ScrollToTop from './components/ScrollToTop'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -15,7 +16,8 @@ import PriceList from './pages/PriceList'
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+          <BrowserRouter>
+          <ScrollToTop />
         <div className="min-h-screen bg-bg-grey flex flex-col">
           <Header />
           <main className="flex-1">
