@@ -1,0 +1,145 @@
+meta {
+  name: Compare the latest price for an item across markets
+  type: http
+  seq: 4
+  tags: [
+    catalog
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/markets/compare
+  body: none
+  auth: inherit
+}
+
+params:query {
+  itemId: cmrmtby0c000apwdjuuy3cixh
+  unitId: cmrmtbv820000pwdjwt3ouvbi
+}
+
+example {
+  name: 200 Response
+  description: Comparison result
+  
+  request: {
+    url: {{baseUrl}}/api/v1/markets/compare
+    method: GET
+    mode: none
+    params:query: {
+      itemId: cmrmtby0c000apwdjuuy3cixh
+      unitId: cmrmtbv820000pwdjwt3ouvbi
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 200
+      text: OK
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "item": {
+            "id": "cmrqexjbk00005kdjpmoq2mo3",
+            "name": "Rice (local)"
+          },
+          "unit": {
+            "id": "cmrqexjbk00005kdjpmoq2mo3",
+            "label": "derica"
+          },
+          "comparison": [
+            {
+              "market": {
+                "id": "cmrqexjbk00005kdjpmoq2mo3",
+                "name": "Mile 3 Market",
+                "lga": "Port Harcourt",
+                "state": "Rivers"
+              },
+              "latestPrice": {
+                "id": "cmrqexjbk00005kdjpmoq2mo3",
+                "item": {
+                  "id": "cmrqexjbk00005kdjpmoq2mo3",
+                  "name": "Rice (local)"
+                },
+                "unit": {
+                  "id": "cmrqexjbk00005kdjpmoq2mo3",
+                  "label": "derica"
+                },
+                "market": {
+                  "id": "cmrqexjbk00005kdjpmoq2mo3",
+                  "name": "Mile 3 Market",
+                  "lga": "Port Harcourt",
+                  "state": "Rivers"
+                },
+                "price": 2100,
+                "note": null,
+                "status": "ACTIVE",
+                "source": "REAL_USER",
+                "isStale": false,
+                "isFlagged": false,
+                "flagCount": 0,
+                "submitterDisplayName": "Chidi",
+                "createdAt": "2026-07-19T09:00:00.000Z"
+              },
+              "isCheapest": true
+            }
+          ],
+          "marketsWithData": 2,
+          "comparisonPossible": true
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 400 Response
+  description: Invalid item or unit
+  
+  request: {
+    url: {{baseUrl}}/api/v1/markets/compare
+    method: GET
+    mode: none
+    params:query: {
+      itemId: cmrmtby0c000apwdjuuy3cixh
+      unitId: cmrmtbv820000pwdjwt3ouvbi
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 400
+      text: Bad Request
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}
