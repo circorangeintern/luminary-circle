@@ -6,7 +6,7 @@ interface AuthContextType {
   user: UserDto | null
   isAuthenticated: boolean
   login: (phone: string, password: string) => Promise<void>
-  signup: (displayName: string, phone: string, password: string) => Promise<void>
+  signup: (displayName: string, phone: string, password: string, captchaToken: string) => Promise<void>
   logout: () => void
 }
 
@@ -38,8 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user)
   }, [])
 
-  const signup = useCallback(async (displayName: string, phone: string, password: string) => {
-    const res = await apiRegister(displayName, phone, password)
+  const signup = useCallback(async (displayName: string, phone: string, password: string, captchaToken: string) => {
+    const res = await apiRegister(displayName, phone, password, captchaToken)
     setToken(res.accessToken)
     setUser(res.user)
   }, [])

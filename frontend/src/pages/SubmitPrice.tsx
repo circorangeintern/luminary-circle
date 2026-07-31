@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchItems, fetchMarkets, submitPrice as apiSubmitPrice, createMarketRequest } from '../services/api'
 import type { ItemDto, MarketDto } from '../services/api'
-import { trackScreenView, trackPriceSubmission } from '../services/events'
+import { trackScreenView, trackPriceSubmission, trackApiError } from '../services/events'
 
 type State = 'loading' | 'empty' | 'form' | 'validationError' | 'offline' | 'confirm' | 'duplicate' | 'rateLimited'
 
@@ -42,7 +42,7 @@ export default function SubmitPrice() {
         }
       })
       .catch(() => {
-        if (!cancelled) setState('offline')
+        if (!cancelled) { setState('offline'); trackApiError('submit', 'NETWORK_ERROR') }
       })
     return () => { cancelled = true }
   }, [])
@@ -83,8 +83,10 @@ export default function SubmitPrice() {
         setState('rateLimited')
       } else if (!status || status === 0) {
         setState('offline')
+        trackApiError('submit', 'NETWORK_ERROR')
       } else {
         setState('offline')
+        trackApiError('submit', `HTTP_${status}`)
       }
     }
   }

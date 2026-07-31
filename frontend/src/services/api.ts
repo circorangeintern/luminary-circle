@@ -155,8 +155,8 @@ export interface PriceQueryResult {
 
 // ----- API calls -----
 
-export async function register(displayName: string, phone: string, password: string): Promise<AuthDataDto> {
-  const { data } = await api.post<ApiResponse<AuthDataDto>>('/auth/register', { displayName, phone, password })
+export async function register(displayName: string, phone: string, password: string, captchaToken: string): Promise<AuthDataDto> {
+  const { data } = await api.post<ApiResponse<AuthDataDto>>('/auth/register', { displayName, phone, password, captchaToken })
   return data.data
 }
 
@@ -170,9 +170,13 @@ export async function fetchMe(): Promise<UserDto> {
   return data.data
 }
 
-export async function fetchItems(): Promise<ItemDto[]> {
+let itemsCache: ItemDto[] | null = null
+
+export async function fetchItems(force = false): Promise<ItemDto[]> {
+  if (!force && itemsCache) return itemsCache
   const { data } = await api.get<ApiResponse<{ items: ItemDto[] }>>('/items')
-  return data.data.items
+  itemsCache = data.data.items
+  return itemsCache
 }
 
 export async function fetchMarkets(): Promise<MarketDto[]> {
@@ -303,6 +307,11 @@ export interface MarketRequestDto {
 export async function createMarketRequest(proposedName: string, lga: string, state: string): Promise<MarketRequestDto> {
   const { data } = await api.post<ApiResponse<MarketRequestDto>>('/market-requests', { proposedName, lga, state })
   return data.data
+}
+
+export async function fetchMyRequests(): Promise<MarketRequestDto[]> {
+  const { data } = await api.get<ApiResponse<{ requests: MarketRequestDto[] }>>('/market-requests/mine')
+  return data.data.requests
 }
 
 // ----- Events / analytics -----
