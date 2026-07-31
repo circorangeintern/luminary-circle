@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { getRelativeTime } from '../utils/time'
 import { fetchItems, fetchComparePrices } from '../services/api'
 import type { ItemDto, ComparePriceEntry } from '../services/api'
-import { trackComparisonView } from '../services/events'
+import { trackComparisonView, trackApiError } from '../services/events'
 import ReportPriceModal from './ReportPriceModal'
 
 interface ProductOption {
@@ -76,7 +76,7 @@ export default function ComparePrices() {
         setItems(data)
         setState(data.length === 0 ? 'emptyItems' : 'itemsLoaded')
       })
-      .catch(() => setState('offline'))
+      .catch(() => { setState('offline'); trackApiError('comparison', 'NETWORK_ERROR') })
   }, [])
 
   useEffect(() => {
@@ -93,7 +93,7 @@ export default function ComparePrices() {
         setCompareEntries(res.items)
         trackComparisonView(res.items.length)
       })
-      .catch(() => { setCompareEntries([]) })
+      .catch(() => { setCompareEntries([]); trackApiError('comparison', 'NETWORK_ERROR') })
       .finally(() => setPricesLoading(false))
   }, [active?.itemId, active?.unitId])
 
@@ -208,7 +208,7 @@ export default function ComparePrices() {
 
             <div className="flex gap-5 justify-center flex-wrap">
               <button
-                onClick={() => { setState('loading'); fetchItems().then(d => { setItems(d); setState(d.length === 0 ? 'emptyItems' : 'itemsLoaded') }).catch(() => setState('offline')) }}
+                onClick={() => { setState('loading'); fetchItems().then(d => { setItems(d); setState(d.length === 0 ? 'emptyItems' : 'itemsLoaded') }).catch(() => { setState('offline'); trackApiError('comparison', 'NETWORK_ERROR') }) }}
                 className="inline-flex items-center gap-2.5 bg-input-bg border border-grey-border text-black px-8 py-5 rounded-xl text-sm font-bold cursor-pointer hover:bg-[#eee]"
               >
                 <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">

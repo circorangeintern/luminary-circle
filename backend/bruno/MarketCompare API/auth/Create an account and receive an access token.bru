@@ -1,0 +1,181 @@
+meta {
+  name: Create an account and receive an access token
+  type: http
+  seq: 1
+  tags: [
+    auth
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/register
+  body: json
+  auth: inherit
+}
+
+headers {
+  ~X-Session-Id: 
+}
+
+body:json {
+  {
+    "displayName": "Chidi",
+    "phone": "08031234567",
+    "password": "hunter2hunter2"
+  }
+}
+
+example {
+  name: 201 Response
+  description: Account created
+  
+  request: {
+    url: {{baseUrl}}/api/v1/auth/register
+    method: POST
+    mode: json
+    headers: {
+      ~X-Session-Id: 
+    }
+  
+    body:json: {
+      {
+        "displayName": "Chidi",
+        "phone": "08031234567",
+        "password": "hunter2hunter2"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 201
+      text: Created
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": true,
+          "data": {
+            "user": {
+              "id": "cmrqexjbk00005kdjpmoq2mo3",
+              "displayName": "Chidi",
+              "phone": "+2348031234567",
+              "role": "USER"
+            },
+            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 400 Response
+  description: Validation failed
+  
+  request: {
+    url: {{baseUrl}}/api/v1/auth/register
+    method: POST
+    mode: json
+    headers: {
+      ~X-Session-Id: 
+    }
+  
+    body:json: {
+      {
+        "displayName": "Chidi",
+        "phone": "08031234567",
+        "password": "hunter2hunter2"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 400
+      text: Bad Request
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 409 Response
+  description: Phone already registered
+  
+  request: {
+    url: {{baseUrl}}/api/v1/auth/register
+    method: POST
+    mode: json
+    headers: {
+      ~X-Session-Id: 
+    }
+  
+    body:json: {
+      {
+        "displayName": "Chidi",
+        "phone": "08031234567",
+        "password": "hunter2hunter2"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 409
+      text: Conflict
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { getRelativeTime } from '../utils/time'
 import { fetchItems, fetchMarkets, fetchComparePrices, fetchTrend } from '../services/api'
 import type { ItemDto, MarketDto, TrendResponse } from '../services/api'
-import { trackTrendView } from '../services/events'
+import { trackTrendView, trackApiError } from '../services/events'
 import { Suspense } from 'react'
 import PriceTrendChart from './PriceTrendChart'
 
@@ -64,7 +64,7 @@ export default function PriceTrend() {
         setMarkets(marketsData)
         setState(itemsData.length === 0 ? 'emptyItems' : 'itemsLoaded')
       })
-      .catch(() => setState('offline'))
+      .catch(() => { setState('offline'); trackApiError('trend', 'NETWORK_ERROR') })
   }, [])
 
   const active = allProducts[activeIdx]
@@ -81,7 +81,7 @@ export default function PriceTrend() {
     setTrendLoading(true)
     fetchTrend(active.itemId, active.unitId, activeMarket.id)
       .then((t) => { setTrend(t); trackTrendView(t.points.length > 0) })
-      .catch(() => { setTrend(null); trackTrendView(false) })
+      .catch(() => { setTrend(null); trackTrendView(false); trackApiError('trend', 'NETWORK_ERROR') })
       .finally(() => setTrendLoading(false))
   }, [active?.itemId, active?.unitId, activeMarket?.id])
 

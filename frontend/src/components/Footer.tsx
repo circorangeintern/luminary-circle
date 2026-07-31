@@ -43,8 +43,11 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-[1380px] mx-auto pt-4 lg:pt-6 border-t border-white/15 text-[9px] lg:text-xs text-white/60 text-center">
-        &copy; 2026 Market Compare. All rights reserved.
+      <div className="max-w-[1380px] mx-auto pt-4 lg:pt-6 border-t border-white/15 text-[9px] lg:text-xs text-white/60 flex items-center justify-between">
+        <span>&copy; 2026 Market Compare. All rights reserved.</span>
+        <span>
+          <Link to="/privacy-policy" onClick={() => window.scrollTo(0, 0)} className="hover:underline transition">Privacy Policy</Link> &middot; Terms of Use
+        </span>
       </div>
     </footer>
   )

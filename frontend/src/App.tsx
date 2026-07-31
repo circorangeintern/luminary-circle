@@ -12,6 +12,7 @@ import SignIn from './pages/SignIn'
 import CreateAccount from './pages/CreateAccount'
 import SubmitPrice from './pages/SubmitPrice'
 import PriceList from './pages/PriceList'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
               <Route path="/prices/list" element={<PriceList />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/create-account" element={<CreateAccount />} />
               <Route path="/submit" element={<RequireAuth><SubmitPrice /></RequireAuth>} />

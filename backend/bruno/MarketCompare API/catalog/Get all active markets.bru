@@ -1,0 +1,52 @@
+meta {
+  name: Get all active markets
+  type: http
+  seq: 3
+  tags: [
+    catalog
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/markets
+  body: none
+  auth: inherit
+}
+
+example {
+  name: 200 Response
+  description: Markets request successful
+  
+  request: {
+    url: {{baseUrl}}/api/v1/markets
+    method: GET
+    mode: none
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 200
+      text: OK
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "markets": [
+            {
+              "id": "cmrqexjbk00005kdjpmoq2mo3",
+              "name": "Mile 3 Market",
+              "lga": "Port Harcourt",
+              "state": "Rivers"
+            }
+          ]
+        }
+      '''
+    }
+  }
+}
