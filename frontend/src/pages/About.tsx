@@ -5,22 +5,26 @@ export default function About() {
   useEffect(() => { trackScreenView('about') }, [])
   return (
     <div className="min-h-screen bg-bg-grey">
-      <div className="max-w-[1240px] mx-auto px-6 sm:px-12 lg:px-20 py-16 sm:py-20">
+      <div className="max-w-[1240px] mx-auto px-6 sm:px-12 lg:px-20 py-12 sm:py-20">
         {/* Logo */}
-        <div className="flex justify-center mb-16">
-          <div className="flex items-center gap-3.5">
-            <img src="/logo-icon.png" srcSet="/logo-icon@2x.png 2x" alt="Market Compare" style={{ width: 'auto', height: 72 }} />
+        <div className="flex justify-center mb-10 lg:mb-16">
+          <div className="flex items-center gap-2.5 lg:gap-3.5">
+            <img src="/logo-icon.png" srcSet="/logo-icon@2x.png 2x" alt="Market Compare" style={{ width: 'auto', height: 40 }} className="lg:hidden" />
+            <img src="/logo-icon.png" srcSet="/logo-icon@2x.png 2x" alt="Market Compare" style={{ width: 'auto', height: 56 }} className="hidden lg:block" />
             <div>
-              <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.05, color: '#141414' }} className="m-0">
+              <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.05, color: '#141414' }} className="m-0 lg:hidden">
                 Market<br />Compare
               </h1>
-              <p style={{ fontSize: 11, color: '#555' }} className="mt-0.5">Know before you go</p>
+              <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.05, color: '#141414' }} className="m-0 hidden lg:block">
+                Market<br />Compare
+              </h1>
+              <p style={{ fontSize: 10, color: '#555' }} className="mt-0.5 text-center lg:text-left">Know before you go</p>
             </div>
           </div>
         </div>
 
         {/* Article */}
-        <article className="text-2xl leading-[38px] text-black space-y-6">
+        <article className="text-base leading-[26px] sm:text-xl sm:leading-[32px] text-black space-y-4 sm:space-y-5">
           <p>
             <strong>About MarketCompare</strong> We built this because the market should work for the shopper — not against them. Every day, millions of Nigerian families leave home to buy food without knowing what prices await them at the market. They spend money on transport, arrive at Bodija only to discover beans are cheaper at Dugbe, and return home having overpaid — or worse, having bought less than they needed because the budget ran out. This is not a small inconvenience. For families already stretching every naira, it is a real and recurring cost. MarketCompare was built to fix that.
           </p>
@@ -51,10 +55,10 @@ export default function About() {
         </article>
 
         {/* Separator */}
-        <hr className="border-t border-black my-16 max-w-[769px]" />
+        <hr className="border-t border-black my-10 sm:my-16 max-w-[769px]" />
 
         {/* Contact */}
-        <p className="text-2xl leading-[38px] text-black">
+        <p className="text-base leading-[26px] sm:text-xl sm:leading-[32px] text-black">
           <strong>Have questions, suggestions, or want to partner with us?</strong> Reach us at info@marketcompare.ng or call +234 913 9444 569 &middot; Ibadan, Nigeria
         </p>
       </div>
