@@ -11,3 +11,8 @@ export function getApiError(err: unknown): string {
   }
   return 'Something went wrong. Please try again.'
 }
+
+export function getApiErrorCode(err: unknown): string | undefined {
+  const axiosErr = err as AxiosError<ErrorResponseDto>
+  return axiosErr.response?.data?.error?.code
+}

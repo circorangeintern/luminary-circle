@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getApiError } from '../utils/errors'
+import { getApiError, getApiErrorCode } from '../utils/errors'
 import { trackScreenView, trackSignupStarted } from '../services/events'
+
+declare global {
+  interface Window {
+    onCaptchaSuccess?: (token: string) => void
+    turnstile?: { reset: () => void }
+  }
+}
 
 type State = 'form' | 'validationError' | 'phoneExists' | 'networkError' | 'submitting' | 'success'
 
@@ -19,6 +26,23 @@ export default function CreateAccount() {
   const [confirm, setConfirm] = useState('')
   const [state, setState] = useState<State>('form')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaError, setCaptchaError] = useState(false)
+
+  useEffect(() => {
+    window.onCaptchaSuccess = (token: string) => {
+      setCaptchaToken(token)
+      setCaptchaError(false)
+    }
+    return () => { window.onCaptchaSuccess = undefined }
+  }, [])
+
+  function resetCaptcha() {
+    setCaptchaToken('')
+    if (typeof window.turnstile !== 'undefined') {
+      window.turnstile.reset()
+    }
+  }
 
   function validate(): boolean {
     const errs: Record<string, string> = {}
@@ -37,9 +61,17 @@ export default function CreateAccount() {
     trackSignupStarted()
     setState('submitting')
     try {
-      await signup(displayName, phone, password)
+      await signup(displayName, phone, password, captchaToken)
       setState('success')
     } catch (err) {
+      const code = getApiErrorCode(err)
+      if (code === 'CAPTCHA_FAILED') {
+        setCaptchaError(true)
+        resetCaptcha()
+        setState('form')
+        return
+      }
+      resetCaptcha()
       const msg = getApiError(err)
       if (msg.includes('already exist') || msg.includes('phone')) {
         setErrors({ phone: 'Phone number already exist.' })
@@ -137,6 +169,16 @@ export default function CreateAccount() {
             We couldn't create your account — server is unreachable. Your details are saved. Try again when you reconnect.
           </div>
         )}
+        {captchaError && (
+          <div className="border rounded-[10px] px-[18px] py-4 flex items-center gap-2.5 text-sm font-semibold mb-[22px]" style={{ background: '#fdf6e1', borderColor: '#e9d27a', color: '#8a6d1d' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
+              <circle cx="12" cy="12" r="10" stroke="#8a6d1d" strokeWidth="2" />
+              <line x1="12" y1="7" x2="12" y2="13" stroke="#8a6d1d" strokeWidth="2" />
+              <circle cx="12" cy="16.5" r="1" fill="#8a6d1d" />
+            </svg>
+            Captcha verification failed. Please complete the captcha again.
+          </div>
+        )}
 
         {/* Fields */}
         <div className="mb-5">
@@ -227,6 +269,15 @@ export default function CreateAccount() {
               {errors.confirm}
             </div>
           )}
+        </div>
+
+        {/* Captcha */}
+        <div className="mb-[22px]">
+          <div
+            className="cf-turnstile"
+            data-sitekey="0x4AAAAAAECJICQ9Y6vBhQKx"
+            data-callback="onCaptchaSuccess"
+          />
         </div>
 
         {/* Button */}
