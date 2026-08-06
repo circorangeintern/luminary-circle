@@ -46,6 +46,9 @@ export const envSchema = z.object({
 
   // Cloudflare Turnstile
   TURNSTILE_SECRET_KEY: z.string().min(1, 'TURNSTILE_SECRET_KEY is required'),
+
+  // Mixpanel config
+  MIXPANEL_TOKEN: z.string().min(1, 'MIXPANEL_TOKEN is required'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

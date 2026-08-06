@@ -106,6 +106,8 @@ export class AuthController {
         responseStatus: 'SUCCESS',
       });
 
+      this.analytics.linkSessionToUser(sessionId, result.user.id);
+
       return result;
     } catch (e) {
       this.analytics.emit({

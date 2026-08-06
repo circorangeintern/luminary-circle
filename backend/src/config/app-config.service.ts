@@ -59,4 +59,8 @@ export class AppConfigService {
   get turnstileSecretKey() {
     return this.config.get('TURNSTILE_SECRET_KEY', { infer: true });
   }
+
+  get mixpanelToken() {
+    return this.config.get('MIXPANEL_TOKEN', { infer: true });
+  }
 }

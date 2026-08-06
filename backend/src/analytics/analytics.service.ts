@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DeviceType, Prisma, ResponseStatus } from '../generated/prisma';
+import Mixpanel from 'mixpanel';
+import { AppConfigService } from '../config/app-config.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { DeviceType, Prisma, ResponseStatus } from '../generated/prisma';
 import {
   CreateEventsDto,
   EventsResultDto,
@@ -22,13 +24,19 @@ export interface EmitEventInput {
 @Injectable()
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
+  private readonly mixpanel: Mixpanel.Mixpanel;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: AppConfigService,
+  ) {
+    this.mixpanel = Mixpanel.init(this.config.mixpanelToken);
+  }
 
   /**
-   * Fire-and-forget event write. Deliberately NOT async from the caller's
-   * perspective: it returns void, swallows its own errors, and can never
-   * delay or fail the request that triggered it.
+   * Fire-and-forget event write, now to two destinations. Both writes are
+   * independent: a Mixpanel failure never blocks or affects the Postgres
+   * write, and vice versa. Neither can ever fail or delay the caller.
    */
   emit(input: EmitEventInput): void {
     void this.prisma.analyticsEvent
@@ -47,11 +55,56 @@ export class AnalyticsService {
       })
       .catch((e: unknown) => {
         this.logger.warn(
-          `Failed to record analytics event "${input.name}": ${
+          `Failed to record analytics event "${input.name}" in Postgres: ${
             e instanceof Error ? e.message : String(e)
           }`,
         );
       });
+
+    this.trackMixpanel(input);
+  }
+
+  private trackMixpanel(input: EmitEventInput): void {
+    try {
+      this.mixpanel.track(input.name, {
+        // distinct_id is how Mixpanel groups events into one user/funnel.
+        // Fall back to sessionId for anonymous events so they still group
+        // sensibly even without a signed-in user.
+        distinct_id: input.userId ?? input.sessionId,
+        session_id: input.sessionId,
+        screen_name: input.screenName,
+        response_status: input.responseStatus,
+        error_code: input.errorCode,
+        device_type: input.deviceType,
+        ...input.properties,
+      });
+    } catch (e) {
+      // mixpanel-node's track() is synchronous and can throw on a malformed
+      // payload. Same posture as the Postgres write: log it, never throw.
+      this.logger.warn(
+        `Failed to record analytics event "${input.name}" in Mixpanel: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Called once at login, after we know both the anonymous sessionId that
+   * was active before sign-in and the real userId. Links the two in
+   * Mixpanel so a user's pre-login and post-login events merge into one
+   * timeline instead of appearing as two different people.
+   */
+  linkSessionToUser(sessionId: string, userId: string): void {
+    try {
+      this.mixpanel.alias(sessionId, userId);
+    } catch (e) {
+      this.logger.warn(
+        `Failed to alias session to user in Mixpanel: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+    }
   }
 
   /**
@@ -83,9 +136,6 @@ export class AnalyticsService {
         errorCode: event.errorCode ?? null,
         deviceType: (event.deviceType as DeviceType) ?? null,
         properties: (event.properties ?? undefined) as never,
-        // Client timestamp when supplied, else server time. Client clocks
-        // can be wrong, but for UI events the client's own ordering is
-        // more useful than network-arrival time.
         createdAt: event.occurredAt ? new Date(event.occurredAt) : new Date(),
       });
     }
@@ -102,6 +152,19 @@ export class AnalyticsService {
       data: valid,
       skipDuplicates: true,
     });
+
+    for (const event of valid) {
+      this.trackMixpanel({
+        name: event.name,
+        sessionId: event.sessionId,
+        userId: event.userId as string | null,
+        screenName: event.screenName as string | null,
+        responseStatus: event.responseStatus as ResponseStatus | null,
+        errorCode: event.errorCode as string | null,
+        deviceType: event.deviceType as DeviceType | null,
+        properties: event.properties as Record<string, unknown> | null,
+      });
+    }
 
     return {
       accepted: result.count,
