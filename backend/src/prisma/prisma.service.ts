@@ -1,7 +1,7 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '../generated/prisma';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { AppConfigService } from '../config/app-config.service';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { AppConfigService } from '../config/app-config.service'
+import { PrismaClient } from '../generated/prisma'
 
 @Injectable()
 export class PrismaService
@@ -11,18 +11,18 @@ export class PrismaService
   constructor(configService: AppConfigService) {
     const adapter = new PrismaPg({
       connectionString: configService.databaseUrl,
-    });
-    super({ adapter });
+    })
+    super({ adapter })
     // Known upstream issue: @prisma/adapter-pg emits a pg deprecation warning on
     // writes that select relations (prisma/prisma#29407, #29646). Functional today;
     // revisit when Prisma ships a fix or before pg@9. Not caused by our code.
   }
 
   async onModuleInit() {
-    await this.$connect();
+    await this.$connect()
   }
 
   async onModuleDestroy() {
-    await this.$disconnect();
+    await this.$disconnect()
   }
 }

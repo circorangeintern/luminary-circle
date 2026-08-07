@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger'
+import { IsIn, IsString } from 'class-validator'
 
 export class CreateFlagDto {
   @ApiProperty({
@@ -10,22 +10,22 @@ export class CreateFlagDto {
   @IsIn(['WRONG_PRICE', 'OUTDATED', 'OTHER'], {
     message: 'Reason must be WRONG_PRICE, OUTDATED or OTHER',
   })
-  reason!: string;
+  reason!: string
 }
 
 export class FlagResponseDto {
   @ApiProperty({ example: 'cmrm...' })
-  flagId!: string;
+  flagId!: string
 
   @ApiProperty({ example: 'cmrm...' })
-  submissionId!: string;
+  submissionId!: string
 
   @ApiProperty({ example: 2 })
-  flagCount!: number;
+  flagCount!: number
 
   @ApiProperty({
     example: 'ACTIVE',
     enum: ['ACTIVE', 'UNDER_REVIEW', 'REMOVED'],
   })
-  submissionStatus!: string;
+  submissionStatus!: string
 }

@@ -1,12 +1,12 @@
-import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { AppConfigService } from '../config/app-config.service';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import type { SignOptions } from 'jsonwebtoken';
-import { CaptchaService } from './captcha.service';
+import { Module } from '@nestjs/common'
+import { JwtModule } from '@nestjs/jwt'
+import { PassportModule } from '@nestjs/passport'
+import type { SignOptions } from 'jsonwebtoken'
+import { AppConfigService } from '../config/app-config.service'
+import { AuthController } from './auth.controller'
+import { AuthService } from './auth.service'
+import { CaptchaService } from './captcha.service'
+import { JwtStrategy } from './strategies/jwt.strategy'
 
 @Module({
   imports: [

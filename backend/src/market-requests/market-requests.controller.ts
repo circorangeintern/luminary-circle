@@ -1,20 +1,20 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger';
-import { MarketRequestsService } from './market-requests.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+} from '@nestjs/swagger'
+import { CurrentUser } from '../auth/decorators/current-user.decorator'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { type AuthenticatedUser } from '../auth/types/authenticated-user.type'
+import { ErrorResponseDto } from '../common/errors/error-response.dto'
 import {
   CreateMarketRequestDto,
   MarketRequestDto,
   MarketRequestListDto,
-} from './dto/market-request.dto';
-import { ErrorResponseDto } from '../common/errors/error-response.dto';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { type AuthenticatedUser } from '../auth/types/authenticated-user.type';
+} from './dto/market-request.dto'
+import { MarketRequestsService } from './market-requests.service'
 
 @ApiTags('market-requests')
 @Controller('market-requests')
@@ -44,7 +44,7 @@ export class MarketRequestsController {
     @Body() dto: CreateMarketRequestDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.requests.create(user.id, dto);
+    return await this.requests.create(user.id, dto)
   }
 
   @Get('mine')
@@ -57,6 +57,6 @@ export class MarketRequestsController {
     type: MarketRequestListDto,
   })
   async mine(@CurrentUser() user: AuthenticatedUser) {
-    return this.requests.listMine(user.id);
+    return await this.requests.listMine(user.id)
   }
 }

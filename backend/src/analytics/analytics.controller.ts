@@ -1,10 +1,10 @@
-import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
-import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AnalyticsService } from './analytics.service';
-import { CreateEventsDto, EventsResultDto } from './dto/event.dto';
-import { ErrorResponseDto } from '../common/errors/error-response.dto';
-import { JwtService } from '@nestjs/jwt';
-import { AppConfigService } from '../config/app-config.service';
+import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common'
+import { JwtService } from '@nestjs/jwt'
+import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ErrorResponseDto } from '../common/errors/error-response.dto'
+import { AppConfigService } from '../config/app-config.service'
+import { AnalyticsService } from './analytics.service'
+import { CreateEventsDto, EventsResultDto } from './dto/event.dto'
 
 @ApiTags('analytics')
 @ApiHeader({
@@ -41,19 +41,19 @@ export class AnalyticsController {
     // Public endpoint (anonymous browsing produces events), but attribute
     // to a user when a valid token happens to be present. A bad token is
     // ignored rather than rejected: analytics must never block the client.
-    const userId = this.extractUserId(req.headers.authorization);
-    return this.analytics.ingestBatch(dto, userId);
+    const userId = this.extractUserId(req.headers.authorization)
+    return await this.analytics.ingestBatch(dto, userId)
   }
 
   private extractUserId(authHeader?: string): string | null {
-    if (!authHeader?.startsWith('Bearer ')) return null;
+    if (!authHeader?.startsWith('Bearer ')) return null
     try {
       const payload = this.jwt.verify<{ sub: string }>(authHeader.slice(7), {
         secret: this.config.jwtSecret,
-      });
-      return payload.sub ?? null;
+      })
+      return payload.sub ?? null
     } catch {
-      return null;
+      return null
     }
   }
 }

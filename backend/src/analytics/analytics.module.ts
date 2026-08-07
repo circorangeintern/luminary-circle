@@ -1,7 +1,7 @@
-import { Global, Module } from '@nestjs/common';
-import { AnalyticsService } from './analytics.service';
-import { JwtModule } from '@nestjs/jwt';
-import { AnalyticsController } from './analytics.controller';
+import { Global, Module } from '@nestjs/common'
+import { JwtModule } from '@nestjs/jwt'
+import { AnalyticsController } from './analytics.controller'
+import { AnalyticsService } from './analytics.service'
 
 @Global()
 @Module({

@@ -1,53 +1,53 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger'
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator'
 
 export class CreateMarketRequestDto {
   @ApiProperty({ example: 'Rumuokor Market' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  proposedName!: string;
+  proposedName!: string
 
   @ApiProperty({ example: 'Obio/Akpor' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  lga!: string;
+  lga!: string
 
   @ApiProperty({ example: 'Rivers' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  state!: string;
+  state!: string
 }
 
 export class MarketRequestDto {
   @ApiProperty({ example: 'cmrm...' })
-  id!: string;
+  id!: string
 
   @ApiProperty({ example: 'Rumuokoro Market' })
-  proposedName!: string;
+  proposedName!: string
 
   @ApiProperty({ example: 'Obio/Akpor' })
-  lga!: string;
+  lga!: string
 
   @ApiProperty({ example: 'Rivers' })
-  state!: string;
+  state!: string
 
   @ApiProperty({
     example: 'PENDING',
     enum: ['PENDING', 'APPROVED', 'DECLINED'],
   })
-  status!: string;
+  status!: string
 
   @ApiProperty({ example: '2026-07-23T09:00:00.000Z' })
-  createdAt!: string;
+  createdAt!: string
 
   @ApiProperty({ example: null, nullable: true })
-  reviewedAt!: string | null;
+  reviewedAt!: string | null
 }
 
 export class MarketRequestListDto {
   @ApiProperty({ type: [MarketRequestDto] })
-  requests!: MarketRequestDto[];
+  requests!: MarketRequestDto[]
 }

@@ -1,7 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsString } from 'class-validator';
-import { PriceDto } from '../../prices/dto/price-response.dto';
-import { MarketRequestDto } from '../../market-requests/dto/market-request.dto';
+import { ApiProperty } from '@nestjs/swagger'
+import { IsIn, IsString } from 'class-validator'
+import { MarketRequestDto } from '../../market-requests/dto/market-request.dto'
+import { PriceDto } from '../../prices/dto/price-response.dto'
 
 export class ModerationActionDto {
   @ApiProperty({
@@ -12,7 +12,7 @@ export class ModerationActionDto {
   @IsIn(['RESTORE', 'REMOVE'], {
     message: 'Action must be RESTORE or REMOVE',
   })
-  action!: string;
+  action!: string
 }
 
 export class RequestReviewDto {
@@ -24,26 +24,26 @@ export class RequestReviewDto {
   @IsIn(['APPROVE', 'DECLINE'], {
     message: 'Action must be APPROVE or DECLINE',
   })
-  action!: string;
+  action!: string
 }
 
 export class ModerationItemDto {
   @ApiProperty({ type: PriceDto })
-  price!: PriceDto;
+  price!: PriceDto
 
   @ApiProperty({ example: 3 })
-  flagCount!: number;
+  flagCount!: number
 
   @ApiProperty({ example: ['WRONG_PRICE', 'OUTDATED'] })
-  reasons!: string[];
+  reasons!: string[]
 }
 
 export class ModerationQueueDto {
   @ApiProperty({ type: [ModerationItemDto] })
-  items!: ModerationItemDto[];
+  items!: ModerationItemDto[]
 }
 
 export class AdminRequestListDto {
   @ApiProperty({ type: [MarketRequestDto] })
-  requests!: MarketRequestDto[];
+  requests!: MarketRequestDto[]
 }

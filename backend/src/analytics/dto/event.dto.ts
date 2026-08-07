@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { Type } from 'class-transformer'
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -12,7 +12,7 @@ import {
   IsString,
   MaxLength,
   ValidateNested,
-} from 'class-validator';
+} from 'class-validator'
 
 // Frontend-owned event names, per the ownership split in the Data Model doc
 // section 5. Backend-owned names are rejected so events can never be
@@ -29,7 +29,7 @@ export const FRONTEND_EVENT_NAMES = [
   'trend_insufficient_data_viewed',
   'screen_load_completed',
   'api_error_encountered',
-] as const;
+] as const
 
 const RESPONSE_STATUSES = [
   'LOADING',
@@ -39,59 +39,59 @@ const RESPONSE_STATUSES = [
   'AUTHENTICATION_ERROR',
   'NETWORK_ERROR',
   'SERVER_ERROR',
-] as const;
+] as const
 
-const DEVICE_TYPES = ['MOBILE', 'TABLET', 'DESKTOP'] as const;
+const DEVICE_TYPES = ['MOBILE', 'TABLET', 'DESKTOP'] as const
 
 export class IncomingEventDto {
   @ApiProperty({ example: '6f1c9e6a-3b4d-4e2a-9c8f-1a2b3c4d5e6f' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  clientEventId!: string;
+  clientEventId!: string
 
   @ApiProperty({ example: 'comparison_viewed', enum: FRONTEND_EVENT_NAMES })
   @IsString()
   @IsNotEmpty()
-  name!: string;
+  name!: string
 
   @ApiProperty({ example: 'ses_a1b2c3' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  sessionId!: string;
+  sessionId!: string
 
   @ApiPropertyOptional({ example: 'comparison' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  screenName?: string;
+  screenName?: string
 
   @ApiPropertyOptional({ example: 'SUCCESS', enum: RESPONSE_STATUSES })
   @IsOptional()
   @IsIn(RESPONSE_STATUSES)
-  responseStatus?: string;
+  responseStatus?: string
 
   @ApiPropertyOptional({ example: 'VALIDATION_ERROR' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  errorCode?: string;
+  errorCode?: string
 
   @ApiPropertyOptional({ example: 'MOBILE', enum: DEVICE_TYPES })
   @IsOptional()
   @IsIn(DEVICE_TYPES)
-  deviceType?: string;
+  deviceType?: string
 
   @ApiPropertyOptional({ example: { itemId: 'cmrm...', marketsDisplayed: 3 } })
   @IsOptional()
   @IsObject()
-  properties?: Record<string, unknown>;
+  properties?: Record<string, unknown>
 
   @ApiPropertyOptional({ example: '2026-07-23T10:00:00.000Z' })
   @IsOptional()
   @IsISO8601()
-  occurredAt?: string;
+  occurredAt?: string
 }
 
 export class CreateEventsDto {
@@ -101,16 +101,16 @@ export class CreateEventsDto {
   @ArrayMaxSize(20, { message: 'A batch may contain at most 20 events' })
   @ValidateNested({ each: true }) // validates every item in the array
   @Type(() => IncomingEventDto) // tells class-transformer what to instantiate
-  events!: IncomingEventDto[];
+  events!: IncomingEventDto[]
 }
 
 export class EventsResultDto {
   @ApiProperty({ example: 5 })
-  accepted!: number;
+  accepted!: number
 
   @ApiProperty({ example: 1 })
-  duplicates!: number;
+  duplicates!: number
 
   @ApiProperty({ example: 0 })
-  rejected!: number;
+  rejected!: number
 }

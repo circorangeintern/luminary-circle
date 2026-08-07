@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const envSchema = z.object({
   // App config
@@ -49,6 +49,6 @@ export const envSchema = z.object({
 
   // Mixpanel config
   MIXPANEL_TOKEN: z.string().min(1, 'MIXPANEL_TOKEN is required'),
-});
+})
 
-export type EnvConfig = z.infer<typeof envSchema>;
+export type EnvConfig = z.infer<typeof envSchema>
