@@ -49,6 +49,7 @@ export const envSchema = z.object({
 
   // Mixpanel config
   MIXPANEL_TOKEN: z.string().min(1, 'MIXPANEL_TOKEN is required'),
+  MIXPANEL_HOST: z.string().default('api.mixpanel.com'),
 })
 
 export type EnvConfig = z.infer<typeof envSchema>

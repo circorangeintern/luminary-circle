@@ -30,7 +30,9 @@ export class AnalyticsService {
     private readonly prisma: PrismaService,
     private readonly config: AppConfigService,
   ) {
-    this.mixpanel = Mixpanel.init(this.config.mixpanelToken)
+    this.mixpanel = Mixpanel.init(this.config.mixpanelToken, {
+      host: this.config.mixpanelHost,
+    })
   }
 
   /**
@@ -61,15 +63,13 @@ export class AnalyticsService {
         )
       })
 
-    this.trackMixpanel(input)
+    void this.trackMixpanel(input)
   }
 
   private trackMixpanel(input: EmitEventInput): void {
-    try {
-      this.mixpanel.track(input.name, {
-        // distinct_id is how Mixpanel groups events into one user/funnel.
-        // Fall back to sessionId for anonymous events so they still group
-        // sensibly even without a signed-in user.
+    this.mixpanel.track(
+      input.name,
+      {
         distinct_id: input.userId ?? input.sessionId,
         session_id: input.sessionId,
         screen_name: input.screenName,
@@ -77,16 +77,15 @@ export class AnalyticsService {
         error_code: input.errorCode,
         device_type: input.deviceType,
         ...input.properties,
-      })
-    } catch (e) {
-      // mixpanel-node's track() is synchronous and can throw on a malformed
-      // payload. Same posture as the Postgres write: log it, never throw.
-      this.logger.warn(
-        `Failed to record analytics event "${input.name}" in Mixpanel: ${
-          e instanceof Error ? e.message : String(e)
-        }`,
-      )
-    }
+      },
+      (err?: Error) => {
+        if (err) {
+          this.logger.warn(
+            `Failed to record analytics event "${input.name}" in Mixpanel: ${err.message}`,
+          )
+        }
+      },
+    )
   }
 
   /**
@@ -96,15 +95,13 @@ export class AnalyticsService {
    * timeline instead of appearing as two different people.
    */
   linkSessionToUser(sessionId: string, userId: string): void {
-    try {
-      this.mixpanel.alias(sessionId, userId)
-    } catch (e) {
-      this.logger.warn(
-        `Failed to alias session to user in Mixpanel: ${
-          e instanceof Error ? e.message : String(e)
-        }`,
-      )
-    }
+    this.mixpanel.alias(userId, sessionId, (err?: Error) => {
+      if (err) {
+        this.logger.warn(
+          `Failed to alias session to user in Mixpanel: ${err.message}`,
+        )
+      }
+    })
   }
 
   /**

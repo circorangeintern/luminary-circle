@@ -63,4 +63,8 @@ export class AppConfigService {
   get mixpanelToken() {
     return this.config.get('MIXPANEL_TOKEN', { infer: true })
   }
+
+  get mixpanelHost() {
+    return this.config.get('MIXPANEL_HOST', { infer: true })
+  }
 }

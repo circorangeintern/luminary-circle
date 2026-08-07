@@ -6,7 +6,11 @@ import { AdminService } from './admin.service'
 describe('AdminService', () => {
   let service: AdminService
   let prisma: {
-    priceSubmission: { findUnique: jest.Mock; findMany: jest.Mock, update: jest.Mock }
+    priceSubmission: {
+      findUnique: jest.Mock
+      findMany: jest.Mock
+      update: jest.Mock
+    }
     flag: { updateMany: jest.Mock }
     marketRequest: {
       findUnique: jest.Mock
@@ -19,7 +23,11 @@ describe('AdminService', () => {
 
   beforeEach(async () => {
     prisma = {
-      priceSubmission: { findUnique: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+      priceSubmission: {
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
+        update: jest.fn(),
+      },
       flag: { updateMany: jest.fn() },
       marketRequest: {
         findUnique: jest.fn(),
