@@ -1,49 +1,29 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getRelativeTime, isStale, formatDate } from '../utils/time'
+import { trackScreenView, trackApiError } from '../services/events'
+import { fetchPrices } from '../services/api'
+import type { PriceDto } from '../services/api'
 
-interface PriceItem {
-  name: string
-  market: string
-  size: string
-  price: string
-  updatedAt: string
-  isSeed?: boolean
-  source?: string
-}
-
-const products: PriceItem[] = [
-  { name: 'Beans (brown)', market: 'Dugbe', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Garri (white)', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Beans (white)', market: 'Dugbe', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z', isSeed: true, source: 'NBS' },
-  { name: 'Cassava', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Flour', market: 'Gbagi', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Garri (red)', market: 'Dugbe', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z', isSeed: true, source: 'NBS' },
-  { name: 'Rice (local)', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Plantain', market: 'Gbagi', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Chicken', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-10T10:00:00Z' },
-  { name: 'Noodles', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Yam', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Rice (foreign)', market: 'Gbagi', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Tomatoes', market: 'Dugbe', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Onions', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-01T10:00:00Z' },
-  { name: 'Maize', market: 'Gbagi', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z', isSeed: true, source: 'NBS' },
-  { name: 'Fish (fresh fish)', market: 'Dugbe', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Potato (irish)', market: 'Gbagi', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Turkey', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Meat (beef)', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-06-25T10:00:00Z' },
-  { name: 'Pepper', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Vegetables', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Oil (vegetable oil)', market: 'Dugbe', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Fish (crayfish)', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Cereal/Flakes', market: 'Gbagi', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Egusi', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Chicken', market: 'Dugbe', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Eggs', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Fish (stockfish)', market: 'Gbagi', size: '5kg', price: '₦15,000', updatedAt: '2026-07-22T10:00:00Z' },
-  { name: 'Meat (goat)', market: 'Bodija', size: '5kg', price: '₦15,000', updatedAt: '2026-07-05T10:00:00Z' },
-]
+type State = 'loading' | 'offline' | 'empty' | 'loaded'
 
 export default function PriceList() {
+  useEffect(() => { trackScreenView('price-list') }, [])
+  const [state, setState] = useState<State>('loading')
+  const [prices, setPrices] = useState<PriceDto[]>([])
+
+  function load() {
+    setState('loading')
+    fetchPrices({ pageSize: 100 })
+      .then((res) => {
+        setPrices(res.items)
+        setState(res.items.length === 0 ? 'empty' : 'loaded')
+      })
+      .catch(() => { setState('offline'); trackApiError('price-list', 'NETWORK_ERROR') })
+  }
+
+  useEffect(load, [])
+
   return (
     <div className="min-h-screen bg-bg-grey">
       <div className="max-w-[797px] mx-auto flex flex-col">
@@ -80,42 +60,101 @@ export default function PriceList() {
             </div>
           </div>
 
-          <div className="px-[30px]">
-            {products.map((p, i) => {
-              const stale = isStale(p.updatedAt)
-              return (
-                <div
-                  key={i}
-                  className={`flex items-center gap-[78px] border-b border-days-grey min-h-[84px] ${stale ? 'opacity-50' : ''}`}
-                >
-                  <div className="flex items-center gap-[27px] w-[172px] shrink-0">
-                    <div className="w-[18px] h-[18px] rounded-full border border-black shrink-0" />
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-base leading-6 tracking-[-0.24px] text-black">
-                        {p.name}
-                      </span>
-                      {p.isSeed && (
-                        <span className="text-[10px] font-medium text-[#8a7a3a] bg-[#f6d99a] px-2 py-0.5 rounded-full w-fit leading-normal">
-                          Source: {p.source}
-                        </span>
-                      )}
-                    </div>
+          {state === 'loading' && (
+            <div className="px-[30px]">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-[78px] border-b border-days-grey min-h-[84px]">
+                  <div className="w-[172px] shrink-0">
+                    <div className="skeleton h-4 rounded w-3/4" />
                   </div>
                   <div className="flex items-center gap-[61px]">
-                    <span className="w-[69px] text-base leading-5 tracking-[-0.24px] text-black text-center">{p.market}</span>
-                    <span className="w-[48px] text-base leading-5 tracking-[-0.24px] text-black text-center">{p.size}</span>
-                    <span className="w-[82px] text-base leading-5 tracking-[-0.24px] text-black text-center">{p.price}</span>
-                    <span className="w-[85px] text-base leading-5 tracking-[-0.24px] text-black text-center flex flex-col items-center">
-                      <span className={stale ? 'text-[#888]' : ''}>{formatDate(p.updatedAt)}</span>
-                      {stale && (
-                        <span className="text-[10px] font-semibold text-[#888]">{getRelativeTime(p.updatedAt)}</span>
-                      )}
-                    </span>
+                    <div className="skeleton h-4 rounded w-[69px]" />
+                    <div className="skeleton h-4 rounded w-[48px]" />
+                    <div className="skeleton h-4 rounded w-[82px]" />
+                    <div className="skeleton h-4 rounded w-[85px]" />
                   </div>
                 </div>
-              )
-            })}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {state === 'offline' && (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 rounded-full bg-input-bg flex items-center justify-center mx-auto mb-5">
+                <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7">
+                  <circle cx="12" cy="12" r="10" stroke="#A1A1A1" strokeWidth="1.5" />
+                  <path d="M12 8V12M12 16H12.01" stroke="#A1A1A1" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-black mb-2">Couldn't load prices</h3>
+              <p className="text-sm text-[#666] mb-5">Check your connection and try again</p>
+              <button
+                onClick={load}
+                className="inline-flex items-center gap-2 bg-input-bg border border-grey-border text-black px-6 py-3 rounded-xl text-sm font-bold cursor-pointer hover:bg-[#eee]"
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+                  <path d="M4 4V9H9" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4.6 15A8 8 0 1 0 6 7.3L4 9" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Try again
+              </button>
+            </div>
+          )}
+
+          {state === 'empty' && (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 rounded-full bg-input-bg flex items-center justify-center mx-auto mb-5">
+                <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7">
+                  <circle cx="12" cy="12" r="10" stroke="#A1A1A1" strokeWidth="1.5" />
+                  <path d="M12 8V12M12 16H12.01" stroke="#A1A1A1" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-black mb-2">No prices yet</h3>
+              <p className="text-sm text-[#666] mb-5">Be the first to submit a price</p>
+              <Link to="/submit" className="inline-flex items-center gap-2 bg-red text-white px-6 py-3 rounded-lg text-sm font-semibold hover:brightness-110 transition">
+                Submit a price
+              </Link>
+            </div>
+          )}
+
+          {state === 'loaded' && (
+            <div className="px-[30px]">
+              {prices.map((p, i) => {
+                const stale = isStale(p.createdAt)
+                return (
+                  <div
+                    key={p.id || i}
+                    className={`flex items-center gap-[78px] border-b border-days-grey min-h-[84px] ${stale ? 'opacity-50' : ''}`}
+                  >
+                    <div className="flex items-center gap-[27px] w-[172px] shrink-0">
+                      <div className="w-[18px] h-[18px] rounded-full border border-black shrink-0" />
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-base leading-6 tracking-[-0.24px] text-black">
+                          {p.item.name}
+                        </span>
+                        {p.source === 'SEED_DEMO' && (
+                          <span className="text-[10px] font-medium text-[#8a7a3a] bg-[#f6d99a] px-2 py-0.5 rounded-full w-fit leading-normal">
+                            Source: NBS
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-[61px]">
+                      <span className="w-[69px] text-base leading-5 tracking-[-0.24px] text-black text-center">{p.market.name}</span>
+                      <span className="w-[48px] text-base leading-5 tracking-[-0.24px] text-black text-center">{p.unit.label}</span>
+                      <span className="w-[82px] text-base leading-5 tracking-[-0.24px] text-black text-center">₦{p.price.toLocaleString()}</span>
+                      <span className="w-[85px] text-base leading-5 tracking-[-0.24px] text-black text-center flex flex-col items-center">
+                        <span className={stale ? 'text-[#888]' : ''}>{formatDate(p.createdAt)}</span>
+                        {stale && (
+                          <span className="text-[10px] font-semibold text-[#888]">{getRelativeTime(p.createdAt)}</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
-import { normalizePhone } from './phone.util';
-import { AppException } from '../errors/app.exception';
+import { AppException } from '../errors/app.exception'
+import { normalizePhone } from './phone.util'
 
 describe('normalizePhone', () => {
   describe('valid inputs', () => {
@@ -14,9 +14,9 @@ describe('normalizePhone', () => {
       ['09161234567', '+2349161234567'],
       ['07051234567', '+2347051234567'],
     ])('normalizes %s to %s', (input, expected) => {
-      expect(normalizePhone(input)).toBe(expected);
-    });
-  });
+      expect(normalizePhone(input)).toBe(expected)
+    })
+  })
 
   describe('invalid inputs', () => {
     it.each([
@@ -29,13 +29,13 @@ describe('normalizePhone', () => {
       ['+1 555 123 4567'],
     ])('throws VALIDATION_ERROR for %s', (input) => {
       try {
-        normalizePhone(input);
-        fail('expected normalizePhone to throw');
+        normalizePhone(input)
+        fail('expected normalizePhone to throw')
       } catch (e) {
-        expect(e).toBeInstanceOf(AppException);
-        expect((e as AppException).code).toBe('VALIDATION_ERROR');
-        expect((e as AppException).details?.[0]?.field).toBe('phone');
+        expect(e).toBeInstanceOf(AppException)
+        expect((e as AppException).code).toBe('VALIDATION_ERROR')
+        expect((e as AppException).details?.[0]?.field).toBe('phone')
       }
-    });
-  });
-});
+    })
+  })
+})

@@ -15,13 +15,13 @@
 // SEED_DEMO, and attributed in the note field.
 // =====================================================================
 
-import 'dotenv/config';
-import { PrismaClient, SubmissionSource } from '../src/generated/prisma';
-import { PrismaPg } from '@prisma/adapter-pg';
-import * as bcrypt from 'bcrypt';
+import 'dotenv/config'
+import { PrismaPg } from '@prisma/adapter-pg'
+import * as bcrypt from 'bcrypt'
+import { PrismaClient, SubmissionSource } from '../src/generated/prisma'
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
-const prisma = new PrismaClient({ adapter });
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
+const prisma = new PrismaClient({ adapter })
 
 // ---------------------------------------------------------------------
 // helpers
@@ -29,26 +29,26 @@ const prisma = new PrismaClient({ adapter });
 
 /** A Date `n` days ago, at a fixed hour so re-seeds are reproducible. */
 function daysAgo(n: number, hour = 10): Date {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  d.setHours(hour, 0, 0, 0);
-  return d;
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  d.setHours(hour, 0, 0, 0)
+  return d
 }
 
 /** Deterministic string hash, used to vary trend shapes per item+unit. */
 function hashString(s: string): number {
-  let h = 0;
+  let h = 0
   for (let i = 0; i < s.length; i++) {
-    h = (h * 31 + s.charCodeAt(i)) | 0;
+    h = (h * 31 + s.charCodeAt(i)) | 0
   }
-  return Math.abs(h);
+  return Math.abs(h)
 }
 
 /** Round to a sensible increment for the magnitude. */
 function roundPrice(n: number): number {
-  if (n >= 10000) return Math.round(n / 50) * 50;
-  if (n >= 1000) return Math.round(n / 10) * 10;
-  return Math.round(n / 5) * 5;
+  if (n >= 10000) return Math.round(n / 50) * 50
+  if (n >= 1000) return Math.round(n / 10) * 10
+  return Math.round(n / 5) * 5
 }
 
 // ---------------------------------------------------------------------
@@ -56,20 +56,20 @@ function roundPrice(n: number): number {
 // ---------------------------------------------------------------------
 
 const UNITS: { label: string; approxKg?: number }[] = [
-  { label: 'derica', approxKg: 0.9 },        // tomato-tin measure
-  { label: 'mudu', approxKg: 1.5 },          // heaped; regional variation is real
-  { label: 'congo', approxKg: 1.5 },         // south-west name for the mudu
-  { label: 'paint bucket', approxKg: 4.0 },  // ~4kg of rice
+  { label: 'derica', approxKg: 0.9 }, // tomato-tin measure
+  { label: 'mudu', approxKg: 1.5 }, // heaped; regional variation is real
+  { label: 'congo', approxKg: 1.5 }, // south-west name for the mudu
+  { label: 'paint bucket', approxKg: 4.0 }, // ~4kg of rice
   { label: '50kg bag', approxKg: 50.0 },
-  { label: 'basket' },                       // size varies, no kg claimed
-  { label: 'crate (30)' },                   // 30 eggs
+  { label: 'basket' }, // size varies, no kg claimed
+  { label: 'crate (30)' }, // 30 eggs
   { label: 'piece' },
   { label: 'tuber' },
-  { label: 'heap' },                         // market-table heap, highly variable
+  { label: 'heap' }, // market-table heap, highly variable
   { label: 'bottle (75cl)' },
   { label: 'litre' },
   { label: 'keg (5L)' },
-];
+]
 
 // ---------------------------------------------------------------------
 // 2) ITEMS — the five PRD staples plus common additions
@@ -79,14 +79,17 @@ const ITEMS: { name: string; localNames: string[] }[] = [
   { name: 'Rice (local)', localNames: ['ofada-type', 'abakaliki rice'] },
   { name: 'Beans (brown)', localNames: ['honey beans', 'oloyin', 'ewa'] },
   { name: 'Tomatoes (fresh)', localNames: ['tomato jos', 'tamatir'] },
-  { name: 'Cooking oil (vegetable)', localNames: ['groundnut oil', 'kings-type'] },
+  {
+    name: 'Cooking oil (vegetable)',
+    localNames: ['groundnut oil', 'kings-type'],
+  },
   { name: 'Eggs', localNames: ['egg', 'kwai'] },
   { name: 'Garri (white)', localNames: ['garri funfun', 'ijebu garri'] },
   { name: 'Yam', localNames: ['isu', 'puna yam'] },
   { name: 'Pepper (fresh)', localNames: ['rodo', 'ata rodo', 'shombo'] },
   { name: 'Onions', localNames: ['alubosa', 'albasa'] },
   { name: 'Palm oil', localNames: ['epo pupa', 'red oil'] },
-];
+]
 
 // ---------------------------------------------------------------------
 // 3) ITEM-UNIT legality map (drives the submit-form picker)
@@ -103,7 +106,7 @@ const ITEM_UNITS: Record<string, string[]> = {
   'Pepper (fresh)': ['basket', 'paint bucket', 'heap'],
   Onions: ['basket', 'paint bucket', 'heap'],
   'Palm oil': ['bottle (75cl)', 'litre', 'keg (5L)'],
-};
+}
 
 // ---------------------------------------------------------------------
 // 4) MARKETS — edit this array only
@@ -115,7 +118,7 @@ const MARKETS: { name: string; lga: string; state: string }[] = [
   { name: 'Oje Market', lga: 'Ibadan North East', state: 'Oyo' },
   { name: 'Aleshinloye Market', lga: 'Ibadan North West', state: 'Oyo' },
   { name: 'Sasa Market', lga: 'Akinyele', state: 'Oyo' },
-];
+]
 
 // ---------------------------------------------------------------------
 // 5) PRICE BANDS per (item, unit): [low, high] whole naira
@@ -171,7 +174,7 @@ const PRICE_BANDS: Record<string, Record<string, [number, number]>> = {
     litre: [2600, 3400],
     'keg (5L)': [13000, 16500],
   },
-};
+}
 
 // ---------------------------------------------------------------------
 // 6) SERIES SHAPE
@@ -181,15 +184,15 @@ const PRICE_BANDS: Record<string, Record<string, [number, number]>> = {
 //    gives the UI something real to badge.
 // ---------------------------------------------------------------------
 
-const SERIES_OFFSETS = [14, 12, 10, 8, 6, 4, 2, 1];
+const SERIES_OFFSETS = [14, 12, 10, 8, 6, 4, 2, 1]
 
 /** One market is deliberately left behind so its LATEST price is stale,
  *  giving the comparison view a visible stale badge to demo. */
-const STALE_MARKET_INDEX = 4; // Sasa Market
-const STALE_MARKET_EXTRA_DAYS = 9;
+const STALE_MARKET_INDEX = 4 // Sasa Market
+const STALE_MARKET_EXTRA_DAYS = 9
 
-type Shape = 'RISING' | 'FALLING' | 'STABLE' | 'VOLATILE' | 'DIP';
-const SHAPES: Shape[] = ['RISING', 'FALLING', 'STABLE', 'VOLATILE', 'DIP'];
+type Shape = 'RISING' | 'FALLING' | 'STABLE' | 'VOLATILE' | 'DIP'
+const SHAPES: Shape[] = ['RISING', 'FALLING', 'STABLE', 'VOLATILE', 'DIP']
 
 /**
  * Deterministic price series. No Math.random, so every re-seed tells the
@@ -202,42 +205,42 @@ function buildSeries(
   marketIdx: number,
   seedKey: string,
 ): number[] {
-  const [low, high] = band;
-  const span = high - low;
-  const n = SERIES_OFFSETS.length;
+  const [low, high] = band
+  const span = high - low
+  const n = SERIES_OFFSETS.length
 
   // Markets sit at staggered levels within the band.
-  const base = low + span * (0.15 + 0.14 * marketIdx);
-  const shape = SHAPES[(hashString(seedKey) + marketIdx) % SHAPES.length];
-  const phase = ((hashString(seedKey) % 7) / 7) * Math.PI * 2;
+  const base = low + span * (0.15 + 0.14 * marketIdx)
+  const shape = SHAPES[(hashString(seedKey) + marketIdx) % SHAPES.length]
+  const phase = ((hashString(seedKey) % 7) / 7) * Math.PI * 2
 
   return SERIES_OFFSETS.map((_, i) => {
-    const t = i / (n - 1); // 0 at oldest, 1 at newest
+    const t = i / (n - 1) // 0 at oldest, 1 at newest
 
-    let drift: number;
+    let drift: number
     switch (shape) {
       case 'RISING':
-        drift = span * 0.3 * t;
-        break;
+        drift = span * 0.3 * t
+        break
       case 'FALLING':
-        drift = -span * 0.28 * t;
-        break;
+        drift = -span * 0.28 * t
+        break
       case 'STABLE':
-        drift = span * 0.015 * Math.sin(t * Math.PI + phase);
-        break;
+        drift = span * 0.015 * Math.sin(t * Math.PI + phase)
+        break
       case 'VOLATILE':
-        drift = span * 0.22 * Math.sin(t * Math.PI * 2.5 + phase);
-        break;
+        drift = span * 0.22 * Math.sin(t * Math.PI * 2.5 + phase)
+        break
       case 'DIP':
-        drift = -span * 0.25 * Math.sin(t * Math.PI);
-        break;
+        drift = -span * 0.25 * Math.sin(t * Math.PI)
+        break
     }
 
-    const wobble = span * 0.03 * Math.sin(t * Math.PI * 3 + phase);
-    const price = base + drift + wobble;
+    const wobble = span * 0.03 * Math.sin(t * Math.PI * 3 + phase)
+    const price = base + drift + wobble
 
-    return roundPrice(Math.max(low, Math.min(high, price)));
-  });
+    return roundPrice(Math.max(low, Math.min(high, price)))
+  })
 }
 
 // ---------------------------------------------------------------------
@@ -247,11 +250,11 @@ function buildSeries(
 // ---------------------------------------------------------------------
 
 const SYSTEM_USERS: {
-  phone: string;
-  displayName: string;
-  role: 'ADMIN' | 'USER';
-  passwordEnv: string;
-  fallback: string;
+  phone: string
+  displayName: string
+  role: 'ADMIN' | 'USER'
+  passwordEnv: string
+  fallback: string
 }[] = [
   {
     phone: '+2340000000001',
@@ -281,74 +284,76 @@ const SYSTEM_USERS: {
     passwordEnv: 'SEED_CONTRIB_PASSWORD',
     fallback: 'ChangeMe-Contrib-1!',
   },
-];
+]
 
 // ---------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------
 
 async function main() {
-  console.log('Seeding MarketCompare (idempotent)...');
+  console.log('Seeding MarketCompare (idempotent)...')
 
   // ---- Units --------------------------------------------------------
-  const unitByLabel = new Map<string, string>();
+  const unitByLabel = new Map<string, string>()
   for (const u of UNITS) {
     const unit = await prisma.unit.upsert({
       where: { label: u.label },
       update: { approxKg: u.approxKg ?? null },
       create: { label: u.label, approxKg: u.approxKg ?? null },
-    });
-    unitByLabel.set(u.label, unit.id);
+    })
+    unitByLabel.set(u.label, unit.id)
   }
-  console.log(`  units: ${unitByLabel.size}`);
+  console.log(`  units: ${unitByLabel.size}`)
 
   // ---- Items --------------------------------------------------------
-  const itemByName = new Map<string, string>();
+  const itemByName = new Map<string, string>()
   for (const it of ITEMS) {
     const item = await prisma.item.upsert({
       where: { name: it.name },
       update: { localNames: it.localNames },
       create: { name: it.name, localNames: it.localNames },
-    });
-    itemByName.set(it.name, item.id);
+    })
+    itemByName.set(it.name, item.id)
   }
-  console.log(`  items: ${itemByName.size}`);
+  console.log(`  items: ${itemByName.size}`)
 
   // ---- ItemUnit pairs -----------------------------------------------
-  let pairCount = 0;
+  let pairCount = 0
   for (const [itemName, unitLabels] of Object.entries(ITEM_UNITS)) {
-    const itemId = itemByName.get(itemName)!;
+    const itemId = itemByName.get(itemName)!
     for (const label of unitLabels) {
-      const unitId = unitByLabel.get(label)!;
+      const unitId = unitByLabel.get(label)!
       await prisma.itemUnit.upsert({
         where: { itemId_unitId: { itemId, unitId } }, // composite-PK upsert key
         update: {},
         create: { itemId, unitId },
-      });
-      pairCount++;
+      })
+      pairCount++
     }
   }
-  console.log(`  item-unit pairs: ${pairCount}`);
+  console.log(`  item-unit pairs: ${pairCount}`)
 
   // ---- Markets ------------------------------------------------------
-  const marketIds: string[] = [];
+  const marketIds: string[] = []
   for (const m of MARKETS) {
     const market = await prisma.market.upsert({
-      where: { uq_market_identity: { name: m.name, lga: m.lga, state: m.state } },
+      where: {
+        uq_market_identity: { name: m.name, lga: m.lga, state: m.state },
+      },
       update: {},
       create: m,
-    });
-    marketIds.push(market.id);
+    })
+    marketIds.push(market.id)
   }
-  console.log(`  markets: ${marketIds.length}`);
+  console.log(`  markets: ${marketIds.length}`)
 
   // ---- System accounts ----------------------------------------------
-  const contributorIds: string[] = [];
+  const contributorIds: string[] = []
   for (const su of SYSTEM_USERS) {
     const hash = await bcrypt.hash(
       process.env[su.passwordEnv] ?? su.fallback,
       10,
-    );
+    )
     const user = await prisma.user.upsert({
       where: { phone: su.phone },
       update: {},
@@ -358,39 +363,39 @@ async function main() {
         passwordHash: hash,
         role: su.role,
       },
-    });
-    if (su.role === 'USER') contributorIds.push(user.id);
+    })
+    if (su.role === 'USER') contributorIds.push(user.id)
   }
-  console.log(`  system accounts: ${SYSTEM_USERS.length}`);
+  console.log(`  system accounts: ${SYSTEM_USERS.length}`)
 
   // ---- Seed prices: delete-then-reinsert (SEED_DEMO only) -----------
   const deleted = await prisma.priceSubmission.deleteMany({
     where: { source: SubmissionSource.SEED_DEMO },
-  });
-  console.log(`  cleared previous seed prices: ${deleted.count}`);
+  })
+  console.log(`  cleared previous seed prices: ${deleted.count}`)
 
   const rows: {
-    userId: string;
-    itemId: string;
-    unitId: string;
-    marketId: string;
-    price: number;
-    source: SubmissionSource;
-    createdAt: Date;
-    note: string;
-  }[] = [];
+    userId: string
+    itemId: string
+    unitId: string
+    marketId: string
+    price: number
+    source: SubmissionSource
+    createdAt: Date
+    note: string
+  }[] = []
 
   for (const [itemName, unitBands] of Object.entries(PRICE_BANDS)) {
-    const itemId = itemByName.get(itemName)!;
+    const itemId = itemByName.get(itemName)!
 
     for (const [unitLabel, band] of Object.entries(unitBands)) {
-      const unitId = unitByLabel.get(unitLabel)!;
-      const seedKey = `${itemName}|${unitLabel}`;
+      const unitId = unitByLabel.get(unitLabel)!
+      const seedKey = `${itemName}|${unitLabel}`
 
       marketIds.forEach((marketId, marketIdx) => {
-        const series = buildSeries(band, marketIdx, seedKey);
+        const series = buildSeries(band, marketIdx, seedKey)
         const extraDays =
-          marketIdx === STALE_MARKET_INDEX ? STALE_MARKET_EXTRA_DAYS : 0;
+          marketIdx === STALE_MARKET_INDEX ? STALE_MARKET_EXTRA_DAYS : 0
 
         series.forEach((price, i) => {
           rows.push({
@@ -405,23 +410,23 @@ async function main() {
               8 + (marketIdx % 6), // stagger the hour so ordering is stable
             ),
             note: 'Seed data, anchored to NBS Food Price Watch ranges',
-          });
-        });
-      });
+          })
+        })
+      })
     }
   }
 
-  await prisma.priceSubmission.createMany({ data: rows });
-  console.log(`  seed price submissions: ${rows.length}`);
+  await prisma.priceSubmission.createMany({ data: rows })
+  console.log(`  seed price submissions: ${rows.length}`)
 
-  console.log('Seed complete.');
+  console.log('Seed complete.')
 }
 
 main()
   .catch((e) => {
-    console.error('Seed failed:', e);
-    process.exit(1);
+    console.error('Seed failed:', e)
+    process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect();
-  });
+    await prisma.$disconnect()
+  })

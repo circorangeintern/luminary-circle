@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { CatalogController } from './catalog.controller';
-import { CatalogService } from './catalog.service';
-import { PricesModule } from '../prices/prices.module';
+import { Module } from '@nestjs/common'
+import { PricesModule } from '../prices/prices.module'
+import { CatalogController } from './catalog.controller'
+import { CatalogService } from './catalog.service'
 
 @Module({
   imports: [PricesModule],

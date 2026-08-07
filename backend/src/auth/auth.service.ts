@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { AppException } from '../common/errors/app.exception';
-import { normalizePhone } from '../common/utils/phone.util';
-import { CaptchaService } from './captcha.service';
+import { Injectable } from '@nestjs/common'
+import { JwtService } from '@nestjs/jwt'
+import * as bcrypt from 'bcrypt'
+import { AppException } from '../common/errors/app.exception'
+import { normalizePhone } from '../common/utils/phone.util'
+import { PrismaService } from '../prisma/prisma.service'
+import { CaptchaService } from './captcha.service'
+import { LoginDto } from './dto/login.dto'
+import { RegisterDto } from './dto/register.dto'
 
-const BCRYPT_ROUNDS = 10;
+const BCRYPT_ROUNDS = 10
 
 @Injectable()
 export class AuthService {
@@ -22,55 +22,55 @@ export class AuthService {
     // Verify before ANY database work. A bot that fails the captcha should
     // never cost us a query, and should learn nothing about which phone
     // numbers exist.
-    await this.captcha.verify(dto.captchaToken, remoteIp);
+    await this.captcha.verify(dto.captchaToken, remoteIp)
 
-    const phone = normalizePhone(dto.phone); // throws VALIDATION_ERROR if bad
+    const phone = normalizePhone(dto.phone) // throws VALIDATION_ERROR if bad
 
-    const existing = await this.prisma.user.findUnique({ where: { phone } });
+    const existing = await this.prisma.user.findUnique({ where: { phone } })
     if (existing) {
       throw new AppException(
         'CONFLICT',
         'This phone number already has an account',
         [{ field: 'phone', message: 'Already registered' }],
-      );
+      )
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS)
 
     const user = await this.prisma.user.create({
       data: { displayName: dto.displayName.trim(), phone, passwordHash },
       select: { id: true, displayName: true, phone: true, role: true },
-    });
+    })
 
-    return { user, accessToken: this.signToken(user.id, user.role) };
+    return { user, accessToken: this.signToken(user.id, user.role) }
   }
 
   async login(dto: LoginDto) {
-    let phone: string;
+    let phone: string
     try {
-      phone = normalizePhone(dto.phone);
+      phone = normalizePhone(dto.phone)
     } catch {
       // Deliberate: a malformed phone yields the same generic 401 as a wrong
       // password, so login has exactly one failure shape. Do not "fix" this
       // into a VALIDATION_ERROR without a decision.
-      throw this.invalidCredentials();
+      throw this.invalidCredentials()
     }
 
-    const user = await this.prisma.user.findUnique({ where: { phone } });
+    const user = await this.prisma.user.findUnique({ where: { phone } })
 
-    const hashToCheck = user?.passwordHash ?? DUMMY_HASH;
-    const passwordOk = await bcrypt.compare(dto.password, hashToCheck);
+    const hashToCheck = user?.passwordHash ?? DUMMY_HASH
+    const passwordOk = await bcrypt.compare(dto.password, hashToCheck)
 
-    if (!user || !passwordOk) throw this.invalidCredentials();
+    if (!user || !passwordOk) throw this.invalidCredentials()
 
     if (user.accountStatus !== 'ACTIVE') {
-      throw new AppException('FORBIDDEN', 'This account is not active');
+      throw new AppException('FORBIDDEN', 'This account is not active')
     }
 
     await this.prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
-    });
+    })
 
     return {
       user: {
@@ -80,21 +80,21 @@ export class AuthService {
         role: user.role,
       },
       accessToken: this.signToken(user.id, user.role),
-    };
+    }
   }
 
   private signToken(sub: string, role: string) {
-    return this.jwt.sign({ sub, role });
+    return this.jwt.sign({ sub, role })
   }
 
   private invalidCredentials() {
     return new AppException(
       'AUTHENTICATION_ERROR',
       'Phone number or password is incorrect',
-    );
+    )
   }
 }
 
 // A real bcrypt hash of a random string, used only to equalize timing.
 const DUMMY_HASH =
-  '$2b$10$CwTycUXWue0Thq9StjUM0uJ8.PjTPRTLQvzD9pAeC3zsFYyj5FSDy';
+  '$2b$10$CwTycUXWue0Thq9StjUM0uJ8.PjTPRTLQvzD9pAeC3zsFYyj5FSDy'

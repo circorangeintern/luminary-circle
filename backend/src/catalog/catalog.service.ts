@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CatalogItemsDto, CatalogMarketsDto } from './dto/catalog-response.dto';
+import { Injectable } from '@nestjs/common'
+import { PrismaService } from '../prisma/prisma.service'
+import { CatalogItemsDto, CatalogMarketsDto } from './dto/catalog-response.dto'
 
 @Injectable()
 export class CatalogService {
@@ -18,7 +18,7 @@ export class CatalogService {
         },
       },
       orderBy: { name: 'asc' },
-    });
+    })
 
     return {
       items: items.map((item) => ({
@@ -30,14 +30,14 @@ export class CatalogService {
           label: itemUnit.unit.label,
         })),
       })),
-    };
+    }
   }
 
   async getMarkets(): Promise<CatalogMarketsDto> {
     const markets = await this.prisma.market.findMany({
       where: { status: 'ACTIVE' },
       orderBy: { name: 'asc' },
-    });
+    })
 
     return {
       markets: markets.map((market) => ({
@@ -46,6 +46,6 @@ export class CatalogService {
         lga: market.lga,
         state: market.state,
       })),
-    };
+    }
   }
 }

@@ -1,8 +1,8 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from '../decorators/roles.decorator';
-import { AuthenticatedUser } from '../types/authenticated-user.type';
-import { AppException } from '../../common/errors/app.exception';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
+import { AppException } from '../../common/errors/app.exception'
+import { ROLES_KEY } from '../decorators/roles.decorator'
+import { AuthenticatedUser } from '../types/authenticated-user.type'
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -12,24 +12,24 @@ export class RolesGuard implements CanActivate {
     const required = this.reflector.getAllAndOverride<string[] | undefined>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
-    );
-    if (!required?.length) return true;
+    )
+    if (!required?.length) return true
 
     const { user } = context
       .switchToHttp()
-      .getRequest<{ user?: AuthenticatedUser }>();
+      .getRequest<{ user?: AuthenticatedUser }>()
     if (!user)
       throw new AppException(
         'AUTHENTICATION_ERROR',
         'Please sign in to continue',
-      );
+      )
     if (!required.includes(user.role)) {
       throw new AppException(
         'FORBIDDEN',
         'You do not have permission to do this',
-      );
+      )
     }
 
-    return true;
+    return true
   }
 }

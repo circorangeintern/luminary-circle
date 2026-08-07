@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const envSchema = z.object({
   // App config
@@ -46,6 +46,10 @@ export const envSchema = z.object({
 
   // Cloudflare Turnstile
   TURNSTILE_SECRET_KEY: z.string().min(1, 'TURNSTILE_SECRET_KEY is required'),
-});
 
-export type EnvConfig = z.infer<typeof envSchema>;
+  // Mixpanel config
+  MIXPANEL_TOKEN: z.string().min(1, 'MIXPANEL_TOKEN is required'),
+  MIXPANEL_HOST: z.string().default('api.mixpanel.com'),
+})
+
+export type EnvConfig = z.infer<typeof envSchema>

@@ -1,4 +1,4 @@
-import { ErrorCode } from './error-codes';
+import { ErrorCode } from './error-codes'
 
 export class AppException extends Error {
   constructor(
@@ -6,8 +6,8 @@ export class AppException extends Error {
     message: string,
     public readonly details?: { field: string; message: string }[],
   ) {
-    super(message);
-    this.name = 'AppException';
-    Error.captureStackTrace(this, this.constructor);
+    super(message)
+    this.name = 'AppException'
+    Error.captureStackTrace(this, this.constructor)
   }
 }

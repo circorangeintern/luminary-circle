@@ -1,13 +1,13 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CatalogService } from './catalog.service';
-import { CatalogItemsDto, CatalogMarketsDto } from './dto/catalog-response.dto';
-import { CompareResponseDto } from '../prices/dto/compare-response.dto';
-import { ErrorResponseDto } from '../common/errors/error-response.dto';
-import { CompareQueryDto } from '../prices/dto/compare-query.dto';
-import { PricesService } from '../prices/prices.service';
-import { TrendResponseDto } from '../prices/dto/trend-response.dto';
-import { TrendQueryDto } from '../prices/dto/trend-query.dto';
+import { Controller, Get, Param, Query } from '@nestjs/common'
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ErrorResponseDto } from '../common/errors/error-response.dto'
+import { CompareQueryDto } from '../prices/dto/compare-query.dto'
+import { CompareResponseDto } from '../prices/dto/compare-response.dto'
+import { TrendQueryDto } from '../prices/dto/trend-query.dto'
+import { TrendResponseDto } from '../prices/dto/trend-response.dto'
+import { PricesService } from '../prices/prices.service'
+import { CatalogService } from './catalog.service'
+import { CatalogItemsDto, CatalogMarketsDto } from './dto/catalog-response.dto'
 
 @ApiTags('catalog')
 @Controller()
@@ -25,7 +25,7 @@ export class CatalogController {
     type: CatalogItemsDto,
   })
   async items() {
-    return await this.catalog.getItems();
+    return await this.catalog.getItems()
   }
 
   @Get('items/:itemId/trend')
@@ -41,7 +41,7 @@ export class CatalogController {
     type: ErrorResponseDto,
   })
   async trend(@Param('itemId') itemId: string, @Query() query: TrendQueryDto) {
-    return this.prices.trend(itemId, query.unitId, query.marketId);
+    return await this.prices.trend(itemId, query.unitId, query.marketId)
   }
 
   @Get('markets')
@@ -52,7 +52,7 @@ export class CatalogController {
     type: CatalogMarketsDto,
   })
   async markets() {
-    return await this.catalog.getMarkets();
+    return await this.catalog.getMarkets()
   }
 
   @Get('markets/compare')
@@ -70,6 +70,6 @@ export class CatalogController {
     type: ErrorResponseDto,
   })
   async compare(@Query() query: CompareQueryDto) {
-    return this.prices.compare(query.itemId, query.unitId);
+    return await this.prices.compare(query.itemId, query.unitId)
   }
 }

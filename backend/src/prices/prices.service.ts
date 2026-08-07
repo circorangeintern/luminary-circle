@@ -1,39 +1,39 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { AppConfigService } from '../config/app-config.service';
-import { CreatePriceDto } from './dto/create-price.dto';
-import { PriceDto } from './dto/price-response.dto';
-import { AppException } from '../common/errors/app.exception';
-import { PRICE_SELECT, PriceWithRelations, toPriceDto } from './price.mapper';
-import { PriceQueryDto, PriceQueryResponseDto } from './dto/query-price.dto';
-import { CompareResponseDto } from './dto/compare-response.dto';
-import { TrendResponseDto } from './dto/trend-response.dto';
-import { FlagResponseDto } from './dto/flag.dto';
-import { FlagReason } from '../generated/prisma';
+import { Injectable } from '@nestjs/common'
+import { AppException } from '../common/errors/app.exception'
+import { AppConfigService } from '../config/app-config.service'
+import { FlagReason } from '../generated/prisma'
+import { PrismaService } from '../prisma/prisma.service'
+import { CompareResponseDto } from './dto/compare-response.dto'
+import { CreatePriceDto } from './dto/create-price.dto'
+import { FlagResponseDto } from './dto/flag.dto'
+import { PriceDto } from './dto/price-response.dto'
+import { PriceQueryDto, PriceQueryResponseDto } from './dto/query-price.dto'
+import { TrendResponseDto } from './dto/trend-response.dto'
+import { PRICE_SELECT, PriceWithRelations, toPriceDto } from './price.mapper'
 
-const DEDUPE_WINDOW_MINUTES = 10;
-const DEFAULT_PAGE_SIZE = 20;
-const TREND_WINDOW = 9; // last N submissions considered
-const STABLE_THRESHOLD_PCT = 2; // +/- this % counts as STABLE
+const DEDUPE_WINDOW_MINUTES = 10
+const DEFAULT_PAGE_SIZE = 20
+const TREND_WINDOW = 9 // last N submissions considered
+const STABLE_THRESHOLD_PCT = 2 // +/- this % counts as STABLE
 
 /** Raw row shape returned by the comparison query. */
 interface CompareRow {
-  id: string;
-  price: number;
-  note: string | null;
-  status: string;
-  source: string;
-  created_at: Date;
-  item_id: string;
-  item_name: string;
-  unit_id: string;
-  unit_label: string;
-  market_id: string;
-  market_name: string;
-  market_lga: string;
-  market_state: string;
-  display_name: string;
-  flag_count: number;
+  id: string
+  price: number
+  note: string | null
+  status: string
+  source: string
+  created_at: Date
+  item_id: string
+  item_name: string
+  unit_id: string
+  unit_label: string
+  market_id: string
+  market_name: string
+  market_lga: string
+  market_state: string
+  display_name: string
+  flag_count: number
 }
 
 @Injectable()
@@ -60,7 +60,7 @@ export class PricesService {
         where: { id: dto.marketId },
         select: { status: true },
       }),
-    ]);
+    ])
 
     if (!pair) {
       throw new AppException(
@@ -72,12 +72,12 @@ export class PricesService {
             message: 'Choose a measure from the list for this item',
           },
         ],
-      );
+      )
     }
     if (pair.item.status !== 'ACTIVE') {
       throw new AppException('VALIDATION_ERROR', 'That item is not available', [
         { field: 'itemId', message: 'Item is not active' },
-      ]);
+      ])
     }
     if (!market || market.status != 'ACTIVE') {
       throw new AppException(
@@ -89,11 +89,11 @@ export class PricesService {
             message: 'Choose a market from the list',
           },
         ],
-      );
+      )
     }
 
     // dedupe window
-    const since = new Date(Date.now() - DEDUPE_WINDOW_MINUTES * 60 * 1000);
+    const since = new Date(Date.now() - DEDUPE_WINDOW_MINUTES * 60 * 1000)
     const duplicate = await this.prisma.priceSubmission.findFirst({
       where: {
         userId,
@@ -104,13 +104,13 @@ export class PricesService {
         createdAt: { gte: since },
       },
       select: { id: true },
-    });
+    })
 
     if (duplicate) {
       throw new AppException(
         'CONFLICT',
         'You just submitted this exact price a moment ago',
-      );
+      )
     }
 
     const created = await this.prisma.priceSubmission.create({
@@ -123,24 +123,24 @@ export class PricesService {
         note: dto.note ?? null,
       },
       select: PRICE_SELECT,
-    });
+    })
 
     return toPriceDto(created, {
       freshnessWindowDays: this.config.freshnessWindowDays,
       flagMarkThreshold: this.config.flagMarkThreshold,
-    });
+    })
   }
 
   async getPrices(dto: PriceQueryDto): Promise<PriceQueryResponseDto> {
-    const page = dto.page ?? 1;
-    const pageSize = dto.pageSize ?? DEFAULT_PAGE_SIZE;
+    const page = dto.page ?? 1
+    const pageSize = dto.pageSize ?? DEFAULT_PAGE_SIZE
 
     const where = {
       status: 'ACTIVE' as const,
       ...(dto.itemId && { itemId: dto.itemId }),
       ...(dto.unitId && { unitId: dto.unitId }),
       ...(dto.marketId && { marketId: dto.marketId }),
-    };
+    }
 
     const [rows, totalItems] = await this.prisma.$transaction([
       this.prisma.priceSubmission.findMany({
@@ -151,12 +151,12 @@ export class PricesService {
         take: pageSize,
       }),
       this.prisma.priceSubmission.count({ where }),
-    ]);
+    ])
 
     const mapperOptions = {
       freshnessWindowDays: this.config.freshnessWindowDays,
       flagMarkThreshold: this.config.flagMarkThreshold,
-    };
+    }
 
     return {
       items: rows.map((row) => toPriceDto(row, mapperOptions)),
@@ -164,7 +164,7 @@ export class PricesService {
       pageSize,
       totalItems,
       totalPages: Math.ceil(totalItems / pageSize),
-    };
+    }
   }
 
   async compare(itemId: string, unitId: string): Promise<CompareResponseDto> {
@@ -180,7 +180,7 @@ export class PricesService {
           select: { id: true, label: true },
         },
       },
-    });
+    })
 
     if (!pair || pair.item.status !== 'ACTIVE') {
       throw new AppException(
@@ -192,10 +192,10 @@ export class PricesService {
             message: 'Choose a measure from the list for this item',
           },
         ],
-      );
+      )
     }
 
-    const excludeThreshold = this.config.flagExcludeThreshold;
+    const excludeThreshold = this.config.flagExcludeThreshold
 
     // DISTINCT ON (market_id) with ORDER BY market_id, created_at DESC keeps
     // exactly the newest surviving row per market. The flag filter sits in
@@ -236,12 +236,12 @@ export class PricesService {
         AND m.status    = 'ACTIVE'
         AND COALESCE(f.flag_count, 0) < ${excludeThreshold}
       ORDER BY ps.market_id, ps.created_at DESC
-    `;
+    `
 
     const mapperOptions = {
       freshnessWindowDays: this.config.freshnessWindowDays,
       flagMarkThreshold: this.config.flagMarkThreshold,
-    };
+    }
 
     // Reshape raw rows into what the mapper expects, then reuse it - same
     // Price object shape as POST /prices and GET /prices.
@@ -263,25 +263,25 @@ export class PricesService {
         },
         user: { displayName: r.display_name },
         _count: { flags: r.flag_count },
-      };
+      }
 
       return {
         market: relation.market,
         latestPrice: toPriceDto(relation, mapperOptions),
-      };
-    });
+      }
+    })
 
-    const marketsWithData = priced.length;
+    const marketsWithData = priced.length
     // KAN-34: with fewer than two markets there is nothing to compare, so no
     // price may be labelled cheapest. One price alone is not a bargain.
-    const comparisonPossible = marketsWithData >= 2;
+    const comparisonPossible = marketsWithData >= 2
 
-    let cheapestId: string | null = null;
+    let cheapestId: string | null = null
     if (comparisonPossible) {
       const cheapest = priced.reduce((best, current) =>
         current.latestPrice.price < best.latestPrice.price ? current : best,
-      );
-      cheapestId = cheapest.latestPrice.id;
+      )
+      cheapestId = cheapest.latestPrice.id
     }
 
     return {
@@ -294,7 +294,7 @@ export class PricesService {
       })),
       marketsWithData,
       comparisonPossible,
-    };
+    }
   }
 
   async trend(
@@ -312,7 +312,7 @@ export class PricesService {
           select: { id: true, label: true },
         },
       },
-    });
+    })
 
     if (!pair || pair.item.status !== 'ACTIVE') {
       throw new AppException(
@@ -324,7 +324,7 @@ export class PricesService {
             message: 'Choose a measure from the list for this item',
           },
         ],
-      );
+      )
     }
 
     const market = await this.prisma.market.findUnique({
@@ -336,7 +336,7 @@ export class PricesService {
         state: true,
         status: true,
       },
-    });
+    })
 
     if (!market || market.status !== 'ACTIVE') {
       throw new AppException(
@@ -348,10 +348,10 @@ export class PricesService {
             message: 'Choose a market from the list',
           },
         ],
-      );
+      )
     }
 
-    const excludeThreshold = this.config.flagExcludeThreshold;
+    const excludeThreshold = this.config.flagExcludeThreshold
 
     // Fetch a bit more than the window, because some rows may be flagged out.
     // We over-fetch, filter, THEN slice to the window — otherwise a flagged
@@ -361,17 +361,17 @@ export class PricesService {
       select: PRICE_SELECT,
       orderBy: { createdAt: 'desc' },
       take: TREND_WINDOW * 3, // headroom for flagged exclusions
-    });
+    })
 
     // Exclude flagged-out prices (same rule as compare), then take the window.
     const valid = rows
       .filter((r) => r._count.flags < excludeThreshold)
-      .slice(0, TREND_WINDOW);
+      .slice(0, TREND_WINDOW)
 
     const mapperOptions = {
       freshnessWindowDays: this.config.freshnessWindowDays,
       flagMarkThreshold: this.config.flagMarkThreshold,
-    };
+    }
 
     const header = {
       item: {
@@ -388,12 +388,12 @@ export class PricesService {
         lga: market.lga,
         state: market.state,
       },
-    };
+    }
 
     // points: lightweight, chronological (oldest -> newest) for a left-to-right chart.
     const points = valid
       .map((r) => ({ price: r.price, createdAt: r.createdAt.toISOString() }))
-      .reverse();
+      .reverse()
 
     if (valid.length < 2) {
       return {
@@ -402,21 +402,21 @@ export class PricesService {
         sampleSize: valid.length,
         latest: valid.length === 1 ? toPriceDto(valid[0], mapperOptions) : null,
         points,
-      };
+      }
     }
 
     // valid[0] is newest (desc order), valid[last] is oldest.
-    const newest = valid[0].price;
-    const oldest = valid[valid.length - 1].price;
-    const pctChange = ((newest - oldest) / oldest) * 100;
+    const newest = valid[0].price
+    const oldest = valid[valid.length - 1].price
+    const pctChange = ((newest - oldest) / oldest) * 100
 
-    let direction: string;
+    let direction: string
     if (Math.abs(pctChange) <= STABLE_THRESHOLD_PCT) {
-      direction = 'STABLE';
+      direction = 'STABLE'
     } else if (newest > oldest) {
-      direction = 'UP';
+      direction = 'UP'
     } else {
-      direction = 'DOWN';
+      direction = 'DOWN'
     }
 
     return {
@@ -425,7 +425,7 @@ export class PricesService {
       sampleSize: valid.length,
       latest: toPriceDto(valid[0], mapperOptions),
       points,
-    };
+    }
   }
 
   async flagPrice(
@@ -436,16 +436,16 @@ export class PricesService {
     const submission = await this.prisma.priceSubmission.findUnique({
       where: { id: submissionId },
       select: { id: true, status: true },
-    });
+    })
 
     if (!submission || submission.status === 'REMOVED') {
-      throw new AppException('NOT_FOUND', 'That price could not be found');
+      throw new AppException('NOT_FOUND', 'That price could not be found')
     }
 
     // The unique (submissionId, flaggedById) constraint enforces one flag per
     // user. We catch P2002 here to give a specific message rather than the
     // generic CONFLICT the global filter would produce
-    let flagId: string;
+    let flagId: string
     try {
       const flag = await this.prisma.flag.create({
         data: {
@@ -454,16 +454,16 @@ export class PricesService {
           reason: reason as FlagReason,
         },
         select: { id: true },
-      });
-      flagId = flag.id;
+      })
+      flagId = flag.id
     } catch (e) {
       if (this.isUniqueViolation(e)) {
         throw new AppException(
           'CONFLICT',
           'You have already reported this price',
-        );
+        )
       }
-      throw e;
+      throw e
     }
 
     // Only unresolved flags count toward the threshold. After an admin RESTORE,
@@ -472,8 +472,8 @@ export class PricesService {
     // single new flag would instantly overturn the admin's decision.
     const flagCount = await this.prisma.flag.count({
       where: { submissionId, status: 'PENDING' },
-    });
-    let submissionStatus: string = submission.status;
+    })
+    let submissionStatus: string = submission.status
 
     if (
       submissionStatus === 'ACTIVE' &&
@@ -482,8 +482,8 @@ export class PricesService {
       await this.prisma.priceSubmission.update({
         where: { id: submissionId },
         data: { status: 'UNDER_REVIEW' },
-      });
-      submissionStatus = 'UNDER_REVIEW';
+      })
+      submissionStatus = 'UNDER_REVIEW'
     }
 
     return {
@@ -491,7 +491,7 @@ export class PricesService {
       submissionId,
       flagCount,
       submissionStatus,
-    };
+    }
   }
 
   private isUniqueViolation(e: unknown): boolean {
@@ -499,6 +499,6 @@ export class PricesService {
       typeof e === 'object' &&
       e !== null &&
       (e as { code?: string }).code === 'P2002'
-    );
+    )
   }
 }

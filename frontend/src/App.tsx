@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import RequireAuth from './components/RequireAuth'
+import ScrollToTop from './components/ScrollToTop'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -11,11 +12,13 @@ import SignIn from './pages/SignIn'
 import CreateAccount from './pages/CreateAccount'
 import SubmitPrice from './pages/SubmitPrice'
 import PriceList from './pages/PriceList'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+          <BrowserRouter>
+          <ScrollToTop />
         <div className="min-h-screen bg-bg-grey flex flex-col">
           <Header />
           <main className="flex-1">
@@ -25,6 +28,7 @@ export default function App() {
               <Route path="/prices/list" element={<PriceList />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/create-account" element={<CreateAccount />} />
               <Route path="/submit" element={<RequireAuth><SubmitPrice /></RequireAuth>} />

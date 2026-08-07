@@ -1,47 +1,47 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger'
 
 export class MarketDto {
   @ApiProperty({ example: 'cmrqexjbk00005kdjpmoq2mo3' })
-  id!: string;
+  id!: string
 
   @ApiProperty({ example: 'Mile 3 Market' })
-  name!: string;
+  name!: string
 
   @ApiProperty({ example: 'Port Harcourt' })
-  lga!: string;
+  lga!: string
 
   @ApiProperty({ example: 'Rivers' })
-  state!: string;
+  state!: string
 }
 
 export class UnitDto {
   @ApiProperty({ example: 'cmrqexjbk00005kdjpmoq2mo3' })
-  id!: string;
+  id!: string
 
   @ApiProperty({ example: 'derica' })
-  label!: string;
+  label!: string
 }
 
 export class ItemDto {
   @ApiProperty({ example: 'cmrqexjbk00005kdjpmoq2mo3' })
-  id!: string;
+  id!: string
 
   @ApiProperty({ example: 'Rice (local)' })
-  name!: string;
+  name!: string
 
   @ApiProperty({ type: [String], example: ['ofada-type', 'abakaliki rice'] })
-  localNames!: string[];
+  localNames!: string[]
 
   @ApiProperty({ type: [UnitDto] })
-  units!: UnitDto[];
+  units!: UnitDto[]
 }
 
 export class CatalogMarketsDto {
   @ApiProperty({ type: [MarketDto] })
-  markets!: MarketDto[];
+  markets!: MarketDto[]
 }
 
 export class CatalogItemsDto {
   @ApiProperty({ type: [ItemDto] })
-  items!: ItemDto[];
+  items!: ItemDto[]
 }

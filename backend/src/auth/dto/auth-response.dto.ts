@@ -1,31 +1,31 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger'
 
 export class UserDto {
   @ApiProperty({ example: 'cmrqexjbk00005kdjpmoq2mo3' })
-  id!: string;
+  id!: string
 
   @ApiProperty({ example: 'Chidi' })
-  displayName!: string;
+  displayName!: string
 
   @ApiProperty({ example: '+2348031234567' })
-  phone!: string;
+  phone!: string
 
   @ApiProperty({ example: 'USER', enum: ['USER', 'ADMIN'] })
-  role!: string;
+  role!: string
 }
 
 export class AuthDataDto {
   @ApiProperty({ type: UserDto })
-  user!: UserDto;
+  user!: UserDto
 
   @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
-  accessToken!: string;
+  accessToken!: string
 }
 
 export class AuthResponseDto {
   @ApiProperty({ example: true })
-  success!: boolean;
+  success!: boolean
 
   @ApiProperty({ type: AuthDataDto })
-  data!: AuthDataDto;
+  data!: AuthDataDto
 }
