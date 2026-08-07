@@ -4,42 +4,42 @@ import {
   ExceptionFilter,
   HttpException,
   Logger,
-} from '@nestjs/common';
-import { Response, Request } from 'express';
-import { ErrorCode, ErrorCodes } from './error-codes';
-import { AppException } from './app.exception';
-import { AnalyticsService } from '../../analytics/analytics.service';
-import { ResponseStatus } from '../../generated/prisma';
+} from '@nestjs/common'
+import { Request, Response } from 'express'
+import { AnalyticsService } from '../../analytics/analytics.service'
+import { ResponseStatus } from '../../generated/prisma'
+import { AppException } from './app.exception'
+import { ErrorCode, ErrorCodes } from './error-codes'
 
 interface PrismaKnownError {
-  code: string;
-  message: string;
-  meta?: Record<string, unknown>;
+  code: string
+  message: string
+  meta?: Record<string, unknown>
 }
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(GlobalExceptionFilter.name);
+  private readonly logger = new Logger(GlobalExceptionFilter.name)
 
   constructor(private readonly analytics: AnalyticsService) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const res = ctx.getResponse<Response>();
-    const req = ctx.getRequest<Request & { user?: { id: string } }>();
+    const ctx = host.switchToHttp()
+    const res = ctx.getResponse<Response>()
+    const req = ctx.getRequest<Request & { user?: { id: string } }>()
 
-    const { code, message, details } = this.translate(exception);
-    const httpStatus = ErrorCodes[code].httpStatus;
+    const { code, message, details } = this.translate(exception)
+    const httpStatus = ErrorCodes[code].httpStatus
 
     if (code === 'SERVER_ERROR') {
       this.logger.error(
         `${req.method} ${req.url} -> 500`,
         exception instanceof Error ? exception.stack : String(exception),
-      );
+      )
     } else {
       this.logger.warn(
         `${req.method} ${req.url} -> ${httpStatus} ${code}: ${message}`,
-      );
+      )
     }
 
     this.analytics.emit({
@@ -53,18 +53,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         method: req.method,
         httpStatus,
       },
-    });
+    })
 
     res.status(httpStatus).json({
       success: false,
       error: { code, message, ...(details && { details }) },
-    });
+    })
   }
 
   private translate(exception: unknown): {
-    code: ErrorCode;
-    message: string;
-    details?: { field: string; message: string }[];
+    code: ErrorCode
+    message: string
+    details?: { field: string; message: string }[]
   } {
     // 1) if it's AppException which is the apps custom exception
     if (exception instanceof AppException) {
@@ -72,7 +72,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         code: exception.code,
         message: exception.message,
         details: exception.details,
-      };
+      }
     }
 
     // 2) if it's a Prisma known error
@@ -82,34 +82,34 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           return {
             code: 'CONFLICT',
             message: 'A record with this value already exists',
-          };
+          }
         case 'P2025':
           return {
             code: 'NOT_FOUND',
             message: 'The requested resource was not found',
-          };
+          }
         default:
           this.logger.error(
             `Unmapped Prisma error ${exception.code}`,
             exception.message,
-          );
+          )
           return {
             code: 'SERVER_ERROR',
             message: 'Something went wrong on our end',
-          };
+          }
       }
     }
 
     // 3) if it's nestjs exceptions
     if (exception instanceof HttpException) {
-      const status = exception.getStatus();
+      const status = exception.getStatus()
 
       // ThrottlerException's default message is "ThrottlerException: Too Many Requests". This one reaches real users, so give it our voice.
       if (status === 429) {
         return {
           code: 'RATE_LIMITED',
           message: 'You are submitting very fast. Please try again shortly.',
-        };
+        }
       }
 
       // Express's default is "Cannot PATCH /api/v1/...", which leaks framework
@@ -118,7 +118,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         return {
           code: 'NOT_FOUND',
           message: 'That endpoint could not be found',
-        };
+        }
       }
 
       const map: Record<number, ErrorCode> = {
@@ -128,15 +128,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         404: 'NOT_FOUND',
         409: 'CONFLICT',
         429: 'RATE_LIMITED',
-      };
+      }
       return {
         code: map[status] ?? 'SERVER_ERROR',
         message: exception.message,
-      };
+      }
     }
 
     // 4) all other exceptions
-    return { code: 'SERVER_ERROR', message: 'Something went wrong on our end' };
+    return { code: 'SERVER_ERROR', message: 'Something went wrong on our end' }
   }
 
   private isPrismaKnownError(e: unknown): e is PrismaKnownError {
@@ -146,7 +146,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       e.constructor?.name === 'PrismaClientKnownRequestError' &&
       'code' in e &&
       typeof e.code === 'string'
-    );
+    )
   }
 
   private toResponseStatus(code: ErrorCode): ResponseStatus {
@@ -154,12 +154,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       case 'VALIDATION_ERROR':
       case 'CONFLICT':
       case 'RATE_LIMITED':
-        return 'VALIDATION_ERROR';
+        return 'VALIDATION_ERROR'
       case 'AUTHENTICATION_ERROR':
       case 'FORBIDDEN':
-        return 'AUTHENTICATION_ERROR';
+        return 'AUTHENTICATION_ERROR'
       default:
-        return 'SERVER_ERROR';
+        return 'SERVER_ERROR'
     }
   }
 }

@@ -6,28 +6,28 @@ import {
   Patch,
   Query,
   UseGuards,
-} from '@nestjs/common';
+} from '@nestjs/common'
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { AdminService } from './admin.service';
-import { AnalyticsService } from '../analytics/analytics.service';
+} from '@nestjs/swagger'
+import { AnalyticsService } from '../analytics/analytics.service'
+import { CurrentUser } from '../auth/decorators/current-user.decorator'
+import { Roles } from '../auth/decorators/roles.decorator'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { RolesGuard } from '../auth/guards/roles.guard'
+import { type AuthenticatedUser } from '../auth/types/authenticated-user.type'
+import { SessionId } from '../common/decorators/session-id.decorator'
+import { ErrorResponseDto } from '../common/errors/error-response.dto'
+import { AdminService } from './admin.service'
 import {
   AdminRequestListDto,
   ModerationActionDto,
   ModerationQueueDto,
   RequestReviewDto,
-} from './dto/admin.dto';
-import { ErrorResponseDto } from '../common/errors/error-response.dto';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { type AuthenticatedUser } from '../auth/types/authenticated-user.type';
-import { SessionId } from '../common/decorators/session-id.decorator';
+} from './dto/admin.dto'
 
 @ApiTags('admin')
 @ApiBearerAuth('access-token')
@@ -53,7 +53,7 @@ export class AdminController {
     type: ErrorResponseDto,
   })
   async queue() {
-    return this.admin.moderationQueue();
+    return await this.admin.moderationQueue()
   }
 
   @Patch('moderation/:submissionId')
@@ -73,7 +73,7 @@ export class AdminController {
     @CurrentUser() user: AuthenticatedUser,
     @SessionId() sessionId: string,
   ) {
-    const result = await this.admin.moderate(submissionId, dto.action);
+    const result = await this.admin.moderate(submissionId, dto.action)
 
     this.analytics.emit({
       name: 'flag_resolved',
@@ -85,9 +85,9 @@ export class AdminController {
         action: dto.action,
         resolution: result.status,
       },
-    });
+    })
 
-    return result;
+    return result
   }
 
   @Get('market-requests')
@@ -98,7 +98,7 @@ export class AdminController {
     type: AdminRequestListDto,
   })
   async requests(@Query('status') status?: string) {
-    return this.admin.listRequests(status);
+    return await this.admin.listRequests(status)
   }
 
   @Patch('market-requests/:id')
@@ -122,6 +122,6 @@ export class AdminController {
     @Body() dto: RequestReviewDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.admin.reviewRequest(id, user.id, dto.action);
+    return await this.admin.reviewRequest(id, user.id, dto.action)
   }
 }

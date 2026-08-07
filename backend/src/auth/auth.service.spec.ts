@@ -1,39 +1,39 @@
-import { Test } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { AuthService } from './auth.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { CaptchaService } from './captcha.service';
-import { AppException } from '../common/errors/app.exception';
+import { JwtService } from '@nestjs/jwt'
+import { Test } from '@nestjs/testing'
+import * as bcrypt from 'bcrypt'
+import { AppException } from '../common/errors/app.exception'
+import { PrismaService } from '../prisma/prisma.service'
+import { AuthService } from './auth.service'
+import { CaptchaService } from './captcha.service'
 
 // The exact string both failure paths must return. Asserting against a
 // shared constant is what makes the anti-enumeration property enforceable:
 // change one message and this test fails.
-const INVALID_CREDENTIALS = 'Phone number or password is incorrect';
+const INVALID_CREDENTIALS = 'Phone number or password is incorrect'
 
 describe('AuthService', () => {
-  let service: AuthService;
+  let service: AuthService
   let prisma: {
-    user: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
-  };
-  let captcha: { verify: jest.Mock };
+    user: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock }
+  }
+  let captcha: { verify: jest.Mock }
 
   // Real bcrypt hash of 'correctpass123', computed once for the whole suite.
-  let knownHash: string;
+  let knownHash: string
 
   beforeAll(async () => {
-    knownHash = await bcrypt.hash('correctpass123', 10);
-  });
+    knownHash = await bcrypt.hash('correctpass123', 10)
+  })
 
   beforeEach(async () => {
     prisma = {
       user: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
-    };
+    }
     // Built here, injected below by reference, so mockRejectedValue() in a
     // test affects the same object the service actually calls.
     // jest.fn() resolves undefined by default, so captcha passes unless a
     // test explicitly makes it fail.
-    captcha = { verify: jest.fn() };
+    captcha = { verify: jest.fn() }
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -44,14 +44,14 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: { sign: () => 'fake.jwt.token' } },
         { provide: CaptchaService, useValue: captcha },
       ],
-    }).compile();
+    }).compile()
 
-    service = moduleRef.get(AuthService);
-  });
+    service = moduleRef.get(AuthService)
+  })
 
   describe('register', () => {
     it('rejects a phone number that already has an account', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'existing-id' });
+      prisma.user.findUnique.mockResolvedValue({ id: 'existing-id' })
 
       await expect(
         service.register({
@@ -60,47 +60,47 @@ describe('AuthService', () => {
           password: 'password123',
           captchaToken: 'valid-token',
         }),
-      ).rejects.toMatchObject({ code: 'CONFLICT' });
+      ).rejects.toMatchObject({ code: 'CONFLICT' })
 
-      expect(prisma.user.create).not.toHaveBeenCalled();
-    });
+      expect(prisma.user.create).not.toHaveBeenCalled()
+    })
 
     it('never returns passwordHash in the result', async () => {
-      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null)
       prisma.user.create.mockResolvedValue({
         id: 'new-id',
         displayName: 'Test',
         phone: '+2348031234567',
         role: 'USER',
-      });
+      })
 
       const result = await service.register({
         displayName: 'Test',
         phone: '08031234567',
         password: 'password123',
         captchaToken: 'valid-token',
-      });
+      })
 
-      expect(result.user).not.toHaveProperty('passwordHash');
-      expect(JSON.stringify(result)).not.toContain('$2b$'); // no bcrypt hash anywhere
-      expect(result.accessToken).toBe('fake.jwt.token');
-    });
+      expect(result.user).not.toHaveProperty('passwordHash')
+      expect(JSON.stringify(result)).not.toContain('$2b$') // no bcrypt hash anywhere
+      expect(result.accessToken).toBe('fake.jwt.token')
+    })
 
     it('stores the phone number in E.164 format, not as typed', async () => {
-      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null)
       prisma.user.create.mockResolvedValue({
         id: 'new-id',
         displayName: 'Test',
         phone: '+2348031234567',
         role: 'USER',
-      });
+      })
 
       await service.register({
         displayName: 'Test',
         phone: '0803 123 4567', // messy input
         password: 'password123',
         captchaToken: 'valid-token',
-      });
+      })
 
       expect(prisma.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -109,8 +109,8 @@ describe('AuthService', () => {
             unknown
           >,
         }),
-      );
-    });
+      )
+    })
 
     it('does not touch the database when captcha verification fails', async () => {
       captcha.verify.mockRejectedValue(
@@ -118,7 +118,7 @@ describe('AuthService', () => {
           'CAPTCHA_FAILED',
           "We couldn't verify that you're human",
         ),
-      );
+      )
 
       await expect(
         service.register({
@@ -127,26 +127,26 @@ describe('AuthService', () => {
           password: 'password123',
           captchaToken: 'bad-token',
         }),
-      ).rejects.toMatchObject({ code: 'CAPTCHA_FAILED' });
+      ).rejects.toMatchObject({ code: 'CAPTCHA_FAILED' })
 
       // The assertion that matters: verify() runs BEFORE any query, so a
       // bot never costs a database round trip and never learns whether a
       // phone number is already registered.
-      expect(prisma.user.findUnique).not.toHaveBeenCalled();
-    });
-  });
+      expect(prisma.user.findUnique).not.toHaveBeenCalled()
+    })
+  })
 
   describe('login', () => {
     it('returns the generic message when the phone is not registered', async () => {
-      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null)
 
       await expect(
         service.login({ phone: '08031234567', password: 'correctpass123' }),
       ).rejects.toMatchObject({
         code: 'AUTHENTICATION_ERROR',
         message: INVALID_CREDENTIALS,
-      });
-    });
+      })
+    })
 
     it('returns the identical message when the password is wrong', async () => {
       prisma.user.findUnique.mockResolvedValue({
@@ -156,15 +156,15 @@ describe('AuthService', () => {
         role: 'USER',
         accountStatus: 'ACTIVE',
         passwordHash: knownHash,
-      });
+      })
 
       await expect(
         service.login({ phone: '08031234567', password: 'wrongpassword' }),
       ).rejects.toMatchObject({
         code: 'AUTHENTICATION_ERROR',
         message: INVALID_CREDENTIALS, // same constant as the test above
-      });
-    });
+      })
+    })
 
     it('rejects a suspended account with FORBIDDEN', async () => {
       prisma.user.findUnique.mockResolvedValue({
@@ -174,14 +174,14 @@ describe('AuthService', () => {
         role: 'USER',
         accountStatus: 'SUSPENDED',
         passwordHash: knownHash,
-      });
+      })
 
       await expect(
         service.login({ phone: '08031234567', password: 'correctpass123' }),
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
 
-      expect(prisma.user.update).not.toHaveBeenCalled(); // no lastLoginAt bump
-    });
+      expect(prisma.user.update).not.toHaveBeenCalled() // no lastLoginAt bump
+    })
 
     it('rejects a malformed phone with the generic credentials error', async () => {
       await expect(
@@ -189,8 +189,8 @@ describe('AuthService', () => {
       ).rejects.toMatchObject({
         code: 'AUTHENTICATION_ERROR',
         message: INVALID_CREDENTIALS,
-      });
-      expect(prisma.user.findUnique).not.toHaveBeenCalled();
-    });
-  });
-});
+      })
+      expect(prisma.user.findUnique).not.toHaveBeenCalled()
+    })
+  })
+})

@@ -7,6 +7,6 @@ export const ErrorCodes = {
   CONFLICT: { httpStatus: 409 },
   RATE_LIMITED: { httpStatus: 429 },
   SERVER_ERROR: { httpStatus: 500 },
-} as const;
+} as const
 
-export type ErrorCode = keyof typeof ErrorCodes;
+export type ErrorCode = keyof typeof ErrorCodes

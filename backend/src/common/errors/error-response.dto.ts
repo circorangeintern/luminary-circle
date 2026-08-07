@@ -1,28 +1,28 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger'
 
 class ErrorDetailDto {
   @ApiProperty({ example: 'phone' })
-  field!: string;
+  field!: string
 
   @ApiProperty({ example: 'Not a valid Nigerian mobile number' })
-  message!: string;
+  message!: string
 }
 
 class ErrorBodyDto {
   @ApiProperty({ example: 'VALIDATION_ERROR' })
-  code!: string;
+  code!: string
 
   @ApiProperty({ example: 'Invalid phone number' })
-  message!: string;
+  message!: string
 
   @ApiProperty({ type: [ErrorDetailDto], required: false })
-  details?: ErrorDetailDto[];
+  details?: ErrorDetailDto[]
 }
 
 export class ErrorResponseDto {
   @ApiProperty({ example: false })
-  success!: boolean;
+  success!: boolean
 
   @ApiProperty({ type: ErrorBodyDto })
-  error!: ErrorBodyDto;
+  error!: ErrorBodyDto
 }

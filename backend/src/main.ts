@@ -1,14 +1,14 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { Logger, ValidationPipe } from '@nestjs/common';
-import { AppException } from './common/errors/app.exception';
-import { AppConfigService } from './config/app-config.service';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Logger, ValidationPipe } from '@nestjs/common'
+import { NestFactory } from '@nestjs/core'
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import { AppModule } from './app.module'
+import { AppException } from './common/errors/app.exception'
+import { AppConfigService } from './config/app-config.service'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule)
 
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api/v1')
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -25,9 +25,9 @@ async function bootstrap() {
           })),
         ),
     }),
-  );
+  )
 
-  const config = app.get(AppConfigService);
+  const config = app.get(AppConfigService)
 
   if (!config.isProduction) {
     const swaggerConfig = new DocumentBuilder()
@@ -42,13 +42,13 @@ async function bootstrap() {
         'access-token',
       )
       .addTag('auth', 'Account signup, login and session')
-      .build();
+      .build()
 
-    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    const document = SwaggerModule.createDocument(app, swaggerConfig)
     SwaggerModule.setup('api/docs', app, document, {
       swaggerOptions: { persistAuthorization: true },
-    });
-    Logger.log('Swagger UI available at /api/docs', 'Bootstrap');
+    })
+    Logger.log('Swagger UI available at /api/docs', 'Bootstrap')
   }
 
   /**
@@ -57,23 +57,23 @@ async function bootstrap() {
   const allowedOrigins = config.corsAllowedOrigins
     .split(',')
     .map((o) => o.trim())
-    .filter(Boolean);
+    .filter(Boolean)
 
   // Anchored both ends — an unanchored pattern would match
   // evil-site.vercel.app.attacker.com
-  const VERCEL_PREVIEW = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
+  const VERCEL_PREVIEW = /^https:\/\/[a-z0-9-]+\.vercel\.app$/
 
   app.enableCors({
     origin: (
       origin: string | undefined,
       callback: (error: Error | null, allow: boolean) => void,
     ) => {
-      if (!origin) return callback(null, true); // curl, Postman, same-origin
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (!origin) return callback(null, true) // curl, Postman, same-origin
+      if (allowedOrigins.includes(origin)) return callback(null, true)
       if (config.corsAllowVercelPreviews && VERCEL_PREVIEW.test(origin)) {
-        return callback(null, true);
+        return callback(null, true)
       }
-      return callback(new Error(`Origin not allowed: ${origin}`), false);
+      return callback(new Error(`Origin not allowed: ${origin}`), false)
     },
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
@@ -84,11 +84,11 @@ async function bootstrap() {
     ],
     credentials: false, // auth is a Bearer header, not cookies — no CSRF surface
     maxAge: 86400,
-  });
+  })
 
-  const port = process.env.PORT ?? 3000;
-  await app.listen(port);
-  Logger.log(`MarketCompare backend listening on :${port}/api/v1`, 'Bootstrap');
+  const port = process.env.PORT ?? 3000
+  await app.listen(port)
+  Logger.log(`MarketCompare backend listening on :${port}/api/v1`, 'Bootstrap')
 }
 
-void bootstrap();
+void bootstrap()

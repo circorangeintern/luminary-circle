@@ -6,25 +6,25 @@ import {
   Ip,
   Post,
   UseGuards,
-} from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { CurrentUser } from './decorators/current-user.decorator';
-import type { AuthenticatedUser } from './types/authenticated-user.type';
-import { SessionId } from '../common/decorators/session-id.decorator';
-import { AnalyticsService } from '../analytics/analytics.service';
-import { AppException } from '../common/errors/app.exception';
+} from '@nestjs/common'
 import {
   ApiBearerAuth,
   ApiHeader,
   ApiOperation,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger';
-import { AuthResponseDto } from './dto/auth-response.dto';
-import { ErrorResponseDto } from '../common/errors/error-response.dto';
+} from '@nestjs/swagger'
+import { AnalyticsService } from '../analytics/analytics.service'
+import { SessionId } from '../common/decorators/session-id.decorator'
+import { AppException } from '../common/errors/app.exception'
+import { ErrorResponseDto } from '../common/errors/error-response.dto'
+import { AuthService } from './auth.service'
+import { CurrentUser } from './decorators/current-user.decorator'
+import { AuthResponseDto } from './dto/auth-response.dto'
+import { LoginDto } from './dto/login.dto'
+import { RegisterDto } from './dto/register.dto'
+import { JwtAuthGuard } from './guards/jwt-auth.guard'
+import type { AuthenticatedUser } from './types/authenticated-user.type'
 
 @ApiTags('auth')
 @ApiHeader({
@@ -62,14 +62,14 @@ export class AuthController {
     @Ip() ip: string,
   ) {
     try {
-      const result = await this.auth.register(dto, ip);
+      const result = await this.auth.register(dto, ip)
       this.analytics.emit({
         name: 'signup_completed',
         sessionId,
         userId: result.user.id,
         responseStatus: 'SUCCESS',
-      });
-      return result;
+      })
+      return result
     } catch (e) {
       this.analytics.emit({
         name: 'signup_failed',
@@ -82,8 +82,8 @@ export class AuthController {
             ? 'VALIDATION_ERROR'
             : 'SERVER_ERROR',
         errorCode: e instanceof AppException ? e.code : 'UNKNOWN',
-      });
-      throw e;
+      })
+      throw e
     }
   }
 
@@ -98,15 +98,17 @@ export class AuthController {
   @HttpCode(200)
   async login(@Body() dto: LoginDto, @SessionId() sessionId: string) {
     try {
-      const result = await this.auth.login(dto);
+      const result = await this.auth.login(dto)
       this.analytics.emit({
         name: 'login_completed',
         sessionId,
         userId: result.user.id,
         responseStatus: 'SUCCESS',
-      });
+      })
 
-      return result;
+      this.analytics.linkSessionToUser(sessionId, result.user.id)
+
+      return result
     } catch (e) {
       this.analytics.emit({
         name: 'login_failed',
@@ -118,9 +120,9 @@ export class AuthController {
               ? 'VALIDATION_ERROR'
               : 'SERVER_ERROR',
         errorCode: e instanceof AppException ? e.code : 'UNKNOWN',
-      });
+      })
 
-      throw e;
+      throw e
     }
   }
 
@@ -135,6 +137,6 @@ export class AuthController {
     type: ErrorResponseDto,
   })
   me(@CurrentUser() user: AuthenticatedUser) {
-    return { user };
+    return { user }
   }
 }

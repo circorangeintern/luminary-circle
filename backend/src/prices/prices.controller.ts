@@ -6,27 +6,27 @@ import {
   Post,
   Query,
   UseGuards,
-} from '@nestjs/common';
+} from '@nestjs/common'
 import {
   ApiBearerAuth,
   ApiHeader,
   ApiOperation,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger';
-import { PricesService } from './prices.service';
-import { AnalyticsService } from '../analytics/analytics.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreatePriceDto } from './dto/create-price.dto';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { type AuthenticatedUser } from '../auth/types/authenticated-user.type';
-import { SessionId } from '../common/decorators/session-id.decorator';
-import { AppException } from '../common/errors/app.exception';
-import { PriceResponseDto } from './dto/price-response.dto';
-import { ErrorResponseDto } from '../common/errors/error-response.dto';
-import { ThrottlerGuard } from '@nestjs/throttler';
-import { PriceQueryDto, PriceQueryResponseDto } from './dto/query-price.dto';
-import { CreateFlagDto, FlagResponseDto } from './dto/flag.dto';
+} from '@nestjs/swagger'
+import { ThrottlerGuard } from '@nestjs/throttler'
+import { AnalyticsService } from '../analytics/analytics.service'
+import { CurrentUser } from '../auth/decorators/current-user.decorator'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { type AuthenticatedUser } from '../auth/types/authenticated-user.type'
+import { SessionId } from '../common/decorators/session-id.decorator'
+import { AppException } from '../common/errors/app.exception'
+import { ErrorResponseDto } from '../common/errors/error-response.dto'
+import { CreatePriceDto } from './dto/create-price.dto'
+import { CreateFlagDto, FlagResponseDto } from './dto/flag.dto'
+import { PriceResponseDto } from './dto/price-response.dto'
+import { PriceQueryDto, PriceQueryResponseDto } from './dto/query-price.dto'
+import { PricesService } from './prices.service'
 
 @ApiTags('prices')
 @ApiHeader({
@@ -76,7 +76,7 @@ export class PricesController {
     @SessionId() sessionId: string,
   ) {
     try {
-      const price = await this.prices.create(user.id, dto);
+      const price = await this.prices.create(user.id, dto)
       this.analytics.emit({
         name: 'price_submission_succeeded',
         sessionId,
@@ -89,9 +89,9 @@ export class PricesController {
           unitId: dto.unitId,
           price: dto.price,
         },
-      });
+      })
 
-      return { price };
+      return { price }
     } catch (e) {
       this.analytics.emit({
         name: 'price_submission_failed',
@@ -108,9 +108,9 @@ export class PricesController {
           itemId: dto.itemId,
           marketId: dto.marketId,
         },
-      });
+      })
 
-      throw e;
+      throw e
     }
   }
 
@@ -127,7 +127,7 @@ export class PricesController {
     type: ErrorResponseDto,
   })
   async list(@Query() query: PriceQueryDto) {
-    return this.prices.getPrices(query);
+    return await this.prices.getPrices(query)
   }
 
   @Post(':id/flag')
@@ -161,7 +161,7 @@ export class PricesController {
     @SessionId() sessionId: string,
   ) {
     try {
-      const result = await this.prices.flagPrice(user.id, id, dto.reason);
+      const result = await this.prices.flagPrice(user.id, id, dto.reason)
 
       this.analytics.emit({
         name: 'price_flag_submitted',
@@ -174,9 +174,9 @@ export class PricesController {
           reason: dto.reason,
           flagCount: result.flagCount,
         },
-      });
+      })
 
-      return result;
+      return result
     } catch (e) {
       this.analytics.emit({
         name: 'price_flag_failed',
@@ -189,9 +189,9 @@ export class PricesController {
             : 'SERVER_ERROR',
         errorCode: e instanceof AppException ? e.code : 'UNKNOWN',
         properties: { submissionId: id },
-      });
+      })
 
-      throw e;
+      throw e
     }
   }
 }

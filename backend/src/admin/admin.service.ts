@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { AppConfigService } from '../config/app-config.service';
-import { AdminRequestListDto, ModerationQueueDto } from './dto/admin.dto';
-import { PRICE_SELECT, toPriceDto } from '../prices/price.mapper';
-import { AppException } from '../common/errors/app.exception';
+import { Injectable } from '@nestjs/common'
+import { AppException } from '../common/errors/app.exception'
+import { AppConfigService } from '../config/app-config.service'
+import { PRICE_SELECT, toPriceDto } from '../prices/price.mapper'
+import { PrismaService } from '../prisma/prisma.service'
+import { AdminRequestListDto, ModerationQueueDto } from './dto/admin.dto'
 
 @Injectable()
 export class AdminService {
@@ -24,12 +24,12 @@ export class AdminService {
       },
       orderBy: { createdAt: 'desc' },
       take: 100,
-    });
+    })
 
     const mapperOptions = {
       freshnessWindowDays: this.config.freshnessWindowDays,
       flagMarkThreshold: this.config.flagMarkThreshold,
-    };
+    }
 
     return {
       items: rows.map((row) => ({
@@ -38,21 +38,21 @@ export class AdminService {
         // Distinct reasons, so an admin sees WHY at a glance
         reasons: [...new Set(row.flags.map((f) => f.reason as string))],
       })),
-    };
+    }
   }
 
   async moderate(submissionId: string, action: string) {
     const submission = await this.prisma.priceSubmission.findUnique({
       where: { id: submissionId },
       select: { id: true, status: true },
-    });
+    })
 
     if (!submission) {
-      throw new AppException('NOT_FOUND', 'That price could not be found');
+      throw new AppException('NOT_FOUND', 'That price could not be found')
     }
 
-    const now = new Date();
-    const restoring = action === 'RESTORE';
+    const now = new Date()
+    const restoring = action === 'RESTORE'
 
     // One transaction: submission status and flag resolution move together,
     // so the flag-resolution-rate KPI can never see a half-applied decision.
@@ -68,13 +68,13 @@ export class AdminService {
           resolvedAt: now,
         },
       }),
-    ]);
+    ])
 
     return {
       submissionId,
       status: restoring ? 'ACTIVE' : 'REMOVED',
       resolvedAt: now.toISOString(),
-    };
+    }
   }
 
   async listRequests(status?: string): Promise<AdminRequestListDto> {
@@ -91,7 +91,7 @@ export class AdminService {
       },
       orderBy: { createdAt: 'desc' },
       take: 100,
-    });
+    })
 
     return {
       requests: rows.map((r) => ({
@@ -103,7 +103,7 @@ export class AdminService {
         createdAt: r.createdAt.toISOString(),
         reviewedAt: r.reviewedAt ? r.reviewedAt.toISOString() : null,
       })),
-    };
+    }
   }
 
   async reviewRequest(requestId: string, adminId: string, action: string) {
@@ -116,19 +116,19 @@ export class AdminService {
         lga: true,
         state: true,
       },
-    });
+    })
 
     if (!request) {
-      throw new AppException('NOT_FOUND', 'That request could not be found');
+      throw new AppException('NOT_FOUND', 'That request could not be found')
     }
     if (request.status !== 'PENDING') {
       throw new AppException(
         'CONFLICT',
         'That request has already been reviewed',
-      );
+      )
     }
 
-    const now = new Date();
+    const now = new Date()
 
     if (action === 'DECLINE') {
       await this.prisma.marketRequest.update({
@@ -138,8 +138,8 @@ export class AdminService {
           reviewedById: adminId,
           reviewedAt: now,
         },
-      });
-      return { requestId, status: 'DECLINED', marketId: null };
+      })
+      return { requestId, status: 'DECLINED', marketId: null }
     }
 
     // APPROVE: create the Market, then link it back to the request.
@@ -151,7 +151,7 @@ export class AdminService {
         state: request.state,
       },
       select: { id: true },
-    });
+    })
 
     await this.prisma.marketRequest.update({
       where: { id: requestId },
@@ -161,8 +161,8 @@ export class AdminService {
         reviewedAt: now,
         createdMarketId: market.id,
       },
-    });
+    })
 
-    return { requestId, status: 'APPROVED', marketId: market.id };
+    return { requestId, status: 'APPROVED', marketId: market.id }
   }
 }

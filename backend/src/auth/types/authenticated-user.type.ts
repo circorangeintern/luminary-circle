@@ -1,6 +1,6 @@
 export interface AuthenticatedUser {
-  id: string;
-  displayName: string;
-  phone: string;
-  role: 'USER' | 'ADMIN';
+  id: string
+  displayName: string
+  phone: string
+  role: 'USER' | 'ADMIN'
 }
