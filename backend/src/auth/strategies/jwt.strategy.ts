@@ -1,27 +1,27 @@
-import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { AppConfigService } from '../../config/app-config.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { AppException } from '../../common/errors/app.exception';
-import { AuthenticatedUser } from '../types/authenticated-user.type';
+import { Injectable } from '@nestjs/common'
+import { PassportStrategy } from '@nestjs/passport'
+import { ExtractJwt, Strategy } from 'passport-jwt'
+import { AppException } from '../../common/errors/app.exception'
+import { AppConfigService } from '../../config/app-config.service'
+import { PrismaService } from '../../prisma/prisma.service'
+import { AuthenticatedUser } from '../types/authenticated-user.type'
 
 export interface JwtPayload {
-  sub: string;
-  role: string;
+  sub: string
+  role: string
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private config: AppConfigService,
+    config: AppConfigService,
     private readonly prisma: PrismaService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: config.jwtSecret,
-    });
+    })
   }
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
@@ -34,18 +34,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         role: true,
         accountStatus: true,
       },
-    });
+    })
 
     if (!user || user.accountStatus !== 'ACTIVE') {
       throw new AppException(
         'AUTHENTICATION_ERROR',
         'Session is no longer valid',
-      );
+      )
     }
 
-    const { accountStatus, ...safeUser } = user;
-    void accountStatus;
+    const { accountStatus, ...safeUser } = user
+    void accountStatus
 
-    return safeUser;
+    return safeUser
   }
 }

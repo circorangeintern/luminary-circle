@@ -1,21 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { INestApplication } from '@nestjs/common'
+import { Test, TestingModule } from '@nestjs/testing'
+import request from 'supertest'
+import { App } from 'supertest/types'
+import { AppModule } from './../src/app.module'
 
 describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication<App>
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    }).compile()
 
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    await app.init();
-  });
+    app = moduleFixture.createNestApplication()
+    app.setGlobalPrefix('api/v1')
+    await app.init()
+  })
 
   it('/api/v1/health (GET)', () => {
     return request(app.getHttpServer())
@@ -23,13 +23,13 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect(
         (res: { body: { success: boolean; data: { status: string } } }) => {
-          expect(res.body.success).toBe(true);
-          expect(res.body.data.status).toBe('ok');
+          expect(res.body.success).toBe(true)
+          expect(res.body.data.status).toBe('ok')
         },
-      );
-  });
+      )
+  })
 
   afterEach(async () => {
-    await app.close();
-  });
-});
+    await app.close()
+  })
+})

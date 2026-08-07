@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { AuthenticatedUser } from '../types/authenticated-user.type';
-import { AppException } from '../../common/errors/app.exception';
+import { Injectable } from '@nestjs/common'
+import { AuthGuard } from '@nestjs/passport'
+import { AppException } from '../../common/errors/app.exception'
+import { AuthenticatedUser } from '../types/authenticated-user.type'
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -10,8 +10,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       throw new AppException(
         'AUTHENTICATION_ERROR',
         'Please sign in to continue',
-      );
+      )
     }
-    return user;
+    return user
   }
 }

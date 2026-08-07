@@ -20,7 +20,6 @@ Content-Type: application/json
 
 ### login correct — expect 200 + token
 POST {{base}}/auth/login
-X-Session-Id: ses_test_1
 Content-Type: application/json
 
 { "phone": "08031234567", "password": "testpass123" }
@@ -30,7 +29,7 @@ POST {{base}}/auth/login
 X-Session-Id: ses_test_2
 Content-Type: application/json
 
-{ "phone": "08031234567", "password": "testpass123" }
+{ "phone": "08035551230", "password": "testpass123" }
 
 ### login wrong password — expect 401 "Phone number or password is incorrect"
 POST {{base}}/auth/login
@@ -45,7 +44,7 @@ Content-Type: application/json
 { "phone": "08031234587", "password": "testpass123" }
 
 ### GET /auth/me with Authorization: Bearer <token> — expect the user
-@token = 
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXNpdGRjYTQwMDBobndkanNuanhla2Q5Iiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODYxMTY4MDEsImV4cCI6MTc4NjIwMzIwMX0.GySIA05MZhfT5Do8jlH3JkyqGvAuoawVhvVd2Ta_S-M
 
 GET {{base}}/auth/me
 Authorization: Bearer {{token}}
@@ -70,7 +69,7 @@ Content-Type: application/json
 POST {{base}}/auth/register
 Content-Type: application/json
 
-{ "displayName": "Turnstile Tester", "phone": "08035551237",
+{ "displayName": "Turnstile Tester", "phone": "08035551230",
   "password": "testpass123", "captchaToken": "any-non-empty-string" }
 
 ### missing captchaToken -> 400, details has ONLY captchaToken
