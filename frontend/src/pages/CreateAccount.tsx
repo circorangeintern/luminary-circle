@@ -10,6 +10,7 @@ declare global {
     turnstile?: {
       render: (el: HTMLElement, opts: { sitekey: string; callback: string }) => void
       reset: () => void
+      remove: (el: HTMLElement) => void
     }
   }
 }
@@ -32,7 +33,6 @@ export default function CreateAccount() {
   const [captchaToken, setCaptchaToken] = useState('')
   const [captchaError, setCaptchaError] = useState(false)
   const turnstileContainer = useRef<HTMLDivElement>(null)
-  const captchaRendered = useRef(false)
 
   useEffect(() => {
     window.onCaptchaSuccess = (token: string) => {
@@ -40,24 +40,19 @@ export default function CreateAccount() {
       setCaptchaError(false)
     }
 
+    const el = turnstileContainer.current
+    if (!el) return
+
     // Turnstile's auto-renderer only draws `.cf-turnstile` elements that exist
     // when its script loads. On this SPA the signup page mounts later, so the
     // widget must be rendered explicitly, otherwise it never appears and the
     // callback never fires (leaving captchaToken empty -> backend 400).
     const renderWidget = () => {
-      const el = turnstileContainer.current
-      if (!el || captchaRendered.current) return
       if (typeof window.turnstile === 'undefined') return
       window.turnstile.render(el, {
         sitekey: '0x4AAAAAAECJICQ9Y6vBhQKx',
         callback: 'onCaptchaSuccess',
       })
-      captchaRendered.current = true
-    }
-
-    if (typeof window.turnstile !== 'undefined') {
-      renderWidget()
-      return () => { window.onCaptchaSuccess = undefined }
     }
 
     // Script from index.html (async defer) may not be ready yet; wait for it.
@@ -67,9 +62,25 @@ export default function CreateAccount() {
         renderWidget()
       }
     }, 200)
+    if (typeof window.turnstile !== 'undefined') {
+      window.clearInterval(poll)
+      renderWidget()
+    }
+
     return () => {
       window.clearInterval(poll)
       window.onCaptchaSuccess = undefined
+      // Tear down the widget on unmount. React <StrictMode> double-mounts in
+      // dev, so without this the second mount would re-render on top of a
+      // widget still paired with a stale callback and the token never lands in
+      // state (leaving the Register button disabled).
+      if (typeof window.turnstile !== 'undefined') {
+        try {
+          window.turnstile.remove(el)
+        } catch {
+          // noop: widget may already be gone
+        }
+      }
     }
   }, [])
 
