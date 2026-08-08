@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getApiError, getApiErrorCode } from '../utils/errors'
@@ -7,7 +7,10 @@ import { trackScreenView, trackSignupStarted } from '../services/events'
 declare global {
   interface Window {
     onCaptchaSuccess?: (token: string) => void
-    turnstile?: { reset: () => void }
+    turnstile?: {
+      render: (el: HTMLElement, opts: { sitekey: string; callback: string }) => void
+      reset: () => void
+    }
   }
 }
 
@@ -28,13 +31,46 @@ export default function CreateAccount() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [captchaToken, setCaptchaToken] = useState('')
   const [captchaError, setCaptchaError] = useState(false)
+  const turnstileContainer = useRef<HTMLDivElement>(null)
+  const captchaRendered = useRef(false)
 
   useEffect(() => {
     window.onCaptchaSuccess = (token: string) => {
       setCaptchaToken(token)
       setCaptchaError(false)
     }
-    return () => { window.onCaptchaSuccess = undefined }
+
+    // Turnstile's auto-renderer only draws `.cf-turnstile` elements that exist
+    // when its script loads. On this SPA the signup page mounts later, so the
+    // widget must be rendered explicitly, otherwise it never appears and the
+    // callback never fires (leaving captchaToken empty -> backend 400).
+    const renderWidget = () => {
+      const el = turnstileContainer.current
+      if (!el || captchaRendered.current) return
+      if (typeof window.turnstile === 'undefined') return
+      window.turnstile.render(el, {
+        sitekey: '0x4AAAAAAECJICQ9Y6vBhQKx',
+        callback: 'onCaptchaSuccess',
+      })
+      captchaRendered.current = true
+    }
+
+    if (typeof window.turnstile !== 'undefined') {
+      renderWidget()
+      return () => { window.onCaptchaSuccess = undefined }
+    }
+
+    // Script from index.html (async defer) may not be ready yet; wait for it.
+    const poll = window.setInterval(() => {
+      if (typeof window.turnstile !== 'undefined') {
+        window.clearInterval(poll)
+        renderWidget()
+      }
+    }, 200)
+    return () => {
+      window.clearInterval(poll)
+      window.onCaptchaSuccess = undefined
+    }
   }, [])
 
   function resetCaptcha() {
@@ -194,9 +230,9 @@ export default function CreateAccount() {
           {errors.displayName && (
             <div className="flex items-center gap-1.5 text-sm font-semibold mt-2" style={{ color: '#c62828' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                <circle cx="12" cy="12" r="10" stroke="#c62828" strokeWidth="2"/>
-                <line x1="12" y1="7" x2="12" y2="13" stroke="#c62828" strokeWidth="2"/>
-                <circle cx="12" cy="16.5" r="1" fill="#c62828"/>
+                <circle cx="12" cy="12" r="10" stroke="#c62828" strokeWidth="2" />
+                <line x1="12" y1="7" x2="12" y2="13" stroke="#c62828" strokeWidth="2" />
+                <circle cx="12" cy="16.5" r="1" fill="#c62828" />
               </svg>
               {errors.displayName}
             </div>
@@ -215,9 +251,9 @@ export default function CreateAccount() {
           {errors.phone && (
             <div className="flex items-center gap-1.5 text-sm font-semibold mt-2" style={{ color: '#c62828' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                <circle cx="12" cy="12" r="10" stroke="#c62828" strokeWidth="2"/>
-                <line x1="12" y1="7" x2="12" y2="13" stroke="#c62828" strokeWidth="2"/>
-                <circle cx="12" cy="16.5" r="1" fill="#c62828"/>
+                <circle cx="12" cy="12" r="10" stroke="#c62828" strokeWidth="2" />
+                <line x1="12" y1="7" x2="12" y2="13" stroke="#c62828" strokeWidth="2" />
+                <circle cx="12" cy="16.5" r="1" fill="#c62828" />
               </svg>
               {errors.phone}
             </div>
@@ -236,9 +272,9 @@ export default function CreateAccount() {
           {errors.password ? (
             <div className="flex items-center gap-1.5 text-sm font-semibold mt-2" style={{ color: '#c62828' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                <circle cx="12" cy="12" r="10" stroke="#c62828" strokeWidth="2"/>
-                <line x1="12" y1="7" x2="12" y2="13" stroke="#c62828" strokeWidth="2"/>
-                <circle cx="12" cy="16.5" r="1" fill="#c62828"/>
+                <circle cx="12" cy="12" r="10" stroke="#c62828" strokeWidth="2" />
+                <line x1="12" y1="7" x2="12" y2="13" stroke="#c62828" strokeWidth="2" />
+                <circle cx="12" cy="16.5" r="1" fill="#c62828" />
               </svg>
               {errors.password}
             </div>
@@ -262,9 +298,9 @@ export default function CreateAccount() {
           {errors.confirm && (
             <div className="flex items-center gap-1.5 text-sm font-semibold mt-2" style={{ color: '#c62828' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                <circle cx="12" cy="12" r="10" stroke="#c62828" strokeWidth="2"/>
-                <line x1="12" y1="7" x2="12" y2="13" stroke="#c62828" strokeWidth="2"/>
-                <circle cx="12" cy="16.5" r="1" fill="#c62828"/>
+                <circle cx="12" cy="12" r="10" stroke="#c62828" strokeWidth="2" />
+                <line x1="12" y1="7" x2="12" y2="13" stroke="#c62828" strokeWidth="2" />
+                <circle cx="12" cy="16.5" r="1" fill="#c62828" />
               </svg>
               {errors.confirm}
             </div>
@@ -273,11 +309,7 @@ export default function CreateAccount() {
 
         {/* Captcha */}
         <div className="mb-[22px]">
-          <div
-            className="cf-turnstile"
-            data-sitekey="0x4AAAAAAECJICQ9Y6vBhQKx"
-            data-callback="onCaptchaSuccess"
-          />
+          <div ref={turnstileContainer} className="cf-turnstile" />
         </div>
 
         {/* Button */}
@@ -297,8 +329,9 @@ export default function CreateAccount() {
         ) : (
           <button
             onClick={handleSubmit}
-            className="w-full border-none rounded-xl px-4 py-[18px] text-base font-bold cursor-pointer flex items-center justify-center gap-2 mt-[26px]"
-            style={{ background: '#b30000', color: '#fff', fontFamily: 'inherit' }}
+            disabled={!captchaToken}
+            className="w-full border-none rounded-xl px-4 py-[18px] text-base font-bold flex items-center justify-center gap-2 mt-[26px]"
+            style={{ background: captchaToken ? '#b30000' : '#b3000080', color: '#fff', fontFamily: 'inherit', cursor: captchaToken ? 'pointer' : 'not-allowed' }}
           >
             Register Now
           </button>
