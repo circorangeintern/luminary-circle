@@ -1,0 +1,59 @@
+meta {
+  name: List your own market requests
+  type: http
+  seq: 2
+  tags: [
+    market-requests
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/market-requests/mine
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+example {
+  name: 200 Response
+  description: Your requests
+  
+  request: {
+    url: {{baseUrl}}/api/v1/market-requests/mine
+    method: GET
+    mode: none
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 200
+      text: OK
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "requests": [
+            {
+              "id": "cmrm...",
+              "proposedName": "Rumuokoro Market",
+              "lga": "Obio/Akpor",
+              "state": "Rivers",
+              "status": "PENDING",
+              "createdAt": "2026-07-23T09:00:00.000Z",
+              "reviewedAt": null
+            }
+          ]
+        }
+      '''
+    }
+  }
+}

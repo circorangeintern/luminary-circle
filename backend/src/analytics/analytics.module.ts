@@ -1,0 +1,13 @@
+import { Global, Module } from '@nestjs/common'
+import { JwtModule } from '@nestjs/jwt'
+import { AnalyticsController } from './analytics.controller'
+import { AnalyticsService } from './analytics.service'
+
+@Global()
+@Module({
+  imports: [JwtModule.register({})],
+  controllers: [AnalyticsController],
+  providers: [AnalyticsService],
+  exports: [AnalyticsService],
+})
+export class AnalyticsModule {}

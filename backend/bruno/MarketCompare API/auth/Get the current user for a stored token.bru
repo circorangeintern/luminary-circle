@@ -1,0 +1,94 @@
+meta {
+  name: Get the current user for a stored token
+  type: http
+  seq: 3
+  tags: [
+    auth
+  ]
+}
+
+get {
+  url: {{baseUrl}}/api/v1/auth/me
+  body: none
+  auth: bearer
+}
+
+headers {
+  ~X-Session-Id: 
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+example {
+  name: 200 Response
+  description: Current user
+  
+  request: {
+    url: {{baseUrl}}/api/v1/auth/me
+    method: GET
+    mode: none
+    headers: {
+      ~X-Session-Id: 
+    }
+  }
+  
+  response: {
+    status: {
+      code: 200
+      text: OK
+    }
+  
+    body: {
+      type: text
+      content: '''
+  
+      '''
+    }
+  }
+}
+
+example {
+  name: 401 Response
+  description: Missing, expired or invalid token
+  
+  request: {
+    url: {{baseUrl}}/api/v1/auth/me
+    method: GET
+    mode: none
+    headers: {
+      ~X-Session-Id: 
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 401
+      text: Unauthorized
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}

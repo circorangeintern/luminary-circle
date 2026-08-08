@@ -1,0 +1,52 @@
+@base = https://staging.marketcompare.name.ng/api/v1
+
+### Get all active items
+GET {{base}}/items
+
+### Get all active markets
+GET {{base}}/markets
+
+@riceId = cmrmtby0c000apwdjuuy3cixh
+@dericaId = cmrmtbv820000pwdjwt3ouvbi
+@tomatoId = cmrmtbybo000cpwdjfek4ljjl
+@basketId = cmrmtbxuj0009pwdjod0sizrl
+@eggsId = cmrmtbyn0000epwdj81z5j7sm
+@crateId = cmrmtbx7u0004pwdjafjbl4ae
+@bagId = cmrmtbx0x0003pwdjra33zskz
+@oilId = cmrmtbyha000dpwdjzg2d06rj
+@kegId = cmrmtbxpp0008pwdj6iuv483a
+@muduId = cmrmtbwth0001pwdjqht84eqi
+@beansId = cmrmtby5z000bpwdjonxn47hj
+@mile3Id = cmrmtc86f000fpwdjrju0rwac
+
+### compare: rice + derica -> 3 markets, exactly one isCheapest
+GET {{base}}/markets/compare?itemId={{riceId}}&unitId={{dericaId}}
+
+### compare: tomatoes + basket (seeded in all 3) -> comparisonPossible true
+GET {{base}}/markets/compare?itemId={{tomatoId}}&unitId={{basketId}}
+
+### compare: illegal pair (eggs + 50kg bag) -> 400
+GET {{base}}/markets/compare?itemId={{eggsId}}&unitId={{bagId}}
+
+### compare: missing unitId -> 400
+GET {{base}}/markets/compare?itemId={{riceId}}
+
+### should return an empty comparison (no seed for this pair)
+GET {{base}}/markets/compare?itemId={{oilId}}&unitId={{kegId}}
+
+
+
+
+# TRENDS
+
+### trend: rice+derica+Mile3, should have several submissions
+GET {{base}}/items/{{riceId}}/trend?unitId={{dericaId}}&marketId={{mile3Id}}
+
+### trend: a triple with one submission -> INSUFFICIENT_DATA, points length 1
+GET {{base}}/items/{{oilId}}/trend?unitId={{kegId}}&marketId={{mile3Id}}
+
+### trend: illegal pair -> 400
+GET {{base}}/items/{{eggsId}}/trend?unitId={{bagId}}&marketId={{mile3Id}}
+
+### trend: missing marketId -> 400
+GET {{base}}/items/{{riceId}}/trend?unitId={{dericaId}}

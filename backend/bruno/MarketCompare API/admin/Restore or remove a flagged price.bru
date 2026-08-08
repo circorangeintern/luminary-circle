@@ -1,0 +1,112 @@
+meta {
+  name: Restore or remove a flagged price
+  type: http
+  seq: 2
+  tags: [
+    admin
+  ]
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/moderation/:submissionId
+  body: json
+  auth: bearer
+}
+
+params:path {
+  submissionId: 
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "action": "RESTORE"
+  }
+}
+
+example {
+  name: 200 Response
+  description: Decision applied
+  
+  request: {
+    url: {{baseUrl}}/api/v1/admin/moderation/:submissionId
+    method: PATCH
+    mode: json
+    params:path: {
+      submissionId: 
+    }
+  
+    body:json: {
+      {
+        "action": "RESTORE"
+      }
+    }
+  }
+  
+  response: {
+    status: {
+      code: 200
+      text: OK
+    }
+  
+    body: {
+      type: text
+      content: '''
+  
+      '''
+    }
+  }
+}
+
+example {
+  name: 404 Response
+  description: Price not found
+  
+  request: {
+    url: {{baseUrl}}/api/v1/admin/moderation/:submissionId
+    method: PATCH
+    mode: json
+    params:path: {
+      submissionId: 
+    }
+  
+    body:json: {
+      {
+        "action": "RESTORE"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 404
+      text: Not Found
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}
