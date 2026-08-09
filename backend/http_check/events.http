@@ -1,0 +1,85 @@
+@base = http://localhost:3000/api/v1
+
+### valid batch -> 202 { accepted: 2, duplicates: 0, rejected: 0 }
+POST {{base}}/events
+Content-Type: application/json
+
+{
+  "events": [
+    { "clientEventId": "evt-001", "name": "comparison_viewed", "sessionId": "ses_test",
+      "screenName": "comparison", "responseStatus": "SUCCESS", "deviceType": "MOBILE",
+      "properties": { "itemId": "abc", "marketsDisplayed": 3 } },
+    { "clientEventId": "evt-002", "name": "lowest_price_displayed", "sessionId": "ses_test",
+      "properties": { "marketId": "xyz", "price": 2100 } }
+  ]
+}
+
+### replay the SAME batch -> duplicates: 2, accepted: 0  (retry-safe)
+
+### backend-owned name -> rejected: 1
+POST {{base}}/events
+Content-Type: application/json
+
+{ "events": [{ "clientEventId": "evt-003", "name": "price_submission_succeeded", "sessionId": "ses_test" }] }
+
+### 21 events -> 400 "A batch may contain at most 20 events"
+POST {{base}}/events
+Content-Type: application/json
+
+{
+  "events": [
+    { "clientEventId": "evt-001", "name": "comparison_viewed", "sessionId": "ses_test",
+      "screenName": "comparison", "responseStatus": "SUCCESS", "deviceType": "MOBILE",
+      "properties": { "itemId": "abc", "marketsDisplayed": 3 } },
+    { "clientEventId": "evt-002", "name": "lowest_price_displayed", "sessionId": "ses_test",
+      "properties": { "marketId": "xyz", "price": 2100 } },
+    { "clientEventId": "evt-001", "name": "comparison_viewed", "sessionId": "ses_test",
+      "screenName": "comparison", "responseStatus": "SUCCESS", "deviceType": "MOBILE",
+      "properties": { "itemId": "abc", "marketsDisplayed": 3 } },
+    { "clientEventId": "evt-002", "name": "lowest_price_displayed", "sessionId": "ses_test",
+      "properties": { "marketId": "xyz", "price": 2100 } },
+    { "clientEventId": "evt-001", "name": "comparison_viewed", "sessionId": "ses_test",
+      "screenName": "comparison", "responseStatus": "SUCCESS", "deviceType": "MOBILE",
+      "properties": { "itemId": "abc", "marketsDisplayed": 3 } },
+    { "clientEventId": "evt-002", "name": "lowest_price_displayed", "sessionId": "ses_test",
+      "properties": { "marketId": "xyz", "price": 2100 } },
+    { "clientEventId": "evt-001", "name": "comparison_viewed", "sessionId": "ses_test",
+      "screenName": "comparison", "responseStatus": "SUCCESS", "deviceType": "MOBILE",
+      "properties": { "itemId": "abc", "marketsDisplayed": 3 } },
+    { "clientEventId": "evt-002", "name": "lowest_price_displayed", "sessionId": "ses_test",
+      "properties": { "marketId": "xyz", "price": 2100 } },
+    { "clientEventId": "evt-001", "name": "comparison_viewed", "sessionId": "ses_test",
+      "screenName": "comparison", "responseStatus": "SUCCESS", "deviceType": "MOBILE",
+      "properties": { "itemId": "abc", "marketsDisplayed": 3 } },
+    { "clientEventId": "evt-002", "name": "lowest_price_displayed", "sessionId": "ses_test",
+      "properties": { "marketId": "xyz", "price": 2100 } },
+    { "clientEventId": "evt-001", "name": "comparison_viewed", "sessionId": "ses_test",
+      "screenName": "comparison", "responseStatus": "SUCCESS", "deviceType": "MOBILE",
+      "properties": { "itemId": "abc", "marketsDisplayed": 3 } },
+    { "clientEventId": "evt-002", "name": "lowest_price_displayed", "sessionId": "ses_test",
+      "properties": { "marketId": "xyz", "price": 2100 } },
+    { "clientEventId": "evt-001", "name": "comparison_viewed", "sessionId": "ses_test",
+      "screenName": "comparison", "responseStatus": "SUCCESS", "deviceType": "MOBILE",
+      "properties": { "itemId": "abc", "marketsDisplayed": 3 } },
+    { "clientEventId": "evt-002", "name": "lowest_price_displayed", "sessionId": "ses_test",
+      "properties": { "marketId": "xyz", "price": 2100 } },
+    { "clientEventId": "evt-001", "name": "comparison_viewed", "sessionId": "ses_test",
+      "screenName": "comparison", "responseStatus": "SUCCESS", "deviceType": "MOBILE",
+      "properties": { "itemId": "abc", "marketsDisplayed": 3 } },
+    { "clientEventId": "evt-002", "name": "lowest_price_displayed", "sessionId": "ses_test",
+      "properties": { "marketId": "xyz", "price": 2100 } },
+    { "clientEventId": "evt-001", "name": "comparison_viewed", "sessionId": "ses_test",
+      "screenName": "comparison", "responseStatus": "SUCCESS", "deviceType": "MOBILE",
+      "properties": { "itemId": "abc", "marketsDisplayed": 3 } },
+    { "clientEventId": "evt-002", "name": "lowest_price_displayed", "sessionId": "ses_test",
+      "properties": { "marketId": "xyz", "price": 2100 } },
+    { "clientEventId": "evt-001", "name": "comparison_viewed", "sessionId": "ses_test",
+      "screenName": "comparison", "responseStatus": "SUCCESS", "deviceType": "MOBILE",
+      "properties": { "itemId": "abc", "marketsDisplayed": 3 } }
+  ]
+}
+
+### empty array -> 400
+
+### with a valid Bearer token -> rows have user_id populated
+### with a garbage token -> still 202, user_id null

@@ -1,0 +1,317 @@
+meta {
+  name: Submit a price observation
+  type: http
+  seq: 1
+  tags: [
+    prices
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/prices
+  body: json
+  auth: bearer
+}
+
+headers {
+  ~X-Session-Id: 
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "itemId": "cmrqexjbk00005kdjpmoq2mo3",
+    "unitId": "cmrqexjbk00005kdjpslfsdfc",
+    "marketId": "cmrqexjbk00005kdjpsfweroq",
+    "price": 2100,
+    "note": "price for the big derica"
+  }
+}
+
+example {
+  name: 201 Response
+  description: Price submitted
+  
+  request: {
+    url: {{baseUrl}}/api/v1/prices
+    method: POST
+    mode: json
+    headers: {
+      ~X-Session-Id: 
+    }
+  
+    body:json: {
+      {
+        "itemId": "cmrqexjbk00005kdjpmoq2mo3",
+        "unitId": "cmrqexjbk00005kdjpslfsdfc",
+        "marketId": "cmrqexjbk00005kdjpsfweroq",
+        "price": 2100,
+        "note": "price for the big derica"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 201
+      text: Created
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "price": {
+            "id": "cmrqexjbk00005kdjpmoq2mo3",
+            "item": {
+              "id": "cmrqexjbk00005kdjpmoq2mo3",
+              "name": "Rice (local)"
+            },
+            "unit": {
+              "id": "cmrqexjbk00005kdjpmoq2mo3",
+              "label": "derica"
+            },
+            "market": {
+              "id": "cmrqexjbk00005kdjpmoq2mo3",
+              "name": "Mile 3 Market",
+              "lga": "Port Harcourt",
+              "state": "Rivers"
+            },
+            "price": 2100,
+            "note": null,
+            "status": "ACTIVE",
+            "source": "REAL_USER",
+            "isStale": false,
+            "isFlagged": false,
+            "flagCount": 0,
+            "submitterDisplayName": "Chidi",
+            "createdAt": "2026-07-19T09:00:00.000Z"
+          }
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 400 Response
+  description: Validation failed
+  
+  request: {
+    url: {{baseUrl}}/api/v1/prices
+    method: POST
+    mode: json
+    headers: {
+      ~X-Session-Id: 
+    }
+  
+    body:json: {
+      {
+        "itemId": "cmrqexjbk00005kdjpmoq2mo3",
+        "unitId": "cmrqexjbk00005kdjpslfsdfc",
+        "marketId": "cmrqexjbk00005kdjpsfweroq",
+        "price": 2100,
+        "note": "price for the big derica"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 400
+      text: Bad Request
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 401 Response
+  description: Not signed in
+  
+  request: {
+    url: {{baseUrl}}/api/v1/prices
+    method: POST
+    mode: json
+    headers: {
+      ~X-Session-Id: 
+    }
+  
+    body:json: {
+      {
+        "itemId": "cmrqexjbk00005kdjpmoq2mo3",
+        "unitId": "cmrqexjbk00005kdjpslfsdfc",
+        "marketId": "cmrqexjbk00005kdjpsfweroq",
+        "price": 2100,
+        "note": "price for the big derica"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 401
+      text: Unauthorized
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 409 Response
+  description: Duplicate submission
+  
+  request: {
+    url: {{baseUrl}}/api/v1/prices
+    method: POST
+    mode: json
+    headers: {
+      ~X-Session-Id: 
+    }
+  
+    body:json: {
+      {
+        "itemId": "cmrqexjbk00005kdjpmoq2mo3",
+        "unitId": "cmrqexjbk00005kdjpslfsdfc",
+        "marketId": "cmrqexjbk00005kdjpsfweroq",
+        "price": 2100,
+        "note": "price for the big derica"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 409
+      text: Conflict
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}
+
+example {
+  name: 429 Response
+  description: Rate limit exceeded
+  
+  request: {
+    url: {{baseUrl}}/api/v1/prices
+    method: POST
+    mode: json
+    headers: {
+      ~X-Session-Id: 
+    }
+  
+    body:json: {
+      {
+        "itemId": "cmrqexjbk00005kdjpmoq2mo3",
+        "unitId": "cmrqexjbk00005kdjpslfsdfc",
+        "marketId": "cmrqexjbk00005kdjpsfweroq",
+        "price": 2100,
+        "note": "price for the big derica"
+      }
+    }
+  }
+  
+  response: {
+    headers: {
+      Content-Type: application/json
+    }
+  
+    status: {
+      code: 429
+      text: Too Many Requests
+    }
+  
+    body: {
+      type: json
+      content: '''
+        {
+          "success": false,
+          "error": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid phone number",
+            "details": [
+              {
+                "field": "phone",
+                "message": "Not a valid Nigerian mobile number"
+              }
+            ]
+          }
+        }
+      '''
+    }
+  }
+}

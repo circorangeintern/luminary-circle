@@ -1,0 +1,243 @@
+// =====================================================================
+// MarketCompare — Prisma Schema
+// Implements: Backend Data Model v1.0 Final (KAN-16)
+// Stack: PostgreSQL | Prisma
+// Author: Ekojoe Covenant (AlphaCode), Backend Developer, Luminary-circle
+// =====================================================================
+
+generator client {
+  provider     = "prisma-client-js"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =====================================================================
+// ENUMS
+// =====================================================================
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum RecordStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+enum SubmissionStatus {
+  ACTIVE
+  UNDER_REVIEW
+  REMOVED
+}
+
+enum SubmissionSource {
+  REAL_USER
+  TEAM_TEST
+  SEED_DEMO
+}
+
+enum FlagReason {
+  WRONG_PRICE
+  OUTDATED
+  OTHER
+}
+
+enum FlagStatus {
+  PENDING
+  CONFIRMED
+  DISMISSED
+}
+
+enum ResponseStatus {
+  LOADING
+  SUCCESS
+  EMPTY
+  VALIDATION_ERROR
+  AUTHENTICATION_ERROR
+  NETWORK_ERROR
+  SERVER_ERROR
+}
+
+enum DeviceType {
+  MOBILE
+  TABLET
+  DESKTOP
+}
+
+// =====================================================================
+// CORE MODELS
+// =====================================================================
+
+model User {
+  id            String        @id @default(cuid())
+  displayName   String        @map("display_name")
+  phone         String        @unique // E.164 normalized (+234...), normalize BEFORE insert
+  passwordHash  String        @map("password_hash")
+  role          UserRole      @default(USER)
+  accountStatus AccountStatus @default(ACTIVE) @map("account_status")
+  lastLoginAt   DateTime?     @map("last_login_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  // Relations: three distinct roles this user can play:
+  submissions     PriceSubmission[] // prices they contributed
+  flags           Flag[] // flags they raised
+  marketRequests  MarketRequest[]   @relation("RequestedBy") // markets they proposed
+  marketReviews   MarketRequest[]   @relation("ReviewedBy") // requests they reviewed (admins)
+  analyticsEvents AnalyticsEvent[]
+
+  @@map("users")
+}
+
+model Item {
+  id         String       @id @default(cuid())
+  name       String       @unique
+  localNames String[]     @default([]) @map("local_names")
+  status     RecordStatus @default(ACTIVE)
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  itemUnits   ItemUnit[]
+  submissions PriceSubmission[]
+
+  @@map("items")
+}
+
+model Unit {
+  id        String   @id @default(cuid())
+  label     String   @unique // "derica", "mudu", "paint bucket", "50kg bag", "crate (30)"...
+  approxKg  Decimal? @map("approx_kg") @db.Decimal(6, 3) // informational only
+  createdAt DateTime @default(now()) @map("created_at")
+
+  itemUnits   ItemUnit[]
+  submissions PriceSubmission[]
+
+  @@map("units")
+}
+
+// Valid units per item. Drives the submit-form picker;
+// POST /prices validates the (item, unit) pair against this table.
+model ItemUnit {
+  itemId String @map("item_id")
+  unitId String @map("unit_id")
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  unit Unit @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@id([itemId, unitId])
+  @@map("item_units")
+}
+
+model Market {
+  id        String       @id @default(cuid())
+  name      String
+  lga       String
+  state     String
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  submissions         PriceSubmission[]
+  createdFromRequests MarketRequest[]   @relation("CreatedMarket")
+
+  @@unique([name, lga, state], name: "uq_market_identity")
+  @@map("markets")
+}
+
+model MarketRequest {
+  id              String        @id @default(cuid())
+  proposedName    String        @map("proposed_name")
+  lga             String
+  state           String
+  requestedById   String        @map("requested_by_id")
+  status          RequestStatus @default(PENDING)
+  reviewedById    String?       @map("reviewed_by_id") // null while PENDING
+  reviewedAt      DateTime?     @map("reviewed_at") // null while PENDING
+  createdMarketId String?       @map("created_market_id") // set on approval (audit link)
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  requestedBy   User    @relation("RequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+  reviewedBy    User?   @relation("ReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
+  createdMarket Market? @relation("CreatedMarket", fields: [createdMarketId], references: [id], onDelete: Restrict)
+
+  @@map("market_requests")
+}
+
+// Append-only source of truth. Never UPDATE price/item/market on a row;
+// moderation changes `status` only. Everything public is a query over this table.
+model PriceSubmission {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  itemId    String           @map("item_id")
+  unitId    String           @map("unit_id") // (itemId, unitId) must exist in ItemUnit — app-layer check
+  marketId  String           @map("market_id")
+  price     Int // whole naira; > 0 enforced in validation pipeline
+  note      String?
+  status    SubmissionStatus @default(ACTIVE)
+  source    SubmissionSource @default(REAL_USER)
+  createdAt DateTime         @default(now()) @map("created_at") // server-stamped, never client-supplied
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  unit   Unit   @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  market Market @relation(fields: [marketId], references: [id], onDelete: Restrict)
+
+  flags Flag[]
+
+  // The two hard queries, index-backed from day one:
+  @@index([itemId, marketId, createdAt(sort: Desc)], name: "idx_latest_price_per_market")
+  @@index([itemId, unitId, marketId, createdAt(sort: Desc)], name: "idx_trend_lookup")
+  @@map("price_submissions")
+}
+
+model Flag {
+  id           String     @id @default(cuid())
+  submissionId String     @map("submission_id")
+  flaggedById  String     @map("flagged_by_id")
+  reason       FlagReason
+  status       FlagStatus @default(PENDING)
+  resolvedAt   DateTime?  @map("resolved_at") // null while PENDING
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  submission PriceSubmission @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  flaggedBy  User            @relation(fields: [flaggedById], references: [id], onDelete: Restrict)
+
+  // DB-enforced: one flag per user per submission (PRD User Story 4.1 idempotency)
+  @@unique([submissionId, flaggedById], name: "uq_one_flag_per_user_per_price")
+  @@map("flags")
+}
+
+// Lightweight event store for the Week 2 tracking plan.
+// Writes are fire-and-forget: an analytics failure must never fail the main request.
+model AnalyticsEvent {
+  id             String          @id @default(cuid())
+  clientEventId  String?         @unique @map("client_event_id") // frontend retry dedupe; null for backend-emitted events
+  name           String // validated against tracking plan in app layer (deliberately NOT a DB enum)
+  sessionId      String          @map("session_id")
+  userId         String?         @map("user_id") // null for anonymous browsing
+  screenName     String?         @map("screen_name")
+  responseStatus ResponseStatus? @map("response_status")
+  errorCode      String?         @map("error_code")
+  deviceType     DeviceType?     @map("device_type")
+  properties     Json?
+  createdAt      DateTime        @default(now()) @map("created_at") // UTC
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([name, createdAt], name: "idx_kpi_event_counts")
+  @@map("analytics_events")
+}
