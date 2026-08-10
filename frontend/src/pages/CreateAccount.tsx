@@ -34,7 +34,7 @@ export default function CreateAccount() {
   const [captchaError, setCaptchaError] = useState(false)
   const turnstileContainer = useRef<HTMLDivElement>(null)
   const captchaRendered = useRef(false)
-  const captchaRetry = useRef<number>()
+  const captchaRetry = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     const el = turnstileContainer.current
