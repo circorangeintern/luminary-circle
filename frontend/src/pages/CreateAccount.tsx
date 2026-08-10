@@ -33,15 +33,17 @@ export default function CreateAccount() {
   const [captchaToken, setCaptchaToken] = useState('')
   const [captchaError, setCaptchaError] = useState(false)
   const turnstileContainer = useRef<HTMLDivElement>(null)
+  const captchaRendered = useRef(false)
+  const captchaRetry = useRef<number>()
 
   useEffect(() => {
+    const el = turnstileContainer.current
+    if (!el) return
+
     window.onCaptchaSuccess = (token: string) => {
       setCaptchaToken(token)
       setCaptchaError(false)
     }
-
-    const el = turnstileContainer.current
-    if (!el) return
 
     // Turnstile's auto-renderer only draws `.cf-turnstile` elements that exist
     // when its script loads. On this SPA the signup page mounts later, so the
@@ -49,10 +51,21 @@ export default function CreateAccount() {
     // callback never fires (leaving captchaToken empty -> backend 400).
     const renderWidget = () => {
       if (typeof window.turnstile === 'undefined') return
-      window.turnstile.render(el, {
-        sitekey: '0x4AAAAAAECJICQ9Y6vBhQKx',
-        callback: 'onCaptchaSuccess',
-      })
+      if (captchaRendered.current) return
+      try {
+        window.turnstile.render(el, {
+          sitekey: '0x4AAAAAAECJICQ9Y6vBhQKx',
+          callback: 'onCaptchaSuccess',
+        })
+        captchaRendered.current = true
+      } catch {
+        // React <StrictMode> double-mounts in dev, unmounting and remounting
+        // the very same container node. The first widget may still be in
+        // teardown, so re-render would collide with a stale widget (green
+        // check shows, callback never fires, button stays disabled). Wait for
+        // the teardown to finish, then retry.
+        captchaRetry.current = window.setTimeout(renderWidget, 250)
+      }
     }
 
     // Script from index.html (async defer) may not be ready yet; wait for it.
@@ -69,11 +82,9 @@ export default function CreateAccount() {
 
     return () => {
       window.clearInterval(poll)
+      window.clearTimeout(captchaRetry.current)
       window.onCaptchaSuccess = undefined
-      // Tear down the widget on unmount. React <StrictMode> double-mounts in
-      // dev, so without this the second mount would re-render on top of a
-      // widget still paired with a stale callback and the token never lands in
-      // state (leaving the Register button disabled).
+      captchaRendered.current = false
       if (typeof window.turnstile !== 'undefined') {
         try {
           window.turnstile.remove(el)
@@ -81,6 +92,10 @@ export default function CreateAccount() {
           // noop: widget may already be gone
         }
       }
+      // Drop any orphaned iframe the teardown left behind. A half-initialised
+      // Turnstile frame bootstraps in a sandboxed about:blank document; if it
+      // is destroyed mid-init, the next mount renders onto a dead container.
+      el.replaceChildren()
     }
   }, [])
 
