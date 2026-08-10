@@ -11,6 +11,7 @@ declare global {
       render: (el: HTMLElement, opts: { sitekey: string; callback: string }) => void
       reset: () => void
       remove: (el: HTMLElement) => void
+      getResponse: () => string
     }
   }
 }
@@ -35,6 +36,7 @@ export default function CreateAccount() {
   const turnstileContainer = useRef<HTMLDivElement>(null)
   const captchaRendered = useRef(false)
   const captchaRetry = useRef<number | undefined>(undefined)
+  const lastCaptchaToken = useRef('')
 
   useEffect(() => {
     const el = turnstileContainer.current
@@ -80,8 +82,28 @@ export default function CreateAccount() {
       renderWidget()
     }
 
+    // Safety net for the token->state handoff. Turnstile invokes the widget's
+    // `callback` option (a global function name) when a challenge completes,
+    // but on some deployments that handshake never lands. Poll the widget's
+    // own token reader instead: it returns the finished token unconditionally.
+    const tokenPoll = window.setInterval(() => {
+      if (typeof window.turnstile === 'undefined') return
+      let token = ''
+      try {
+        token = window.turnstile.getResponse()
+      } catch {
+        return
+      }
+      if (token && token !== lastCaptchaToken.current) {
+        lastCaptchaToken.current = token
+        setCaptchaToken(token)
+        setCaptchaError(false)
+      }
+    }, 500)
+
     return () => {
       window.clearInterval(poll)
+      window.clearInterval(tokenPoll)
       window.clearTimeout(captchaRetry.current)
       window.onCaptchaSuccess = undefined
       captchaRendered.current = false
@@ -101,6 +123,7 @@ export default function CreateAccount() {
 
   function resetCaptcha() {
     setCaptchaToken('')
+    lastCaptchaToken.current = ''
     if (typeof window.turnstile !== 'undefined') {
       window.turnstile.reset()
     }
