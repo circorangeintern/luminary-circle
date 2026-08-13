@@ -10,6 +10,8 @@ declare global {
     turnstile?: {
       render: (el: HTMLElement, opts: { sitekey: string; callback: string }) => void
       reset: () => void
+      remove: (el: HTMLElement) => void
+      getResponse: () => string
     }
   }
 }
@@ -33,8 +35,13 @@ export default function CreateAccount() {
   const [captchaError, setCaptchaError] = useState(false)
   const turnstileContainer = useRef<HTMLDivElement>(null)
   const captchaRendered = useRef(false)
+  const captchaRetry = useRef<number | undefined>(undefined)
+  const lastCaptchaToken = useRef('')
 
   useEffect(() => {
+    const el = turnstileContainer.current
+    if (!el) return
+
     window.onCaptchaSuccess = (token: string) => {
       setCaptchaToken(token)
       setCaptchaError(false)
@@ -45,19 +52,22 @@ export default function CreateAccount() {
     // widget must be rendered explicitly, otherwise it never appears and the
     // callback never fires (leaving captchaToken empty -> backend 400).
     const renderWidget = () => {
-      const el = turnstileContainer.current
-      if (!el || captchaRendered.current) return
       if (typeof window.turnstile === 'undefined') return
-      window.turnstile.render(el, {
-        sitekey: '0x4AAAAAAECJICQ9Y6vBhQKx',
-        callback: 'onCaptchaSuccess',
-      })
-      captchaRendered.current = true
-    }
-
-    if (typeof window.turnstile !== 'undefined') {
-      renderWidget()
-      return () => { window.onCaptchaSuccess = undefined }
+      if (captchaRendered.current) return
+      try {
+        window.turnstile.render(el, {
+          sitekey: '0x4AAAAAAECJICQ9Y6vBhQKx',
+          callback: 'onCaptchaSuccess',
+        })
+        captchaRendered.current = true
+      } catch {
+        // React <StrictMode> double-mounts in dev, unmounting and remounting
+        // the very same container node. The first widget may still be in
+        // teardown, so re-render would collide with a stale widget (green
+        // check shows, callback never fires, button stays disabled). Wait for
+        // the teardown to finish, then retry.
+        captchaRetry.current = window.setTimeout(renderWidget, 250)
+      }
     }
 
     // Script from index.html (async defer) may not be ready yet; wait for it.
@@ -67,14 +77,53 @@ export default function CreateAccount() {
         renderWidget()
       }
     }, 200)
+    if (typeof window.turnstile !== 'undefined') {
+      window.clearInterval(poll)
+      renderWidget()
+    }
+
+    // Safety net for the token->state handoff. Turnstile invokes the widget's
+    // `callback` option (a global function name) when a challenge completes,
+    // but on some deployments that handshake never lands. Poll the widget's
+    // own token reader instead: it returns the finished token unconditionally.
+    const tokenPoll = window.setInterval(() => {
+      if (typeof window.turnstile === 'undefined') return
+      let token = ''
+      try {
+        token = window.turnstile.getResponse()
+      } catch {
+        return
+      }
+      if (token && token !== lastCaptchaToken.current) {
+        lastCaptchaToken.current = token
+        setCaptchaToken(token)
+        setCaptchaError(false)
+      }
+    }, 500)
+
     return () => {
       window.clearInterval(poll)
+      window.clearInterval(tokenPoll)
+      window.clearTimeout(captchaRetry.current)
       window.onCaptchaSuccess = undefined
+      captchaRendered.current = false
+      if (typeof window.turnstile !== 'undefined') {
+        try {
+          window.turnstile.remove(el)
+        } catch {
+          // noop: widget may already be gone
+        }
+      }
+      // Drop any orphaned iframe the teardown left behind. A half-initialised
+      // Turnstile frame bootstraps in a sandboxed about:blank document; if it
+      // is destroyed mid-init, the next mount renders onto a dead container.
+      el.replaceChildren()
     }
   }, [])
 
   function resetCaptcha() {
     setCaptchaToken('')
+    lastCaptchaToken.current = ''
     if (typeof window.turnstile !== 'undefined') {
       window.turnstile.reset()
     }
